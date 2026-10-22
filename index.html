@@ -62,21 +62,10 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
  .look .r{gap:12px}.f.hb{gap:8px}
  button{padding:9px 12px}
 }
-/* Login gating: hide dashboard until logged in */
-body:not(.logged-in) main{display:none}
-body:not(.logged-in) #fab{display:none}
-.lock-msg{display:none;text-align:center;padding:60px 20px}
-body:not(.logged-in) .lock-msg{display:block}
-.lock-msg h2{font-size:22px;margin:0 0 8px}
-.lock-msg p{color:var(--mu);margin:0 0 16px}
 </style></head><body>
-<header style="justify-content:flex-end">
-<button class="p" id="upb">&#8679; Upload</button>
-<small id="meta" style="display:none"></small>
-<button id="lgout" style="display:none;margin-left:6px">Logout</button>
-</header>
+<header style="justify-content:flex-end"><button class="p" id="upb">&#8679; Upload</button><small id="meta" style="display:none"></small></header>
 <div class="modal" id="mdl"><div class="mb">
-<div id="lg"><h3>&#128274; Login</h3><label>Name<input id="un" placeholder="Your name" autocomplete="off"></label><label>EPF No<input id="ue" placeholder="EPF number" inputmode="numeric" autocomplete="off"></label><label>Password<input id="upw" type="password" placeholder="Password"></label><div class="err" id="lge"></div><div class="row"><button class="p" id="lgb">Login</button><button class="mc">Cancel</button></div></div>
+<div id="lg"><h3>&#128274; Login to upload</h3><label>Name<input id="un" placeholder="Your name" autocomplete="off"></label><label>EPF No<input id="ue" placeholder="EPF number" inputmode="numeric" autocomplete="off"></label><label>Password<input id="upw" type="password" placeholder="Password"></label><div class="err" id="lge"></div><div class="row"><button class="p" id="lgb">Login</button><button class="mc">Cancel</button></div></div>
 <div id="us" style="display:none"><h3>&#8679; Upload Excel files</h3><div class="mu" id="who" style="margin-bottom:10px"></div>
 <label>1. Branch Wise RentalArrears (.xlsx, one or many branches)<input type="file" id="fa" accept=".xlsx,.xls" multiple></label>
 <label>2. Destinity LE DailySummary (.xlsx, one or many)<input type="file" id="fb" accept=".xlsx,.xls" multiple></label>
@@ -89,11 +78,6 @@ body:not(.logged-in) .lock-msg{display:block}
 <h5>Navigate</h5><div class="mg"><a href="https://gmaphnbf.github.io/HNBFGMAP/" rel="noopener">&#8962; Home</a><button data-m="up">&#8679; Upload data</button><button data-m="look">&#128269; Fac No search</button><button data-m="flt">&#9776; Filters</button><button data-m="ch">&#9684; Stage chart</button><button data-m="npl">&#9201; NPL ratio</button><button data-m="off">&#128101; Officer summary</button><button data-m="cus">&#9776; Customers</button></div>
 <h5>Quick lists</h5><div class="mg"><button id="m_pn" data-m="pnb">PNPL list</button><button id="m_r1" data-m="r1b">1st Rental</button><button id="m_np" data-m="npb">Null Payment</button><button data-m="rs">&#8635; Clear filters</button></div>
 <h5>Download Excel</h5><div class="mg"><button data-m="e1">Filtered list</button><button data-m="e2">Officer summary</button><button data-m="e3">Bucket summary</button></div></div></div>
-<div class="lock-msg">
- <h2>&#128274; Login Required</h2>
- <p>Please login to view the Arrears Dashboard.</p>
- <button class="p" onclick="openLogin()">Login now</button>
-</div>
 <main>
 <div class="card" id="info" style="border-left:4px solid var(--s2)"></div>
 <div class="card look" id="look"><h3>Fac No Search</h3><div class="f"><input id="fq" placeholder="Fac No (e.g. VF250201107747)" size="30"><button id="fgo" class="p">Check</button></div><div id="lres" class="mu" style="margin-top:8px">Type a Fac No and click Check to see its Stage, Arrears and Done status.</div></div>
@@ -134,18 +118,13 @@ var fmt=function(x){return Number(x||0).toLocaleString("en-LK",{maximumFractionD
 var stage=function(d){return d>=90?3:d>=30?2:1};
 var bidx=function(d){for(var i=0;i<BK.length;i++)if(d>=BK[i][1]&&d<=BK[i][2])return i;return 8};
 function dim(d){return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()}
-var HIST=[],USER=null;
-try{HIST=JSON.parse(localStorage.getItem("arr_hist")||"[]");USER=JSON.parse(sessionStorage.getItem("arr_user")||"null")}catch(e){}
+var HIST=[],USER=null;try{HIST=JSON.parse(localStorage.getItem("arr_hist")||"[]");USER=JSON.parse(sessionStorage.getItem("arr_user")||"null")}catch(e){}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function hpush(e){HIST.push(e);try{localStorage.setItem("arr_hist",JSON.stringify(HIST.slice(-200)))}catch(x){}
  var c=ccfg();if(c.url&&typeof fetch=="function")fetch(c.url+"/history.json"+(c.key?"?auth="+encodeURIComponent(c.key):""),{method:"POST",body:JSON.stringify(e)}).catch(function(){});if(R.length)info()}
 function hload(){var c=ccfg();if(!c.url||typeof fetch!="function")return;fetch(c.url+"/history.json?v="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(j){
  if(!j)return;var m={};HIST.forEach(function(x){m[x.ts]=x});Object.keys(j).forEach(function(k){if(j[k]&&j[k].ts)m[j[k].ts]=j[k]});HIST=Object.keys(m).map(function(k){return m[k]});try{localStorage.setItem("arr_hist",JSON.stringify(HIST.slice(-200)))}catch(x){}if(R.length)info()}).catch(function(){})}
-
-/* ==== FIREBASE CONFIG - EDIT THIS URL ==== */
 var CURD=null,CLOUD={url:"https://my-dashbord-24ba7-default-rtdb.asia-southeast1.firebasedatabase.app"};
-/* ========================================= */
-
 function ccfg(){var c={};try{c=JSON.parse(localStorage.getItem("arr_cloud")||"{}")}catch(e){}return{url:(CLOUD.url||c.url||"").replace(/\/+$/,""),key:c.key||""}}
 function cget(){var c=ccfg();if(!c.url||typeof fetch!="function")return Promise.resolve(null);return fetch(c.url+"/arrears.json?v="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
 function cput(o){var c=ccfg();if(!c.url)return Promise.resolve("off");return fetch(c.url+"/arrears.json"+(c.key?"?auth="+encodeURIComponent(c.key):""),{method:"PUT",body:JSON.stringify(o)}).then(function(r){return r.ok?"ok":"HTTP "+r.status}).catch(function(e){return "failed: "+e})}
@@ -160,23 +139,16 @@ function load(d){
  $("ds").innerHTML='<option value="">All</option>'+Array.from(new Set(R.map(function(r){return r.desc||"(none)"}))).sort().map(function(m){return"<option>"+m+"</option>"}).join("");$("mks").innerHTML='<option value="">All</option>'+ms.map(function(m){return"<option>"+m+"</option>"}).join("");var up=function(id,k){$(id).innerHTML='<option value="">All</option>'+Array.from(new Set(R.map(function(r){return r[k]||"(none)"}))).sort().map(function(m){return"<option>"+m+"</option>"}).join("")};up("br","branch");$("ml").innerHTML=ms.map(function(m){return"<option value=\""+m+"\">"}).join("");
 bkSel={};draw();info();
 }
-
-/* ===== info: Uploaded By + History only when logged in ===== */
 function info(){
  var m=META,h;if(!R.length){$("info").innerHTML="<b>No data loaded.</b> Click <b>Upload</b> (top right), login, and select the <b>Branch Wise RentalArrears</b> and <b>Destinity_LE_DailySummary</b> Excel files.";return}
  var it=function(l,v){return"<div><span>"+l+"</span>"+(v||"-")+"</div>"};
- var li=!!USER;
- var upBy='<div><span>UPLOADED BY</span><b>'+(li&&m.by?esc(m.by)+" (EPF "+esc(m.epf)+")":"-")+'</b></div>';
- var hist='';
- if(li){
+ var html='<div class="up-b"><div><span>LAST UPLOAD (DATE &amp; TIME)</span><b>'+esc(m.up||"-")+'</b></div><div><span>DATA AS AT</span><b>'+esc(m.dAsAt||m.aAsAt||"-")+'</b></div></div><div class="f" style="gap:26px;margin-top:10px;font-size:12.5px">'+it("Arrears Report – As At",m.aAsAt)+it("Branches",m.br)+it("Destinity Executed",m.dExec)+it("Data source",m.src)+it("Facilities",R.length)+'</div>';
+ if(USER){
   var hs=HIST.slice().sort(function(a,b){return b.ts-a.ts}).slice(0,20);
-  hist='<details open style="margin-top:10px"><summary><b>Upload History ('+HIST.length+')</b></summary><div class="tw" style="max-height:240px;margin-top:6px"><table><tr><th>Date &amp; Time<th>Uploaded By<th>EPF No<th class=n>Facilities<th>Data as at</tr>'+(hs.map(function(h){return"<tr><td>"+esc(h.up)+"<td>"+esc(h.name)+"<td>"+esc(h.epf)+"<td class=n>"+esc(h.n)+"<td>"+esc(h.asAt)}).join("")||"<tr><td colspan=5>No history yet</tr>")+'</table></div></details>';
- } else {
-  upBy='<div><span>UPLOADED BY</span><b>Hidden</b></div>';
+  html+='<details open style="margin-top:10px"><summary><b>Upload History ('+HIST.length+')</b></summary><div class="tw" style="max-height:240px;margin-top:6px"><table><tr><th>Date &amp; Time<th>Uploaded By<th>EPF No<th class=n>Facilities<th>Data as at</tr>'+(hs.map(function(h){return"<tr><td>"+esc(h.up)+"<td>"+esc(h.name)+"<td>"+esc(h.epf)+"<td class=n>"+esc(h.n)+"<td>"+esc(h.asAt)}).join("")||"<tr><td colspan=5>No history yet</tr>")+'</table></div></details>';
  }
- $("info").innerHTML='<div class="up-b"><div><span>LAST UPLOAD (DATE &amp; TIME)</span><b>'+esc(m.up||"-")+'</b></div>'+upBy+'<div><span>DATA AS AT</span><b>'+esc(m.dAsAt||m.aAsAt||"-")+'</b></div></div><div class="f" style="gap:26px;margin-top:10px;font-size:12.5px">'+it("Arrears Report – As At",m.aAsAt)+it("Branches",m.br)+it("Destinity Executed",m.dExec)+it("Data source",m.src)+it("Facilities",R.length)+'</div>'+hist;
+ $("info").innerHTML=html;
 }
-
 function pn(r){return r.days>=+$("p1").value&&r.days<=+$("p2").value}
 function filt(skipB){
  var br=$("br").value,mks=$("mks").value,ds=$("ds").value,mk=$("mk").value.trim(),st=$("st").value,vt=$("vt").value,fg=$("fg").value,dn=$("dn").value,q=$("q").value.toLowerCase().trim();
@@ -274,28 +246,14 @@ $("sheet").addEventListener("click",function(e){var b=e.target.closest("[data-m]
  else if(MS[m]){var el=$(MS[m]);(el.closest(".card")||el).scrollIntoView({behavior:"smooth"});if(m=="look")$("fq").focus()}
  else{$(m).click();close=(m=="e1"||m=="e2"||m=="e3"||m=="rs"||m=="pnb"||m=="r1b"||m=="npb")}
  if(close)$("sheet").classList.remove("on")});
-
-/* ===== Login gate ===== */
-function applyAuth(){
- if(USER){
-  document.body.classList.add("logged-in");
-  $("lgout").style.display="inline-block";
- } else {
-  document.body.classList.remove("logged-in");
-  $("lgout").style.display="none";
- }
- if(R.length) info();
-}
-function step(){$("lg").style.display=USER?"none":"block";$("us").style.display=USER?"block":"none";if(USER)$("who").textContent="Logged in as "+USER.name+" (EPF "+USER.epf+")";applyAuth()}
-function openLogin(){$("lge").textContent="";$("un").value=USER?USER.name:"";$("ue").value=USER?USER.epf:"";step();$("mdl").classList.add("on")}
-$("upb").onclick=function(){openLogin()};
-$("lgout").onclick=function(){USER=null;try{sessionStorage.removeItem("arr_user")}catch(x){}applyAuth()};
+function step(){$("lg").style.display=USER?"none":"block";$("us").style.display=USER?"block":"none";if(USER)$("who").textContent="Logged in as "+USER.name+" (EPF "+USER.epf+")"}
+$("upb").onclick=function(){step();$("lge").textContent="";$("mdl").classList.add("on")};
 Array.from(document.querySelectorAll(".mc")).forEach(function(b){b.onclick=function(){$("mdl").classList.remove("on")}});
 $("lgb").onclick=function(){var n=$("un").value.trim(),e=$("ue").value.trim(),p=$("upw").value;
  if(!n||!e){$("lge").textContent="Please enter your name and EPF No.";return}
  if(p!=="HNBF123"){$("lge").textContent="Incorrect password.";return}
- USER={name:n,epf:e};try{sessionStorage.setItem("arr_user",JSON.stringify(USER))}catch(x){}$("upw").value="";step();$("mdl").classList.remove("on")};
-$("lo").onclick=function(){USER=null;try{sessionStorage.removeItem("arr_user")}catch(x){}step()};
+ USER={name:n,epf:e};try{sessionStorage.setItem("arr_user",JSON.stringify(USER))}catch(x){}$("upw").value="";step();if(R.length)info()};
+$("lo").onclick=function(){USER=null;try{sessionStorage.removeItem("arr_user")}catch(x){}step();if(R.length)info()};
 $("fgo").onclick=look;$("fq").onkeydown=function(e){if(e.key=="Enter")look()};
 function rd(f){return new Promise(function(ok){var fr=new FileReader();fr.onload=function(){ok(XLSX.read(fr.result,{type:"array",cellDates:true}))};fr.readAsArrayBuffer(f)})}
 function grid(wb){return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:null})}
@@ -329,29 +287,23 @@ $("go").onclick=function(){
   mt.up=new Date().toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:true});mt.by=USER.name;mt.epf=USER.epf;mt.src="Uploaded now (saved on this device)";var nd={ts:Date.now(),asAt:at?at.toISOString():null,rows:rows,meta:mt};
   try{localStorage.setItem("arr_data",JSON.stringify(nd))}catch(e){alert("Browser storage is full - data will not be saved for next time.")}
   load(nd);var o2=JSON.parse(JSON.stringify(nd));delete o2.meta.src;var he={ts:Date.now(),up:mt.up,name:USER.name,epf:USER.epf,n:rows.length,asAt:mt.aAsAt||""};$("mdl").classList.remove("on");
-  cput(o2).then(function(s){
-   /* push history to firebase too */
-   var c=ccfg();
-   if(c.url&&typeof fetch=="function"){
-    fetch(c.url+"/history.json"+(c.key?"?auth="+encodeURIComponent(c.key):""),{method:"POST",body:JSON.stringify(he)}).catch(function(){});
-   }
-   hpush(he);
-   alert(rows.length+" facilities loaded. "+(s=="off"?"Online storage is not set up (saved on this device only).":s=="ok"?"Saved ONLINE - everyone will see this data.":"Online save "+s+" - check the Online storage setup."))
-  })}).catch(function(e){alert("Error: "+e)})};
-
-/* Load existing data (device + Firebase) */
+  hpush(he);
+  cput(o2).then(function(s){alert(rows.length+" facilities loaded. "+(s=="off"?"Online storage is not set up (saved on this device only).":s=="ok"?"Saved ONLINE - everyone will see this data.":"Online save "+s+" - check the Online storage setup."))})}).catch(function(e){alert("Error: "+e)})};
 try{DATA=JSON.parse(localStorage.getItem("arr_data")||"null")}catch(e){DATA=null}
 if(DATA&&DATA.meta)DATA.meta.src="Saved on this device";
-load(DATA||{rows:[]});applyAuth();
-hload();
+load(DATA||{rows:[]});hload();
 cget().then(function(j){if(!j||!j.rows||!j.rows.length)return;if(DATA&&DATA.ts&&DATA.ts>=j.ts)return;
- j.meta=j.meta||{};j.meta.src="Online database";try{localStorage.setItem("arr_data",JSON.stringify(j))}catch(e){}DATA=j;load(j);applyAuth()});
-
-/* Admin setup */
+ j.meta=j.meta||{};j.meta.src="Online database";try{localStorage.setItem("arr_data",JSON.stringify(j))}catch(e){}DATA=j;load(j)});
+try{if(typeof fetch=="function"&&!ccfg().url)fetch("data.json?v="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(j){
+ if(!j||!j.rows||!j.rows.length)return;if(DATA&&DATA.ts&&DATA.ts>=j.ts)return;
+ j.meta=j.meta||{};j.meta.src="Shared file (data.json)";try{localStorage.setItem("arr_data",JSON.stringify(j))}catch(e){}DATA=j;load(j)}).catch(function(){})}catch(e){}
 $("cs").onclick=function(){var c=ccfg();
  var u=prompt("Firebase Realtime Database URL (e.g. https://your-project-default-rtdb.firebaseio.com)\nLeave empty to turn online storage off:",c.url||"");if(u===null)return;
  var k=prompt("Write key (database secret) - only needed on the device that UPLOADS data. Leave empty on viewer devices:",c.key||"");if(k===null)k="";
  try{localStorage.setItem("arr_cloud",JSON.stringify({url:u.trim(),key:k.trim()}))}catch(e){}
  if(!u.trim()){alert("Online storage turned off.");return}
  cget().then(function(j){alert(j&&j.rows?"Connected. Online data found: "+j.rows.length+" facilities.":"Connected (or no data online yet). Upload the Excel files to save online.")})};
+var svf=function(){if(!CURD||!CURD.rows||!CURD.rows.length){alert("Upload the Excel files first.");return}
+ var o=JSON.parse(JSON.stringify(CURD));delete o.meta.src;var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:"application/json"}));a.download="data.json";document.body.appendChild(a);a.click();a.remove();
+ alert("data.json downloaded. Put this file in the same folder as index.html on your website (replace the old one). Everyone who opens the page will then see this data automatically.")};
 </script></body></html>
