@@ -70,12 +70,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 <label>1. Branch Wise RentalArrears (.xlsx, one or many branches)<input type="file" id="fa" accept=".xlsx,.xls" multiple></label>
 <label>2. Destinity LE DailySummary (.xlsx, one or many)<input type="file" id="fb" accept=".xlsx,.xls" multiple></label>
 <div class="mu" style="font-size:12px;margin-bottom:8px">All old data is removed and replaced with these files.</div>
-<div class="row">
-<button class="p" id="go">Upload &amp; Replace</button>
-<button id="clear_data" style="background:var(--s3);color:#fff;border:none;">🗑️ Clear Old Data</button>
-<button class="mc">Close</button>
-<button id="lo">Logout</button>
-</div>
+<div class="row"><button class="p" id="go">Upload &amp; Replace</button><button class="mc">Close</button><button id="lo">Logout</button></div>
 <div class="row"><button id="cs" style="font-size:12px">&#9729; Online storage setup (admin)</button></div></div>
 </div></div>
 <button class="fab" id="fab">&#9776; Menu</button>
@@ -294,36 +289,6 @@ $("go").onclick=function(){
   load(nd);var o2=JSON.parse(JSON.stringify(nd));delete o2.meta.src;var he={ts:Date.now(),up:mt.up,name:USER.name,epf:USER.epf,n:rows.length,asAt:mt.aAsAt||""};$("mdl").classList.remove("on");
   hpush(he);
   cput(o2).then(function(s){alert(rows.length+" facilities loaded. "+(s=="off"?"Online storage is not set up (saved on this device only).":s=="ok"?"Saved ONLINE - everyone will see this data.":"Online save "+s+" - check the Online storage setup."))})}).catch(function(e){alert("Error: "+e)})};
-
-// Clear Old Data Button Logic
-$("clear_data").onclick = function() {
-    if (!confirm("Are you sure you want to completely delete all old data from this device AND the online database? This cannot be undone.")) return;
-    
-    // 1. LocalStorage එකේ තියෙන දේවල් මකන්න
-    localStorage.removeItem("arr_data");
-    localStorage.removeItem("arr_hist");
-    localStorage.removeItem("arr_done");
-    
-    // 2. Firebase එකේ තියෙන දේවල් මකන්න
-    var c = ccfg();
-    if (c.url) {
-        fetch(c.url + "/arrears.json" + (c.key ? "?auth=" + encodeURIComponent(c.key) : ""), { method: "DELETE" })
-        .then(function(r) {
-            return fetch(c.url + "/history.json" + (c.key ? "?auth=" + encodeURIComponent(c.key) : ""), { method: "DELETE" });
-        })
-        .then(function() {
-            alert("All old data cleared successfully from device and online.");
-            location.reload(); // Page එක refresh කරන්න
-        })
-        .catch(function(e) {
-            alert("Error clearing online data: " + e);
-        });
-    } else {
-        alert("Device data cleared. (Online storage is not configured).");
-        location.reload();
-    }
-};
-
 try{DATA=JSON.parse(localStorage.getItem("arr_data")||"null")}catch(e){DATA=null}
 if(DATA&&DATA.meta)DATA.meta.src="Saved on this device";
 load(DATA||{rows:[]});hload();
