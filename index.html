@@ -274,17 +274,16 @@ $("go").onclick=function(){
   ws.forEach(function(wb){
    var g=grid(wb),h=fnd(g,"facno");if(h<0)return;
    var c={};g[h].forEach(function(x,i){if(x!=null)c[nm(x)]=i});
-   
-   if(c["Portfolio"]!=null&&c["FACNo"]!=null){nB++;
-    g.slice(h+1).forEach(function(r){var f=nm(r[c["FACNo"]]);if(f)pm[f]={o:nm(r[c["Follow Up Officer"]]),d:nm(r[c["Description"]]),b:nm(r[c["Branch"]]),p:+r[c["Portfolio"]]||0,a:+r[c["Advance"]]||0}});
+   if(c["Portfolio"]!=null&&c["Fac No"]!=null){nB++;
+    g.slice(h+1).forEach(function(r){var f=nm(r[c["Fac No"]]);if(f)pm[f]={o:nm(r[c["Follow Up Officer"]]),d:nm(r[c["Description"]]),b:nm(r[c["Branch"]]),p:+r[c["Portfolio"]]||0,a:+r[c["Advance"]]||0}});
     g.slice(0,h).forEach(function(r){var k=nm(r[0]).replace(/[:\-\s]+$/,"").toLowerCase(),v=r[1];if(v==null||v==="")return;
      if(k=="as at date")mt.dAsAt=mt.dAsAt||ds(v);if(k=="execute time")mt.dExec=mt.dExec||nm(v)})}
-   else if(c["Fac No"]!=null){nA++;var hb="";
+   else if(c["FACNo"]!=null){nA++;var hb="";
     g.slice(0,10).forEach(function(r){r.forEach(function(x,i){var s=nm(x).toLowerCase();
      if(s=="sys date"){var v=r.slice(i+1).filter(function(y){return y instanceof Date})[0];if(v&&!mt.sys)mt.sys=ds(v)}
      if(s.replace(/[:\s]/g,"")=="branch"&&!hb)hb=nm(r.slice(i+1).filter(function(y){return y!=null&&nm(y)!==":"&&nm(y)!==""})[0]);
      var m=/As at\s*:\s*(\d\d)-(\d\d)-(\d{4})/i.exec(String(x));if(m&&!at){at=new Date(m[3]+"-"+m[2]+"-"+m[1]);mt.aAsAt=m[1]+"-"+m[2]+"-"+m[3]}})});
-    g.slice(h+1).forEach(function(r){var f=nm(r[c["Fac No"]]);if(!f||f.length<8||seen[f])return;seen[f]=1;
+    g.slice(h+1).forEach(function(r){var f=nm(r[c["FACNo"]]);if(!f||f.length<8||seen[f])return;seen[f]=1;
      rows.push({fac:f,name:nm(r[c["Name"]]),reg:nm(r[c["Reg No"]]),town:nm(r[c["Town"]]),nos:+r[c["No Of O/S"]]||0,rent:+r[c["Rental Arrears"]]||0,tot:+r[c["Total Arrears"]]||0,days:+r[c["Arrears Days"]]||0,grant:iso(r[c["Grant Date"]]),lpd:iso(r[c["Last Paid Date"]]),lpa:+r[c["Last Paid Amount"]]||0,tel:nm(r[c["Tel Office Home"]]),mkt0:nm(r[c["Mkt Officer"]]),fu:nm(r[c["Follow up Officer"]]),br:nm(r[c["Branch"]])||hb})}) }
   });
   if(!nA||!nB){alert("Please select at least one Branch Wise RentalArrears file and one Destinity_LE_DailySummary file.");return}
