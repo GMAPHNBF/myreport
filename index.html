@@ -34,10 +34,10 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 <button class="p" id="go">Upload &amp; Replace</button></div></header>
 <main>
 <div class="card" id="info" style="border-left:4px solid var(--s2)"></div>
-<div class="card look" id="look"><h3>Fac No Search</h3><div class="f"><input id="fq" placeholder="Fac No (e.g. VF250201107747)" size="30"><button id="fgo" class="p">Check</button></div><div id="lres" class="mu" style="margin-top:8px">Fac No type karala Check click karanna – Stage, Arrears, Done status penwai.</div></div>
+<div class="card look" id="look"><h3>Fac No Search</h3><div class="f"><input id="fq" placeholder="Fac No (e.g. VF250201107747)" size="30"><button id="fgo" class="p">Check</button></div><div id="lres" class="mu" style="margin-top:8px">Type a Fac No and click Check to see its Stage, Arrears and Done status.</div></div>
 <div class="kpis" id="kpis"></div>
 <div class="card"><div class="f">
-<label>Mkt Officer (type to search)<input id="mk" list="ml" placeholder="Officer name..." autocomplete="off"></label><datalist id="ml"></datalist>
+<label>Mkt Officer (dropdown)<select id="mks"><option value="">All</option></select></label><label>Mkt Officer (search)<input id="mk" list="ml" placeholder="Type officer name..." autocomplete="off"></label><datalist id="ml"></datalist><label>Status<select id="sts"><option value="">All</option></select></label>
 <label>Description<select id="ds"><option value="">All</option></select></label><label>Stage<select id="st"><option value="">All</option><option>1</option><option>2</option><option>3</option></select></label>
 <label>Grant Date<select id="vt"><option value="">All</option><option value="L">Last 12 Months</option><option value="A">After 12 Months</option></select></label>
 <label>Flag<select id="fg"><option value="">All</option><option value="R1">1st Rental</option><option value="PN">PNPL</option><option value="NP">Null Payment</option><option value="ADV">Advance &gt; 0</option></select></label>
@@ -46,6 +46,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 <label>Search<input id="q" placeholder="Name / Reg No / Fac No"></label>
 <button id="pnb" class="p" style="background:#7a5af8;border-color:#7a5af8">PNPL List only</button><button id="r1b" class="p" style="background:#7a5af8;border-color:#7a5af8">1st Rental</button><button id="npb" class="p" style="background:#7a5af8;border-color:#7a5af8">Null Payment</button><button id="rs">Reset</button></div>
 <div class="chips" id="bk"></div><small class="mu" id="pnote"></small></div>
+<div class="card"><h3>NPL Ratio <small>(NPL = Portfolio with Arrears Days 91 and above • Ratio = NPL Portfolio ÷ Total Portfolio)</small></h3><div class="g2"><div id="npg"></div><div id="npo" style="max-height:330px;overflow:auto"></div></div></div>
 <div class="card"><h3>Portfolio – Stage Percentage</h3><div id="dn3" class="g3"></div><h3 style="margin-top:14px">Portfolio Stage mix by Mkt Officer (%)</h3><div id="om2"></div></div>
 <div class="g2"><div class="card"><h3>Stage wise</h3><div id="c1"></div></div><div class="card"><h3>Arrears Bucket wise (click to filter)</h3><div id="c2"></div></div></div>
 <div class="card"><div class="f" style="justify-content:space-between"><h3>Mkt Officer wise summary</h3><button id="e2">⬇ Excel</button></div><div class="tw" style="max-height:340px"><table id="ot"></table></div></div>
@@ -80,19 +81,19 @@ function load(d){
   o.last12=gd?gd>=cut:false;var pm0=new Date(asAt.getFullYear(),asAt.getMonth()-1,1),ms0=new Date(asAt.getFullYear(),asAt.getMonth(),1),g0=o.grant?new Date(o.grant):null,lp=o.lpd?new Date(o.lpd):null;o.r1=!!g0&&g0>=pm0&&g0<ms0&&(+o.rent>0);o.np=!(lp&&lp>=ms0&&(o.lpa==null||+o.lpa>0));o.adv=+o.adv||0;return o});
  $("p1").value=91;$("p2").value=91+dim(asAt);
  var ms=Array.from(new Set(R.map(function(r){return r.mkt||"(none)"}))).sort();
- $("ds").innerHTML='<option value="">All</option>'+Array.from(new Set(R.map(function(r){return r.desc||"(none)"}))).sort().map(function(m){return"<option>"+m+"</option>"}).join("");$("ml").innerHTML=ms.map(function(m){return"<option value=\""+m+"\">"}).join("");
+ $("ds").innerHTML='<option value="">All</option>'+Array.from(new Set(R.map(function(r){return r.desc||"(none)"}))).sort().map(function(m){return"<option>"+m+"</option>"}).join("");$("mks").innerHTML='<option value="">All</option>'+ms.map(function(m){return"<option>"+m+"</option>"}).join("");$("sts").innerHTML='<option value="">All</option>'+Array.from(new Set(R.map(function(r){return r.status||"(none)"}))).sort().map(function(m){return"<option>"+m+"</option>"}).join("");$("ml").innerHTML=ms.map(function(m){return"<option value=\""+m+"\">"}).join("");
 bkSel={};draw();info();
 }
 function info(){
- var m=META,h;if(!R.length){$("info").innerHTML="<b>Data nae.</b> Udin thiyena boxes walata <b>Branch Wise RentalArrears</b> saha <b>Destinity_LE_DailySummary</b> excel deka select karala <b>Upload &amp; Replace</b> click karanna.";return}
+ var m=META,h;if(!R.length){$("info").innerHTML="<b>No data loaded.</b> Select the <b>Branch Wise RentalArrears</b> and <b>Destinity_LE_DailySummary</b> Excel files above, then click <b>Upload &amp; Replace</b>.";return}
  var it=function(l,v){return"<div><span>"+l+"</span>"+(v||"-")+"</div>"};
  $("info").innerHTML='<h3>Latest Uploaded Data</h3><div class="f" style="gap:26px">'+it("Destinity Daily Summary – As At Date",m.dAsAt)+it("Destinity Branch",m.dBranch)+it("Destinity Executed",m.dExec)+it("Arrears Report – As At",m.aAsAt)+it("Arrears Report – Sys Date",m.sys)+it("Uploaded On",m.up)+it("Facilities",R.length)+"</div>"}
 function pn(r){return r.days>=+$("p1").value&&r.days<=+$("p2").value}
 function filt(skipB){
- var ds=$("ds").value,mk=$("mk").value.trim(),st=$("st").value,vt=$("vt").value,fg=$("fg").value,dn=$("dn").value,q=$("q").value.toLowerCase().trim();
+ var mks=$("mks").value,sts=$("sts").value,ds=$("ds").value,mk=$("mk").value.trim(),st=$("st").value,vt=$("vt").value,fg=$("fg").value,dn=$("dn").value,q=$("q").value.toLowerCase().trim();
  var any=Object.keys(bkSel).length;
  return R.filter(function(r){
-  if(mk&&(r.mkt||"(none)").toLowerCase().indexOf(mk.toLowerCase().trim())<0)return false;if(st&&r.stage!=st)return false;if(ds&&(r.desc||"(none)")!==ds)return false;
+  if(mk&&(r.mkt||"(none)").toLowerCase().indexOf(mk.toLowerCase().trim())<0)return false;if(st&&r.stage!=st)return false;if(mks&&(r.mkt||"(none)")!==mks)return false;if(sts&&(r.status||"(none)")!==sts)return false;if(ds&&(r.desc||"(none)")!==ds)return false;
   if(vt==="L"&&!r.last12)return false;if(vt==="A"&&r.last12)return false;
   if(fg==="R1"&&!r.r1)return false;if(fg==="PN"&&!pn(r))return false;if(fg==="NP"&&!r.np)return false;if(fg==="ADV"&&!(r.adv>0))return false;
   var dd=!!done[r.fac];if(dn==="1"&&!dd)return false;if(dn==="0"&&dd)return false;
@@ -105,7 +106,7 @@ function draw(){
  var a=filt(false),b=filt(true);
  var k=[["Customers",fmt(a.length),"#2457d6"],["Total Arrears",fmt(sum(a,"tot")),"#d6453d"],["Rental Arrears",fmt(sum(a,"rent")),"#e69a1c"],["Portfolio",fmt(sum(a,"port")),"#2e9e6b"]];
  [1,2,3].forEach(function(s){var x=a.filter(function(r){return r.stage==s});k.push(["Stage "+s,x.length+" • "+fmt(sum(x,"tot")),["","#2e9e6b","#e69a1c","#d6453d"][s]])});
- var pp=a.filter(pn);k.push(["PNPL",pp.length+" • "+fmt(sum(pp,"tot")),"#7a5af8"]);k.push(["1st Rental (Granted last month)",a.filter(function(r){return r.r1}).length,"#7a5af8"]);k.push(["Null Payment (this month)",a.filter(function(r){return r.np}).length+" • "+fmt(sum(a.filter(function(r){return r.np}),"tot")),"#7a5af8"]);
+ var pp=a.filter(pn);k.push(["NPL Ratio (Portfolio)",(sum(a,"port")?sum(a.filter(function(r){return r.days>=91}),"port")/sum(a,"port")*100:0).toFixed(2)+"%","#d6453d"]);k.push(["PNPL",pp.length+" • "+fmt(sum(pp,"tot")),"#7a5af8"]);k.push(["1st Rental (Granted last month)",a.filter(function(r){return r.r1}).length,"#7a5af8"]);k.push(["Null Payment (this month)",a.filter(function(r){return r.np}).length+" • "+fmt(sum(a.filter(function(r){return r.np}),"tot")),"#7a5af8"]);
  k.push(["Done",a.filter(function(r){return done[r.fac]}).length+" / "+a.length,"#2457d6"]);
  $("kpis").innerHTML=k.map(function(x){return'<div class="kpi" style="border-left-color:'+x[2]+'"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>'}).join("");
  $("bk").innerHTML=BK.map(function(x,i){return'<span class="chip'+(bkSel[i]?" on":"")+'" data-i="'+i+'">'+x[0]+'</span>'}).join("");
@@ -119,6 +120,10 @@ function donut(title,vals,fm){var tot=vals[0]+vals[1]+vals[2],C=2*Math.PI*44,off
  $("dn3").innerHTML=donut("Portfolio",sg.map(function(x){return sum(x,"port")}),fmt);
  var so={};a.forEach(function(r){var m=r.mkt||"(none)";(so[m]=so[m]||[0,0,0,0])[r.stage-1]+=(+r.port||0);so[m][3]+=(+r.port||0)});
  $("om2").innerHTML=Object.keys(so).sort(function(x,y){return so[y][2]/so[y][3]-so[x][2]/so[x][3]}).map(function(m){var v=so[m];return'<div class="sbr"><div class="l" title="'+m+'">'+m+'</div><div class="sb">'+[0,1,2].map(function(i){return v[i]?'<span style="width:'+(v[i]/v[3]*100)+'%;background:var(--s'+(i+1)+')" title="Stage '+(i+1)+': '+fmt(v[i])+' ('+(v[i]/v[3]*100).toFixed(1)+'%)"></span>':""}).join("")+'</div><div class="v">S3 '+(v[2]/v[3]*100).toFixed(1)+'% • '+fmt(v[3])+'</div></div>'}).join("")||'<span class="mu">No data</span>';
+var tp=sum(a,"port"),n3=a.filter(function(r){return r.days>=91}),np=sum(n3,"port"),rt=tp?np/tp*100:0,F=rt/100*251.3,rc=rt<5?"var(--s1)":rt<10?"var(--s2)":"var(--s3)";
+ $("npg").innerHTML='<svg viewBox="0 0 200 125" style="width:100%;max-width:380px;display:block;margin:auto"><path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke-width="20" style="stroke:var(--bd)"/><path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke-width="20" stroke-linecap="butt" style="stroke:'+rc+'" stroke-dasharray="'+F+' 251.3"/><text x="100" y="92" text-anchor="middle" font-size="30" font-weight="700" style="fill:var(--tx)">'+rt.toFixed(2)+'%</text><text x="100" y="114" text-anchor="middle" font-size="9" style="fill:var(--mu)">NPL Ratio</text><text x="16" y="116" font-size="8" style="fill:var(--mu)">0%</text><text x="170" y="116" font-size="8" style="fill:var(--mu)">100%</text></svg><div style="text-align:center;margin-top:6px;font-size:13px"><div>NPL Portfolio (91+ days): <b>'+fmt(np)+'</b> / Total Portfolio: <b>'+fmt(tp)+'</b></div><div class="mu">NPL customers: '+n3.length+' / '+a.length+' ('+(a.length?n3.length/a.length*100:0).toFixed(2)+'%) • NPL arrears: '+fmt(sum(n3,"tot"))+'</div></div>';
+ var nq={};a.forEach(function(r){var m=r.mkt||"(none)";(nq[m]=nq[m]||[0,0])[1]+=(+r.port||0);if(r.days>=91)nq[m][0]+=(+r.port||0)});var no=Object.keys(nq).map(function(m){return[m,nq[m][0],nq[m][1]]}).sort(function(x,y){return y[1]/y[2]-x[1]/x[2]}),mxr=Math.max.apply(null,[1].concat(no.map(function(x){return x[1]/x[2]*100})));
+ $("npo").innerHTML='<div class="mu" style="font-size:12px;margin-bottom:4px">NPL ratio by Mkt Officer</div>'+(no.map(function(x){var r=x[2]?x[1]/x[2]*100:0;return bar(x[0],r/mxr,r.toFixed(1)+'% | '+fmt(x[1]),r<5?"var(--s1)":r<10?"var(--s2)":"var(--s3)")}).join("")||'<span class="mu">No data</span>');
  var bs=BK.map(function(_,i){return b.filter(function(r){return r.b==i})}),m2=Math.max.apply(null,[1].concat(bs.map(function(x){return sum(x,"tot")})));
  $("c2").innerHTML=bs.map(function(x,i){var t=sum(x,"tot");return bar(BK[i][0],t/m2,x.length+" | "+fmt(t),bkSel[i]?"var(--pr)":"#8aa0cf",i)}).join("");
  var om={};a.forEach(function(r){var m=r.mkt||"(none)";var o=om[m]=om[m]||{n:0,t:0,r:0,p:0,s1:0,s2:0,s3:0,pn:0,d:0};o.n++;o.t+=+r.tot||0;o.r+=+r.rent||0;o.p+=+r.port||0;o["s"+r.stage]++;if(pn(r))o.pn++;if(done[r.fac])o.d++});
@@ -129,7 +134,7 @@ function donut(title,vals,fm){var tot=vals[0]+vals[1]+vals[2],C=2*Math.PI*44,off
 }
 var OS=[],BS=[],CUR=[];
 function bar(l,w,v,c,i){return'<div class="bar"'+(i!=null?' data-i="'+i+'"':"")+'><div class="l">'+l+'</div><div class="t"><i style="width:'+Math.max(w*100,.5)+'%;background:'+c+'"></i></div><div class="v">'+v+'</div></div>'}
-var COLS=[["fac","Fac No"],["name","Name"],["reg","Reg No"],["mkt","Mkt Officer"],["desc","Description"],["days","Arrears Days"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["tel","Tel"]];
+var COLS=[["fac","Fac No"],["name","Name"],["reg","Reg No"],["mkt","Mkt Officer"],["desc","Description"],["status","Status"],["days","Arrears Days"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["tel","Tel"]];
 function table(a){
  a=a.slice().sort(function(x,y){var p=x[sortK],q=y[sortK];return(p>q?1:p<q?-1:0)*sortD});CUR=a;
  var ps=100,pc=Math.max(1,Math.ceil(a.length/ps));if(page>=pc)page=pc-1;
@@ -145,18 +150,18 @@ function table(a){
 function look(){
  var q=$("fq").value.trim().toUpperCase(),r=R.filter(function(x){return(x.fac||"").toUpperCase()===q})[0];
  if(!r)r=R.filter(function(x){return(x.fac||"").toUpperCase().indexOf(q)>=0})[0];
- if(!q||!r){$("lres").innerHTML="Fac No eka hambuna ne (arrears report eke naha).";return}
+ if(!q||!r){$("lres").innerHTML="Fac No not found in the arrears report.";return}
  $("lres").innerHTML='<b>'+r.fac+'</b> – '+r.name+' <span class="tag s'+r.stage+'">Stage '+r.stage+'</span> '+(r.r1?'<span class="tag fl">1st Rental</span> ':"")+(r.np?'<span class="tag fl">Null Payment</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span> ':"")+
- '<div class="r"><div><span>Arrears Days</span>'+r.days+' ('+BK[r.b][0]+')</div><div><span>Rental Arrears</span>'+fmt(r.rent)+'</div><div><span>Total Arrears</span>'+fmt(r.tot)+'</div><div><span>No of O/S</span>'+(+r.nos).toFixed(2)+'</div><div><span>Portfolio</span>'+fmt(r.port)+'</div><div><span>Advance</span>'+fmt(r.adv)+'</div><div><span>Description</span>'+(r.desc||"-")+'</div><div><span>Mkt Officer</span>'+r.mkt+'</div><div><span>Fac Age</span>'+(r.last12?"Last 12 Months":"After 12 Months")+'</div><div><span>Done?</span><label><input type=checkbox id="ld" '+(done[r.fac]?"checked":"")+'> Done</label></div></div>';
+ '<div class="r"><div><span>Arrears Days</span>'+r.days+' ('+BK[r.b][0]+')</div><div><span>Rental Arrears</span>'+fmt(r.rent)+'</div><div><span>Total Arrears</span>'+fmt(r.tot)+'</div><div><span>No of O/S</span>'+(+r.nos).toFixed(2)+'</div><div><span>Portfolio</span>'+fmt(r.port)+'</div><div><span>Advance</span>'+fmt(r.adv)+'</div><div><span>Description</span>'+(r.desc||"-")+'</div><div><span>Status</span>'+(r.status||"-")+'</div><div><span>Mkt Officer</span>'+r.mkt+'</div><div><span>Fac Age</span>'+(r.last12?"Last 12 Months":"After 12 Months")+'</div><div><span>Done?</span><label><input type=checkbox id="ld" '+(done[r.fac]?"checked":"")+'> Done</label></div></div>';
  $("ld").onchange=function(){setDone(r.fac,this.checked);draw()};
 }
 function setDone(f,v){if(v)done[f]=1;else delete done[f];try{localStorage.setItem("arr_done",JSON.stringify(done))}catch(e){}}
 function dl(rows,name){var ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Report");XLSX.writeFile(wb,name+".xlsx")}
-$("e1").onclick=function(){dl(CUR.map(function(r){return{"Fac No":r.fac,Name:r.name,"Reg No":r.reg,Town:r.town,"Mkt Officer":r.mkt,Description:r.desc,"Follow Up":r.fu,"Arrears Days":r.days,Stage:r.stage,Bucket:BK[r.b][0],"No Of O/S":r.nos,"Rental Arrears":r.rent,"Total Arrears":r.tot,Portfolio:r.port,Advance:r.adv,"Fac Age":r.last12?"Last 12 Months":"After 12 Months","1st Rental":r.r1?"Yes":"","Null Payment":r.np?"Yes":"","Last Paid Amt":r.lpa,"PNPL":pn(r)?"Yes":"",Done:done[r.fac]?"Yes":"","Grant Date":r.grant,"Last Paid":r.lpd,Tel:r.tel}}),({PN:"PNPL_List",R1:"1st_Rental_List",NP:"Null_Payment_List"}[$("fg").value]||"Arrears_Filtered"))};
+$("e1").onclick=function(){dl(CUR.map(function(r){return{"Fac No":r.fac,Name:r.name,"Reg No":r.reg,Town:r.town,"Mkt Officer":r.mkt,Description:r.desc,Status:r.status,"Follow Up":r.fu,"Arrears Days":r.days,Stage:r.stage,Bucket:BK[r.b][0],"No Of O/S":r.nos,"Rental Arrears":r.rent,"Total Arrears":r.tot,Portfolio:r.port,Advance:r.adv,"Fac Age":r.last12?"Last 12 Months":"After 12 Months","1st Rental":r.r1?"Yes":"","Null Payment":r.np?"Yes":"","Last Paid Amt":r.lpa,"PNPL":pn(r)?"Yes":"",Done:done[r.fac]?"Yes":"","Grant Date":r.grant,"Last Paid":r.lpd,Tel:r.tel}}),({PN:"PNPL_List",R1:"1st_Rental_List",NP:"Null_Payment_List"}[$("fg").value]||"Arrears_Filtered"))};
 $("e2").onclick=function(){dl(OS.map(function(o){return{"Mkt Officer":o.Officer,Customers:o.n,"Rental Arrears":o.r,"Total Arrears":o.t,Portfolio:o.p,"Stage 1":o.s1,"Stage 2":o.s2,"Stage 3":o.s3,PNPL:o.pn,Done:o.d}}),"MktOfficer_Summary")};
 $("e3").onclick=function(){dl(BS.map(function(x,i){return{Bucket:BK[i][0],Customers:x.length,"Rental Arrears":sum(x,"rent"),"Total Arrears":sum(x,"tot"),Portfolio:sum(x,"port")}}),"Bucket_Summary")};
-["mk","ds","st","vt","fg","dn","p1","p2","q"].forEach(function(i){$(i).oninput=function(){page=0;draw()}});
-$("rs").onclick=function(){["mk","ds","st","vt","fg","dn","q"].forEach(function(i){$(i).value=""});$("p1").value=91;$("p2").value=91+dim(asAt);bkSel={};page=0;draw()};
+["mk","mks","sts","ds","st","vt","fg","dn","p1","p2","q"].forEach(function(i){$(i).oninput=function(){page=0;draw()}});
+$("rs").onclick=function(){["mk","mks","sts","ds","st","vt","fg","dn","q"].forEach(function(i){$(i).value=""});$("p1").value=91;$("p2").value=91+dim(asAt);bkSel={};page=0;draw()};
 function tg(e){var c=e.target.closest("[data-i]");if(c){var i=c.dataset.i;if(bkSel[i])delete bkSel[i];else bkSel[i]=1;page=0;draw()}}
 $("bk").onclick=tg;$("c2").onclick=tg;
 $("tb").onclick=function(e){var t=e.target;if(t.dataset.f){setDone(t.dataset.f,t.checked);draw();return}if(t.tagName=="TH"&&t.dataset.k){if(sortK==t.dataset.k)sortD*=-1;else{sortK=t.dataset.k;sortD=-1}draw()}};
@@ -172,19 +177,19 @@ function ds(v){return v instanceof Date?v.toLocaleString("en-GB",{day:"2-digit",
 function nm(x){return String(x==null?"":x).replace(/\s+/g," ").trim()}
 function iso(d){return d instanceof Date?d.toISOString().slice(0,10):(d||"")}
 $("go").onclick=function(){
- var A=$("fa").files[0],B=$("fb").files[0];if(!A||!B){alert("Excel files deka ma select karanna.");return}
+ var A=$("fa").files[0],B=$("fb").files[0];if(!A||!B){alert("Please select both Excel files.");return}
  Promise.all([rd(A),rd(B)]).then(function(w){
   var ga=grid(w[0]),gb=grid(w[1]),ha=fnd(ga,"facno"),hb=fnd(gb,"facno");
-  if(ha<0||hb<0){alert("FACNo / Fac No header eka hambuna ne. Files wenas wela da balanna.");return}
+  if(ha<0||hb<0){alert("Could not find the FACNo / Fac No header. Please check that the correct files were selected.");return}
   var ca={};ga[ha].forEach(function(c,i){if(c!=null)ca[nm(c)]=i});var cb={};gb[hb].forEach(function(c,i){if(c!=null)cb[nm(c)]=i});
-  var pm={};gb.slice(hb+1).forEach(function(r){var f=nm(r[cb["Fac No"]]);if(f)pm[f]={d:nm(r[cb["Description"]]),p:+r[cb["Portfolio"]]||0,a:+r[cb["Advance"]]||0}});
+  var pm={};gb.slice(hb+1).forEach(function(r){var f=nm(r[cb["Fac No"]]);if(f)pm[f]={o:nm(r[cb["Follow Up Officer"]]),s:nm(r[cb["Status"]]),d:nm(r[cb["Description"]]),p:+r[cb["Portfolio"]]||0,a:+r[cb["Advance"]]||0}});
   var mt={};gb.slice(0,hb).forEach(function(r){var k=nm(r[0]).replace(/[:\-\s]+$/,"").toLowerCase(),v=r[1];if(v==null||v==="")return;
    if(k=="as at date")mt.dAsAt=ds(v);if(k=="branch")mt.dBranch=nm(v);if(k=="execute time")mt.dExec=nm(v)});
   ga.slice(0,10).forEach(function(r){r.forEach(function(c,i){if(nm(c).toLowerCase()=="sys date"){var v=r.slice(i+1).filter(function(x){return x instanceof Date})[0];if(v)mt.sys=ds(v)}})});
   var at=null;ga.slice(0,10).forEach(function(r){r.forEach(function(c){var m=/As at\s*:\s*(\d\d)-(\d\d)-(\d{4})/i.exec(String(c));if(m){at=new Date(m[3]+"-"+m[2]+"-"+m[1]);mt.aAsAt=m[1]+"-"+m[2]+"-"+m[3]}})});
-  var rows=[];ga.slice(ha+1).forEach(function(r){var f=nm(r[ca["FACNo"]]);if(!f||f.length<8)return;var p=pm[f]||{p:0,a:0,d:""};
-   rows.push({fac:f,name:nm(r[ca["Name"]]),reg:nm(r[ca["Reg No"]]),town:nm(r[ca["Town"]]),nos:+r[ca["No Of O/S"]]||0,rent:+r[ca["Rental Arrears"]]||0,tot:+r[ca["Total Arrears"]]||0,days:+r[ca["Arrears Days"]]||0,grant:iso(r[ca["Grant Date"]]),lpd:iso(r[ca["Last Paid Date"]]),lpa:+r[ca["Last Paid Amount"]]||0,tel:nm(r[ca["Tel Office Home"]]),mkt:nm(r[ca["Mkt Officer"]]),fu:nm(r[ca["Follow up Officer"]]),port:p.p,adv:p.a,desc:p.d})});
-  mt.up=new Date().toLocaleString("en-GB");var nd={asAt:at?at.toISOString():null,rows:rows,meta:mt};try{localStorage.setItem("arr_data",JSON.stringify(nd))}catch(e){alert("Browser storage full – data next open ekata save wenne naha.")}load(nd);alert(rows.length+" facilities load una.")}).catch(function(e){alert("Error: "+e)})};
+  var rows=[];ga.slice(ha+1).forEach(function(r){var f=nm(r[ca["FACNo"]]);if(!f||f.length<8)return;var p=pm[f]||{p:0,a:0,d:"",o:"",s:""};
+   rows.push({fac:f,name:nm(r[ca["Name"]]),reg:nm(r[ca["Reg No"]]),town:nm(r[ca["Town"]]),nos:+r[ca["No Of O/S"]]||0,rent:+r[ca["Rental Arrears"]]||0,tot:+r[ca["Total Arrears"]]||0,days:+r[ca["Arrears Days"]]||0,grant:iso(r[ca["Grant Date"]]),lpd:iso(r[ca["Last Paid Date"]]),lpa:+r[ca["Last Paid Amount"]]||0,tel:nm(r[ca["Tel Office Home"]]),mkt:p.o||nm(r[ca["Mkt Officer"]]),mkt0:nm(r[ca["Mkt Officer"]]),fu:nm(r[ca["Follow up Officer"]]),port:p.p,adv:p.a,desc:p.d,status:p.s})});
+  mt.up=new Date().toLocaleString("en-GB");var nd={asAt:at?at.toISOString():null,rows:rows,meta:mt};try{localStorage.setItem("arr_data",JSON.stringify(nd))}catch(e){alert("Browser storage is full - data will not be saved for next time.")}load(nd);alert(rows.length+" facilities loaded.")}).catch(function(e){alert("Error: "+e)})};
 try{DATA=JSON.parse(localStorage.getItem("arr_data")||"null")}catch(e){DATA=null}
 load(DATA||{rows:[]});
 </script></body></html>
