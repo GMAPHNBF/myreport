@@ -130,6 +130,12 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
     </div>
 
     <div class="row"><button class="p" id="go">Upload &amp; Replace</button><button class="mc">Close</button><button id="lo">Logout</button></div>
+    <div style="border-top:1px solid var(--bd);margin-top:12px;padding-top:10px">
+      <b>&#128197; Month-end report (manual)</b>
+      <div class="mu" style="font-size:12px;margin:4px 0 8px">Select the two Excel files above, then click here to save them as the month-end report for Compare. Current dashboard data is NOT changed.</div>
+      <label>Month-end date (optional &ndash; empty = date inside the file)<input type="date" id="meDate"></label>
+      <button id="goME">Save as Month-end report</button>
+    </div>
     <div class="row"><button id="cs" style="font-size:12px">&#9729; Online storage setup (admin)</button></div>
   </div>
 </div></div>
@@ -556,14 +562,14 @@ function upFinish(summary,isError){
 /* ============================================================
    UPLOAD EXECUTION
    ============================================================ */
-$("go").onclick=function(){
+function runUpload(meOnly){
   if(!USER){alert("Please login first.");return}
   var filesA=Array.from($("fa").files||[]);
   var filesB=Array.from($("fb").files||[]);
   var all=filesA.concat(filesB);
   if(!all.length){alert("Please select the Excel files.");return}
 
-  var goBtn=$("go");goBtn.disabled=true;
+  var goBtn={set disabled(v){$("go").disabled=v;$("goME").disabled=v}};goBtn.disabled=true;
   upInit(all);
 
   // Read each file with per-file progress
@@ -692,6 +698,22 @@ $("go").onclick=function(){
       mt.up=new Date().toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:true});
       mt.by=USER.name;mt.epf=USER.epf;mt.src="Uploaded now (saved on this device)";
 
+      if(meOnly){
+        var dk=$("meDate").value||(at?at.toISOString().slice(0,10):"");
+        if(!dk||!isME(dk)){upFinish('<span style="color:var(--s3)">'+(dk?dlab(dk)+" is not a month-end date (30/31, or 28/29 in Feb).":"Could not read the as-at date from the file. Pick the month-end date.")+'</span>',true);goBtn.disabled=false;return}
+        if(!ccfg().url){upFinish('<span style="color:var(--s3)">Online storage is not set up.</span>',true);goBtn.disabled=false;return}
+        upSetProgress(90,"Saving month-end report online...");
+        var m3=Object.assign({},mt);delete m3.src;
+        var o3={ts:Date.now(),asAt:dk+"T00:00:00.000Z",rows:rows,meta:m3};
+        var sm3={key:dk,ts:Date.now(),up:mt.up,name:USER.name,epf:USER.epf,n:rows.length,asAt:mt.aAsAt||dk,tot:sum(rows,"tot"),port:sum(rows,"port")};
+        delete SNAP[dk];
+        saveMonthEnd(dk,o3,sm3).then(function(st){
+          if(st=="ok")upFinish('<b>'+rows.length+'</b> facilities saved as the <b>month-end report ('+dlab(dk)+')</b>.<br><span class="mu">Current dashboard data was not changed.</span>',false);
+          else upFinish('<span style="color:var(--s3)">Month-end save '+st+' &ndash; check database rules.</span>',true);
+          goBtn.disabled=false;
+        });
+        return;
+      }
       upSetProgress(88,"Saving to device...");
 
       var nd={ts:Date.now(),asAt:at?at.toISOString():null,rows:rows,meta:mt};
@@ -734,7 +756,9 @@ $("go").onclick=function(){
 
   // Start reading
   readNext();
-};
+}
+$("go").onclick=function(){runUpload(false)};
+$("goME").onclick=function(){runUpload(true)};
 
 /* ============================================================
    INITIAL DATA LOAD
