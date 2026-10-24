@@ -163,7 +163,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 <label>Grant Date<select id="vt"><option value="">All</option><option value="L">Last 12 Months</option><option value="A">After 12 Months</option></select></label>
 <label>Done<select id="dn"><option value="">All</option><option value="1">Done</option><option value="0">Not Done</option></select></label></div></div>
 <div class="fb"><h4>Search &amp; PNPL Range</h4><div class="fr">
-<label>Search<input id="q" placeholder="Name / Reg No / Fac No"></label>
+<label>Search<input id="q" placeholder="Name / VF Fac No / Reg No / Officer / Branch / Tel..."></label>
 <label>PNPL from<input type="number" id="p1" style="width:80px"></label><label>to<input type="number" id="p2" style="width:80px"></label>
 <label style="display:none">Flag<select id="fg"><option value="">All</option><option value="R1">1st Rental</option><option value="PN">PNPL</option><option value="NP">Null Payment</option><option value="ADV">Advance &gt; 0</option></select></label></div></div>
 </div>
@@ -294,6 +294,7 @@ function pn(r){return r.days>=+$("p1").value&&r.days<=+$("p2").value}
 function filt(skipB){
   var br=$("br").value,mks=$("mks").value,ds=$("ds").value,mk=$("mk").value.trim(),st=$("st").value,vt=$("vt").value,fg=$("fg").value,dn=$("dn").value,q=$("q").value.toLowerCase().trim();
   var any=Object.keys(bkSel).length;
+  var qt=q?q.split(/\s+/).filter(Boolean):[];
   return R.filter(function(r){
     if(mk&&(r.mkt||"(none)").toLowerCase().indexOf(mk.toLowerCase().trim())<0)return false;
     if(st&&r.stage!=st)return false;
@@ -309,7 +310,10 @@ function filt(skipB){
     var dd=!!done[r.fac];
     if(dn==="1"&&!dd)return false;
     if(dn==="0"&&dd)return false;
-    if(q&&(r.fac+" "+r.name+" "+r.reg).toLowerCase().indexOf(q)<0)return false;
+    if(qt.length){
+      var h=[r.fac,r.name,r.reg,r.town,r.tel,r.mkt,r.branch,r.desc,r.fu].join(" ").toLowerCase(),hn=h.replace(/[^a-z0-9]/g,"");
+      for(var i=0;i<qt.length;i++){var t=qt[i],tn=t.replace(/[^a-z0-9]/g,"");if(h.indexOf(t)<0&&!(tn&&hn.indexOf(tn)>=0))return false}
+    }
     if(!skipB&&any&&!bkSel[r.b])return false;
     return true;
   });
@@ -344,28 +348,28 @@ function draw(){
     return bar("Stage "+s,t/mx,x.length+" | "+fmt(t),"var(--s"+s+")")
   }).join("");
 
-  function donut(title,vals,fm){
+  function donut(title,vals,fm,cn){
     var tot=vals[0]+vals[1]+vals[2],C=2*Math.PI*44,off=0,col=["var(--s1)","var(--s2)","var(--s3)"],sv="",lg="";
     vals.forEach(function(v,i){
       var f=tot?v/tot:0;
       sv+='<circle cx="60" cy="60" r="44" fill="none" stroke-width="18" style="stroke:'+col[i]+'" stroke-dasharray="'+(f*C)+" "+(C-f*C)+'" stroke-dashoffset="'+(-off*C)+'" transform="rotate(-90 60 60)"/>';
       off+=f;
-      lg+='<div><i style="background:'+col[i]+'"></i>Stage '+(i+1)+': <b>'+(f*100).toFixed(1)+'%</b> <span class="mu">('+fm(v)+')</span></div>'
+      lg+='<div><i style="background:'+col[i]+'"></i>Stage '+(i+1)+': <b>'+(f*100).toFixed(1)+'%</b> <span class="mu">('+fm(v)+')</span> &bull; <b>'+(cn?fmt(cn[i]):0)+'</b> <span class="mu">customers</span></div>'
     });
     return'<div class="dc"><svg viewBox="0 0 120 120">'+(tot?sv:'<circle cx="60" cy="60" r="44" fill="none" stroke-width="18" style="stroke:var(--bd)"/>')+'<text x="60" y="58" text-anchor="middle" font-size="9" fill="currentColor" style="fill:var(--mu)">'+title+'</text><text x="60" y="72" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--tx)">'+fm(tot)+'</text></svg><div>'+lg+'</div></div>'
   }
   var sg=[1,2,3].map(function(s){return a.filter(function(r){return r.stage==s})});
-  $("dn3").innerHTML=donut("Portfolio",sg.map(function(x){return sum(x,"port")}),fmt);
+  $("dn3").innerHTML=donut("Portfolio",sg.map(function(x){return sum(x,"port")}),fmt,sg.map(function(x){return x.length}));
 
   var so={};
   a.forEach(function(r){
     var m=r.mkt||"(none)";
-    (so[m]=so[m]||[0,0,0,0])[r.stage-1]+=(+r.port||0);
-    so[m][3]+=(+r.port||0)
+    (so[m]=so[m]||[0,0,0,0,0,0,0])[r.stage-1]+=(+r.port||0);
+    so[m][3]+=(+r.port||0);so[m][3+r.stage]++
   });
   $("om2").innerHTML=Object.keys(so).sort(function(x,y){return so[y][2]/so[y][3]-so[x][2]/so[x][3]}).map(function(m){
     var v=so[m];
-    return'<div class="sbr"><div class="l" title="'+m+'">'+m+'</div><div class="sb">'+[0,1,2].map(function(i){return v[i]?'<span style="width:'+(v[i]/v[3]*100)+'%;background:var(--s'+(i+1)+')" title="Stage '+(i+1)+': '+fmt(v[i])+' ('+(v[i]/v[3]*100).toFixed(1)+'%)"></span>':""}).join("")+'</div><div class="v">S3 '+(v[2]/v[3]*100).toFixed(1)+'% • '+fmt(v[3])+'</div></div>'
+    return'<div class="sbr"><div class="l" title="'+m+'">'+m+'</div><div class="sb">'+[0,1,2].map(function(i){return v[i]?'<span style="width:'+(v[i]/v[3]*100)+'%;background:var(--s'+(i+1)+')" title="Stage '+(i+1)+': '+fmt(v[i])+' ('+(v[i]/v[3]*100).toFixed(1)+'%) • '+v[4+i]+' customers"></span>':""}).join("")+'</div><div class="v">S3 '+(v[2]/v[3]*100).toFixed(1)+'% • '+fmt(v[3])+' • '+(v[4]+v[5]+v[6])+' cust</div></div>'
   }).join("")||'<span class="mu">No data</span>';
 
   var tp=sum(a,"port"),n3=a.filter(function(r){return r.days>=91}),np=sum(n3,"port"),rt=tp?np/tp*100:0,F=rt/100*251.3,rc=rt<5?"var(--s1)":rt<10?"var(--s2)":"var(--s3)";
@@ -838,7 +842,7 @@ function cmpFilt(rows){var b=$("cmBr").value,o=$("cmOf").value;return rows.filte
 function grp(a,b,k){var m={};a.forEach(function(r){(m[r[k]]=m[r[k]]||{a:[],b:[]}).a.push(r)});b.forEach(function(r){(m[r[k]]=m[r[k]]||{a:[],b:[]}).b.push(r)});return Object.keys(m).map(function(n){return{name:n,A:agg(m[n].a),B:agg(m[n].b)}})}
 function flat(g){return g.map(function(x){return{name:x.name,nA:x.A.n,nB:x.B.n,tA:x.A.tot,tB:x.B.tot,dT:x.B.tot-x.A.tot,dP:x.B.port-x.A.port,s3A:x.A.n3,s3B:x.B.n3,nlA:x.A.npl,nlB:x.B.npl,dN:x.B.npl-x.A.npl}})}
 function gb(l,a,b,mx,txt){return'<div class="gb"><div class="l" title="'+esc(l)+'">'+esc(l)+'</div><div class="bb"><div class="t"><i style="width:'+Math.max(a/mx*100,.5)+'%;background:#8aa0cf"></i></div><div class="t"><i style="width:'+Math.max(b/mx*100,.5)+'%;background:var(--pr)"></i></div></div><div class="v">'+txt+'</div></div>'}
-function stk(l,T){var t=T.p1+T.p2+T.p3,p=function(s){return t?T["p"+s]/t*100:0};return'<div class="sbr"><div class="l">'+l+'</div><div class="sb">'+[1,2,3].map(function(s){return T["p"+s]?'<span style="width:'+p(s)+'%;background:var(--s'+s+')" title="Stage '+s+': '+p(s).toFixed(1)+'%"></span>':""}).join("")+'</div><div class="v" style="width:190px">S1 '+p(1).toFixed(1)+'% • S2 '+p(2).toFixed(1)+'% • S3 '+p(3).toFixed(1)+'%</div></div>'}
+function stk(l,T){var t=T.p1+T.p2+T.p3,p=function(s){return t?T["p"+s]/t*100:0};return'<div class="sbr"><div class="l">'+l+'</div><div class="sb">'+[1,2,3].map(function(s){return T["p"+s]?'<span style="width:'+p(s)+'%;background:var(--s'+s+')" title="Stage '+s+': '+p(s).toFixed(1)+'%"></span>':""}).join("")+'</div><div class="v" style="width:250px">S1 '+p(1).toFixed(1)+'% ('+T.n1+') • S2 '+p(2).toFixed(1)+'% ('+T.n2+') • S3 '+p(3).toFixed(1)+'% ('+T.n3+')</div></div>'}
 function num(k){return function(r){return r[k]==null?"-":fmt(r[k])}}
 function dcl(k,g,f){return function(r){return dlt(0,r[k],g,f)}}
 function gcols(first){return[{k:"name",l:first,h:function(r){return esc(r.name)}},{k:"nA",l:"Cust A",n:1,h:num("nA")},{k:"nB",l:"Cust B",n:1,h:num("nB")},{k:"tA",l:"Arrears A",n:1,h:num("tA")},{k:"tB",l:"Arrears B",n:1,h:num("tB")},{k:"dT",l:"Δ Arrears",n:1,h:dcl("dT",-1)},{k:"dP",l:"Δ Portfolio",n:1,h:dcl("dP",1)},{k:"s3A",l:"Stage3 A",n:1,h:num("s3A")},{k:"s3B",l:"Stage3 B",n:1,h:num("s3B")},{k:"nlA",l:"NPL% A",n:1,h:function(r){return f2(r.nlA)}},{k:"nlB",l:"NPL% B",n:1,h:function(r){return f2(r.nlB)}},{k:"dN",l:"Δ NPL",n:1,h:dcl("dN",-1,f2)}]}
@@ -889,7 +893,7 @@ function cmpRender(){
   var bmx=Math.max.apply(null,[1].concat(bs.map(function(x){return Math.max(sum(x[0],"tot"),sum(x[1],"tot"))})));
   var c2=bs.map(function(x,i){var ta=sum(x[0],"tot"),tb=sum(x[1],"tot");return gb(BK[i][0],ta,tb,bmx,x[0].length+" → "+x[1].length+" cust<br>"+fmt(ta)+" → "+fmt(tb)+" "+dlt(ta,tb,-1))}).join("");
   h+='<div class="g2"><div class="card"><h3>Stage wise – Total Arrears</h3>'+c1+'</div><div class="card"><h3>Arrears Bucket wise</h3>'+c2+'</div></div>';
-  h+='<div class="card"><h3>Portfolio – Stage mix (%)</h3>'+stk(la+" (A)",A)+stk(lb+" (B)",B)+'</div>';
+  h+='<div class="card"><h3>Portfolio – Stage mix <small>(% and customers)</small></h3>'+stk(la+" (A)",A)+stk(lb+" (B)",B)+'</div>';
   var og2=grp(a,b,"mkt").filter(function(x){return x.A.port||x.B.port}).sort(function(x,y){return y.B.npl-x.B.npl}),omx=Math.max.apply(null,[1].concat(og2.map(function(x){return Math.max(x.A.npl,x.B.npl)})));
   h+='<div class="card"><h3>NPL Ratio by Mkt Officer <small>(A vs B)</small></h3><div style="max-height:420px;overflow:auto">'+(og2.map(function(x){return gb(x.name,x.A.npl,x.B.npl,omx,f2(x.A.npl)+" → "+f2(x.B.npl)+" "+dlt(x.A.npl,x.B.npl,-1,f2))}).join("")||'<span class="mu">No data</span>')+'</div></div>';
   // migration matrix
