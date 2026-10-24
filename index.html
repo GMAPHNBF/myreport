@@ -207,6 +207,8 @@ var stage=function(d){return d>=90?3:d>=30?2:1};
 var bidx=function(d){for(var i=0;i<BK.length;i++)if(d>=BK[i][1]&&d<=BK[i][2])return i;return 8};
 function dim(d){return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()}
 var HIST=[],USER=null;try{HIST=JSON.parse(localStorage.getItem("arr_hist")||"[]");USER=JSON.parse(sessionStorage.getItem("arr_user")||"null")}catch(e){}
+var OFM={};
+function onm(x){var s=String(x==null?"":x).replace(/\s+/g," ").trim();if(!s)return"";var k=s.toLowerCase().replace(/[^a-z0-9]/g,"");if(!k)return s;return OFM[k]||(OFM[k]=s)}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 
 /* ============================================================
@@ -245,6 +247,7 @@ function load(d){
   var cut=new Date(asAt.getFullYear(),asAt.getMonth()-11,1);
   R=d.rows.map(function(r){
     var o=Object.assign({},r);
+    o.mkt=onm(r.mkt);
     o.days=Math.round(+r.days||0);
     o.stage=stage(o.days);
     o.b=bidx(o.days);
@@ -687,7 +690,7 @@ function runUpload(meOnly){
     setTimeout(function(){
       rows.forEach(function(r){
         var p=pm[r.fac]||{p:0,a:0,d:"",o:""};
-        r.mkt=p.o||r.mkt0;
+        r.mkt=onm(p.o||r.mkt0);
         r.port=p.p;
         r.adv=p.a;
         r.desc=p.d;
@@ -780,7 +783,7 @@ function saveMonthEnd(sk,o,sm){
 }
 function dlab(k){var d=new Date(k+"T00:00:00Z");return isNaN(d)?k:d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric",timeZone:"UTC"})}
 function f2(x){return Number(x||0).toFixed(2)+"%"}
-function cmpPrep(rows){return rows.filter(Boolean).map(function(r){var d=Math.round(+r.days||0);return Object.assign({},r,{days:d,stage:stage(d),b:bidx(d),mkt:r.mkt||"(none)",branch:r.branch||"(none)",tot:+r.tot||0,rent:+r.rent||0,port:+r.port||0,adv:+r.adv||0})})}
+function cmpPrep(rows){return rows.filter(Boolean).map(function(r){var d=Math.round(+r.days||0);return Object.assign({},r,{days:d,stage:stage(d),b:bidx(d),mkt:onm(r.mkt)||"(none)",branch:r.branch||"(none)",tot:+r.tot||0,rent:+r.rent||0,port:+r.port||0,adv:+r.adv||0})})}
 function agg(a){
   var t={n:a.length,tot:sum(a,"tot"),rent:sum(a,"rent"),port:sum(a,"port")};
   [1,2,3].forEach(function(s){var x=a.filter(function(r){return r.stage==s});t["n"+s]=x.length;t["t"+s]=sum(x,"tot");t["p"+s]=sum(x,"port")});
