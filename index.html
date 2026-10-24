@@ -80,6 +80,13 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 .mxt{border-collapse:collapse;margin-top:6px}.mxt th,.mxt td{text-align:center;padding:7px 12px;border:1px solid var(--bd)}
 .mxg{background:rgba(46,158,107,.2)}.mxb{background:rgba(214,69,61,.2)}
 @media(max-width:700px){.cmph{padding:10px 12px}.cmph label{flex:1;min-width:44%}.cmph select{width:100%}.cmpm{padding:10px}.gb .l{width:74px;font-size:11.5px}.gb .v{width:130px;font-size:10.5px}}
+/* top search bar */
+.sbar{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#7a5af8,#2457d6);padding:12px 16px;border-radius:14px;margin-bottom:14px;box-shadow:0 4px 14px rgba(122,90,248,.35)}
+.sbar .si{font-size:20px;line-height:1}
+.sbar input{flex:1;min-width:0;border:0;border-radius:10px;padding:12px 14px;font-size:16px;background:var(--card);color:var(--tx);outline:none;box-shadow:inset 0 1px 3px rgba(0,0,0,.12)}
+.sbar input:focus{box-shadow:0 0 0 3px rgba(255,255,255,.55)}
+.sbar button{background:rgba(255,255,255,.22);color:#fff;border:0;border-radius:10px;padding:10px 14px;font-size:16px;line-height:1}
+.sbar button:hover{background:rgba(255,255,255,.35)}
 /* upload progress */
 #upProg{display:none;margin:10px 0;padding:10px 12px;background:var(--bg);border-radius:10px;border:1px solid var(--bd)}
 #upProg.on{display:block}
@@ -149,6 +156,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 <h5>Download Excel</h5><div class="mg"><button data-m="e1">Filtered list</button><button data-m="e2">Officer summary</button><button data-m="e3">Bucket summary</button></div></div></div>
 
 <main>
+<div class="sbar"><span class="si">&#128269;</span><input id="q" type="search" placeholder="Search: Name / VF Fac No / Reg No / Officer / Branch / Tel..." autocomplete="off"><button id="qx" title="Clear search">&#10005;</button></div>
 <div class="card" id="info" style="border-left:4px solid var(--s2)"></div>
 <div class="card look" id="look"><h3>Fac No Search</h3><div class="f"><input id="fq" placeholder="Fac No (e.g. VF250201107747)" size="30"><button id="fgo" class="p">Check</button></div><div id="lres" class="mu" style="margin-top:8px">Type a Fac No and click Check to see its Stage, Arrears and Done status.</div></div>
 <div class="kpis" id="kpis"></div>
@@ -163,7 +171,6 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 <label>Grant Date<select id="vt"><option value="">All</option><option value="L">Last 12 Months</option><option value="A">After 12 Months</option></select></label>
 <label>Done<select id="dn"><option value="">All</option><option value="1">Done</option><option value="0">Not Done</option></select></label></div></div>
 <div class="fb"><h4>Search &amp; PNPL Range</h4><div class="fr">
-<label>Search<input id="q" placeholder="Name / VF Fac No / Reg No / Officer / Branch / Tel..."></label>
 <label>PNPL from<input type="number" id="p1" style="width:80px"></label><label>to<input type="number" id="p2" style="width:80px"></label>
 <label style="display:none">Flag<select id="fg"><option value="">All</option><option value="R1">1st Rental</option><option value="PN">PNPL</option><option value="NP">Null Payment</option><option value="ADV">Advance &gt; 0</option></select></label></div></div>
 </div>
@@ -462,6 +469,7 @@ $("e3").onclick=function(){dl(BS.map(function(x,i){return{Bucket:BK[i][0],Custom
    FILTER EVENTS
    ============================================================ */
 ["mk","mks","br","ds","st","vt","fg","dn","p1","p2","q"].forEach(function(i){$(i).oninput=function(){page=0;draw()}});
+$("qx").onclick=function(){$("q").value="";page=0;draw();$("q").focus()};
 $("rs").onclick=function(){["mk","mks","br","ds","st","vt","fg","dn","q"].forEach(function(i){$(i).value=""});$("p1").value=91;$("p2").value=91+dim(asAt);bkSel={};page=0;draw()};
 function tg(e){var c=e.target.closest("[data-i]");if(c){var i=c.dataset.i;if(bkSel[i])delete bkSel[i];else bkSel[i]=1;page=0;draw()}}
 $("bk").onclick=tg;$("c2").onclick=tg;
