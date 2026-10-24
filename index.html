@@ -136,7 +136,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
       <label>1. Month-end: Branch Wise RentalArrears (.xlsx, one or many)<input type="file" id="fma" accept=".xlsx,.xls" multiple></label>
       <label>2. Month-end: Destinity LE DailySummary (.xlsx, one or many)<input type="file" id="fmb" accept=".xlsx,.xls" multiple></label>
       <label>Month-end date (optional &ndash; empty = date inside the file)<input type="date" id="meDate"></label>
-      <button id="goME">Save as Month-end report</button>
+      <button id="goME" class="p" style="width:100%;margin-top:4px;padding:11px;background:#7a5af8;border-color:#7a5af8">&#8679; Upload Month-end report</button>
     </div>
     <div class="row"><button id="cs" style="font-size:12px">&#9729; Online storage setup (admin)</button></div>
   </div>
@@ -524,7 +524,7 @@ var upCurrentPct=0;
 
 function upInit(files){
   upFileList=files.map(function(f){return {name:f.name,size:f.size,status:"wait",file:f}});
-  $("upProg").classList.add("on");
+  $("upProg").classList.add("on");try{$("upProg").scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}
   $("upBarFill").style.width="0%";
   $("upMsg").textContent="Preparing...";
   $("upSum").textContent="";
