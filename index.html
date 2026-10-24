@@ -174,8 +174,8 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
  <div class="cmph">
   <button id="cmBack" class="p">&#8592; Dashboard</button>
   <b style="font-size:16px;align-self:center">&#8644; Compare Dates</b>
-  <label>Date A (earlier)<select id="cmA"></select></label>
-  <label>Date B (later)<select id="cmB"></select></label>
+  <label>A: Last month-end report<select id="cmA"></select></label>
+  <label>B: Today's report<select id="cmB"></select></label>
   <label>Branch<select id="cmBr"><option value="">All</option></select></label>
   <label>Mkt Officer<select id="cmOf"><option value="">All</option></select></label>
   <button id="cmGo" class="p">&#8635; Compare</button>
@@ -711,14 +711,16 @@ $("go").onclick=function(){
 
         var sk=(at||new Date()).toISOString().slice(0,10);
         var sm={key:sk,ts:Date.now(),up:mt.up,name:USER.name,epf:USER.epf,n:rows.length,asAt:mt.aAsAt||"",tot:sum(rows,"tot"),port:sum(rows,"port")};
-        cput(o2).then(function(s){return sput("snaps/"+sk,o2).then(function(s2){return(s2=="ok"?sput("snapmeta/"+sk,sm):Promise.resolve(s2)).then(function(s3){return[s,s3]})})}).then(function(res){
+        var isEnd=!!at&&new Date(at.getTime()+864e5).getUTCDate()==1;
+        cput(o2).then(function(s){return(isEnd?saveMonthEnd(sk,o2,sm):Promise.resolve("skip")).then(function(s3){return[s,s3]})}).then(function(res){
           var s=res[0],s3=res[1];
           var msg="<b>"+rows.length+"</b> facilities loaded from <b>"+all.length+"</b> files.";
           if(s=="off")msg+='<br><span class="mu">Online storage not set up (saved on this device only).</span>';
           else if(s=="ok")msg+='<br><span style="color:var(--s1)">Saved ONLINE – everyone will see this data.</span>';
           else msg+='<br><span style="color:var(--s3)">Online save '+s+' – check storage setup.</span>';
-          if(s3=="ok")msg+='<br><span style="color:var(--s1)">Snapshot saved for Compare ('+dlab(sk)+').</span>';
-          else if(s3!="off")msg+='<br><span style="color:var(--s3)">Compare snapshot save '+s3+' – check database rules.</span>';
+          if(s3=="ok")msg+='<br><span style="color:var(--s1)">Month-end report ('+dlab(sk)+') saved for Compare.</span>';
+          else if(s3=="skip")msg+='<br><span class="mu">Not a month-end date, so not kept for Compare (current data replaced as usual).</span>';
+          else if(s3!="off")msg+='<br><span style="color:var(--s3)">Month-end save '+s3+' – check database rules.</span>';
           upFinish(msg,false);
           goBtn.disabled=false;
           setTimeout(function(){$("upProg").classList.remove("on")},3000);
@@ -743,6 +745,13 @@ $("go").onclick=function(){
 var SM=null,SNAP={},CA=[],CB=[],CMP=null,CF="",cmpPushed=false,TBL={};
 function sget(p){var c=ccfg();if(!c.url||typeof fetch!="function")return Promise.resolve(null);return fetch(c.url+"/"+p+".json?v="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
 function sput(p,o){var c=ccfg();if(!c.url)return Promise.resolve("off");return fetch(c.url+"/"+p+".json"+(c.key?"?auth="+encodeURIComponent(c.key):""),{method:"PUT",body:JSON.stringify(o)}).then(function(r){return r.ok?"ok":"HTTP "+r.status}).catch(function(e){return "failed: "+e})}
+function isME(k){var d=new Date(k+"T00:00:00Z");return !isNaN(d)&&new Date(d.getTime()+864e5).getUTCDate()==1}
+function sdel(p){var c=ccfg();return fetch(c.url+"/"+p+".json"+(c.key?"?auth="+encodeURIComponent(c.key):""),{method:"DELETE"}).catch(function(){})}
+function saveMonthEnd(sk,o,sm){
+  return sput("snaps/"+sk,o).then(function(a){if(a!="ok")return a;
+    return sput("snapmeta/"+sk,sm).then(function(b){if(b!="ok")return b;
+      return sget("snapmeta").then(function(j){var old=Object.keys(j||{}).sort().reverse().slice(2);old.forEach(function(k){delete SNAP[k]});return Promise.all(old.map(function(k){return sdel("snaps/"+k).then(function(){return sdel("snapmeta/"+k)})}))}).then(function(){return "ok"})})})
+}
 function dlab(k){var d=new Date(k+"T00:00:00Z");return isNaN(d)?k:d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric",timeZone:"UTC"})}
 function f2(x){return Number(x||0).toFixed(2)+"%"}
 function cmpPrep(rows){return rows.filter(Boolean).map(function(r){var d=Math.round(+r.days||0);return Object.assign({},r,{days:d,stage:stage(d),b:bidx(d),mkt:r.mkt||"(none)",branch:r.branch||"(none)",tot:+r.tot||0,rent:+r.rent||0,port:+r.port||0,adv:+r.adv||0})})}
@@ -762,16 +771,19 @@ $("cmpb").onclick=function(){cmpPushed=true;location.hash="compare"};
 $("cmBack").onclick=function(){if(cmpPushed&&location.hash=="#compare")history.back();else location.hash=""};
 window.addEventListener("hashchange",function(){if(location.hash=="#compare")cmpShow();else cmpHide()});
 
+var CURR=null;
 function cmpInit(){
-  if(!ccfg().url){$("cbody").innerHTML='<div class="card">Online storage is not set up, so saved dates cannot be loaded.</div>';return}
-  $("cbody").innerHTML='<div class="card mu">Loading saved dates...</div>';
-  sget("snapmeta").then(function(j){
-    SM=j||{};var ks=Object.keys(SM).sort().reverse();
-    if(!ks.length){$("cbody").innerHTML='<div class="card"><b>No saved dates yet.</b><br><span class="mu">Every Excel upload from now on is saved as a dated snapshot. Upload on two different dates, then come back here to compare.</span></div>';$("cmA").innerHTML=$("cmB").innerHTML="";return}
-    var o=ks.map(function(k){var m=SM[k]||{};return'<option value="'+k+'">'+dlab(k)+' ('+(m.n||"?")+' fac)</option>'}).join("");
-    $("cmA").innerHTML=o;$("cmB").innerHTML=o;
-    $("cmA").value=ks[1]||ks[0];$("cmB").value=ks[0];
-    if(ks.length<2){$("cbody").innerHTML='<div class="card"><b>Only 1 saved date ('+dlab(ks[0])+').</b><br><span class="mu">Upload another day\'s Excel files (different "data as at" date) to start comparing.</span></div>';return}
+  if(!ccfg().url){$("cbody").innerHTML='<div class="card">Online storage is not set up, so the saved month-end report cannot be loaded.</div>';return}
+  $("cbody").innerHTML='<div class="card mu">Loading...</div>';
+  Promise.all([sget("snapmeta"),sget("arrears")]).then(function(r){
+    SM=r[0]||{};var cur=(r[1]&&r[1].rows&&r[1].rows.length)?r[1]:CURD;
+    if(!cur||!cur.rows||!cur.rows.length){$("cbody").innerHTML='<div class="card">No current data loaded. Upload the Excel files first.</div>';return}
+    var rows=Array.isArray(cur.rows)?cur.rows:Object.keys(cur.rows).map(function(x){return cur.rows[x]});
+    CURR={key:(cur.asAt||"").slice(0,10)||new Date().toISOString().slice(0,10),rows:cmpPrep(rows)};
+    var ks=Object.keys(SM).filter(function(k){return isME(k)&&k<CURR.key}).sort().reverse();
+    $("cmB").innerHTML='<option>Today ('+dlab(CURR.key)+')</option>';$("cmB").disabled=true;
+    if(!ks.length){$("cmA").innerHTML="";$("cbody").innerHTML='<div class="card"><b>No previous month-end report saved yet.</b><br><span class="mu">Upload the report on the last day of the month (30/31, or 28/29 in Feb). That one is kept, and later reports are compared against it.</span></div>';return}
+    $("cmA").innerHTML=ks.map(function(k){var m=SM[k]||{};return'<option value="'+k+'">Month-end '+dlab(k)+' ('+(m.n||"?")+' fac)</option>'}).join("");
     cmpRun()
   })
 }
@@ -780,19 +792,17 @@ function cmpSnap(k){
   return sget("snaps/"+k).then(function(j){if(!j||!j.rows)return null;var rows=Array.isArray(j.rows)?j.rows:Object.keys(j.rows).map(function(x){return j.rows[x]});return SNAP[k]=cmpPrep(rows)})
 }
 function cmpRun(){
-  var ka=$("cmA").value,kb=$("cmB").value;if(!ka||!kb)return;
-  if(ka>kb){$("cmA").value=kb;$("cmB").value=ka;ka=$("cmA").value;kb=$("cmB").value}
-  if(ka==kb){$("cbody").innerHTML='<div class="card">Please select two different dates.</div>';return}
-  $("cbody").innerHTML='<div class="card mu">Loading snapshots...</div>';
-  Promise.all([cmpSnap(ka),cmpSnap(kb)]).then(function(r){
-    if(!r[0]||!r[1]){$("cbody").innerHTML='<div class="card" style="color:var(--s3)">Could not load one of the snapshots from the online database.</div>';return}
-    CA=r[0];CB=r[1];
+  var ka=$("cmA").value;if(!ka||!CURR)return;
+  $("cbody").innerHTML='<div class="card mu">Loading month-end report...</div>';
+  cmpSnap(ka).then(function(sa){
+    if(!sa){$("cbody").innerHTML='<div class="card" style="color:var(--s3)">Could not load the month-end report from the online database.</div>';return}
+    CA=sa;CB=CURR.rows;
     var all=CA.concat(CB),keep=function(id,k){var v=$(id).value,s=Array.from(new Set(all.map(function(x){return x[k]}))).sort();$(id).innerHTML='<option value="">All</option>'+s.map(function(x){return'<option>'+esc(x)+'</option>'}).join("");if(s.indexOf(v)>=0)$(id).value=v};
     keep("cmBr","branch");keep("cmOf","mkt");CF="";TBL={};cmpRender()
   })
 }
-$("cmA").onchange=$("cmB").onchange=cmpRun;
-$("cmGo").onclick=function(){SNAP={};cmpRun()};
+$("cmA").onchange=cmpRun;
+$("cmGo").onclick=function(){SNAP={};cmpInit()};
 $("cmBr").onchange=$("cmOf").onchange=function(){CF="";TBL={};cmpRender()};
 $("cmXl").onclick=function(){cmpXl()};
 function cmpFilt(rows){var b=$("cmBr").value,o=$("cmOf").value;return rows.filter(function(r){return(!b||r.branch===b)&&(!o||r.mkt===o)})}
@@ -833,7 +843,7 @@ function cmpCust(){
   tset("ctab",CCOLS,rows,o?o.sk:"dT",o?o.sd:-1,100)
 }
 function cmpRender(){
-  var a=cmpFilt(CA),b=cmpFilt(CB),A=agg(a),B=agg(b),ka=$("cmA").value,kb=$("cmB").value,la=dlab(ka),lb=dlab(kb),h="";
+  var a=cmpFilt(CA),b=cmpFilt(CB),A=agg(a),B=agg(b),ka=$("cmA").value,kb=CURR.key,la="Month-end "+dlab(ka),lb="Today "+dlab(kb),h="";
   // customers
   var MA={},MB={};a.forEach(function(r){MA[r.fac]=r});b.forEach(function(r){MB[r.fac]=r});
   var cust=Object.keys(Object.assign({},MA,MB)).map(function(f){
