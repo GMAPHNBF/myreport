@@ -65,6 +65,21 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
  .look .r{gap:12px}.f.hb{gap:8px}
  button{padding:9px 12px}
 }
+/* compare page */
+.cmpv{position:fixed;inset:0;z-index:60;background:var(--bg);overflow:auto;display:none}.cmpv.on{display:block}
+.cmph{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:12px 18px;background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:3}
+.cmph label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
+.cmpm{max-width:1500px;margin:auto;padding:16px 18px}
+.dk{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:14px}
+.kpi .sm{font-size:11.5px;margin-top:4px;color:var(--mu)}
+.cg{color:var(--s1);font-weight:600}.cb{color:var(--s3);font-weight:600}.cn{color:var(--mu)}
+.lgd{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:middle}
+.gb{display:flex;align-items:center;gap:8px;margin:9px 0}.gb .l{width:110px;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gb .bb{flex:1}.gb .t{background:var(--bg);height:11px;border-radius:5px;overflow:hidden;margin:2px 0}.gb .t i{display:block;height:100%}
+.gb .v{width:210px;text-align:right;font-size:11.5px;line-height:1.35}
+.mxt{border-collapse:collapse;margin-top:6px}.mxt th,.mxt td{text-align:center;padding:7px 12px;border:1px solid var(--bd)}
+.mxg{background:rgba(46,158,107,.2)}.mxb{background:rgba(214,69,61,.2)}
+@media(max-width:700px){.cmph{padding:10px 12px}.cmph label{flex:1;min-width:44%}.cmph select{width:100%}.cmpm{padding:10px}.gb .l{width:74px;font-size:11.5px}.gb .v{width:130px;font-size:10.5px}}
 /* upload progress */
 #upProg{display:none;margin:10px 0;padding:10px 12px;background:var(--bg);border-radius:10px;border:1px solid var(--bd)}
 #upProg.on{display:block}
@@ -84,6 +99,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 </head>
 <body>
 <header style="justify-content:flex-end">
+  <button id="cmpb" style="background:#7a5af8;color:#fff;border-color:#7a5af8">&#8644; Compare</button>
   <button class="p" id="upb">&#8679; Upload</button>
   <small id="meta" style="display:none"></small>
 </header>
@@ -120,7 +136,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 
 <button class="fab" id="fab">&#9776; Menu</button>
 <div class="sheet" id="sheet"><div class="sh"><div class="t"><b>Menu</b><button id="sx">&#10005; Close</button></div>
-<h5>Navigate</h5><div class="mg"><a href="https://gmaphnbf.github.io/HNBFGMAP/" rel="noopener">&#8962; Home</a><button data-m="up">&#8679; Upload data</button><button data-m="look">&#128269; Fac No search</button><button data-m="flt">&#9776; Filters</button><button data-m="ch">&#9684; Stage chart</button><button data-m="npl">&#9201; NPL ratio</button><button data-m="off">&#128101; Officer summary</button><button data-m="cus">&#9776; Customers</button></div>
+<h5>Navigate</h5><div class="mg"><a href="https://gmaphnbf.github.io/HNBFGMAP/" rel="noopener">&#8962; Home</a><button data-m="up">&#8679; Upload data</button><button data-m="cmpb">&#8644; Compare dates</button><button data-m="look">&#128269; Fac No search</button><button data-m="flt">&#9776; Filters</button><button data-m="ch">&#9684; Stage chart</button><button data-m="npl">&#9201; NPL ratio</button><button data-m="off">&#128101; Officer summary</button><button data-m="cus">&#9776; Customers</button></div>
 <h5>Quick lists</h5><div class="mg"><button id="m_pn" data-m="pnb">PNPL list</button><button id="m_r1" data-m="r1b">1st Rental</button><button id="m_np" data-m="npb">Null Payment</button><button data-m="rs">&#8635; Clear filters</button></div>
 <h5>Download Excel</h5><div class="mg"><button data-m="e1">Filtered list</button><button data-m="e2">Officer summary</button><button data-m="e3">Bucket summary</button></div></div></div>
 
@@ -153,6 +169,20 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 <div class="card"><div class="f" style="justify-content:space-between"><h3 id="th">Customers</h3><div class="f"><button id="e1" class="p">⬇ Download filtered (Excel)</button><button id="e3">⬇ Bucket summary (Excel)</button></div></div>
 <div class="tw tbl"><table id="tb"></table></div><div class="cl" id="cl"></div><div class="pg"><button id="pv">◀</button><span id="pi"></span><button id="nx">▶</button></div></div>
 </main>
+
+<div class="cmpv" id="cmp">
+ <div class="cmph">
+  <button id="cmBack" class="p">&#8592; Dashboard</button>
+  <b style="font-size:16px;align-self:center">&#8644; Compare Dates</b>
+  <label>Date A (earlier)<select id="cmA"></select></label>
+  <label>Date B (later)<select id="cmB"></select></label>
+  <label>Branch<select id="cmBr"><option value="">All</option></select></label>
+  <label>Mkt Officer<select id="cmOf"><option value="">All</option></select></label>
+  <button id="cmGo" class="p">&#8635; Compare</button>
+  <button id="cmXl">&#11015; Excel</button>
+ </div>
+ <div class="cmpm" id="cbody"></div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
@@ -438,7 +468,7 @@ $("sheet").addEventListener("click",function(e){
   if(m=="up"){$("upb").click()}
   else if(m=="flt"){document.querySelector(".fp").classList.add("open");document.querySelector(".fp").scrollIntoView({behavior:"smooth"})}
   else if(MS[m]){var el=$(MS[m]);(el.closest(".card")||el).scrollIntoView({behavior:"smooth"});if(m=="look")$("fq").focus()}
-  else{$(m).click();close=(m=="e1"||m=="e2"||m=="e3"||m=="rs"||m=="pnb"||m=="r1b"||m=="npb")}
+  else{$(m).click();close=(m=="cmpb"||m=="e1"||m=="e2"||m=="e3"||m=="rs"||m=="pnb"||m=="r1b"||m=="npb")}
   if(close)$("sheet").classList.remove("on")
 });
 
@@ -679,11 +709,16 @@ $("go").onclick=function(){
 
         upSetProgress(97,"Saving online...");
 
-        cput(o2).then(function(s){
+        var sk=(at||new Date()).toISOString().slice(0,10);
+        var sm={key:sk,ts:Date.now(),up:mt.up,name:USER.name,epf:USER.epf,n:rows.length,asAt:mt.aAsAt||"",tot:sum(rows,"tot"),port:sum(rows,"port")};
+        cput(o2).then(function(s){return sput("snaps/"+sk,o2).then(function(s2){return(s2=="ok"?sput("snapmeta/"+sk,sm):Promise.resolve(s2)).then(function(s3){return[s,s3]})})}).then(function(res){
+          var s=res[0],s3=res[1];
           var msg="<b>"+rows.length+"</b> facilities loaded from <b>"+all.length+"</b> files.";
           if(s=="off")msg+='<br><span class="mu">Online storage not set up (saved on this device only).</span>';
           else if(s=="ok")msg+='<br><span style="color:var(--s1)">Saved ONLINE – everyone will see this data.</span>';
           else msg+='<br><span style="color:var(--s3)">Online save '+s+' – check storage setup.</span>';
+          if(s3=="ok")msg+='<br><span style="color:var(--s1)">Snapshot saved for Compare ('+dlab(sk)+').</span>';
+          else if(s3!="off")msg+='<br><span style="color:var(--s3)">Compare snapshot save '+s3+' – check database rules.</span>';
           upFinish(msg,false);
           goBtn.disabled=false;
           setTimeout(function(){$("upProg").classList.remove("on")},3000);
@@ -702,6 +737,143 @@ $("go").onclick=function(){
 /* ============================================================
    INITIAL DATA LOAD
    ============================================================ */
+/* ============================================================
+   COMPARE PAGE (two saved dates)
+   ============================================================ */
+var SM=null,SNAP={},CA=[],CB=[],CMP=null,CF="",cmpPushed=false,TBL={};
+function sget(p){var c=ccfg();if(!c.url||typeof fetch!="function")return Promise.resolve(null);return fetch(c.url+"/"+p+".json?v="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
+function sput(p,o){var c=ccfg();if(!c.url)return Promise.resolve("off");return fetch(c.url+"/"+p+".json"+(c.key?"?auth="+encodeURIComponent(c.key):""),{method:"PUT",body:JSON.stringify(o)}).then(function(r){return r.ok?"ok":"HTTP "+r.status}).catch(function(e){return "failed: "+e})}
+function dlab(k){var d=new Date(k+"T00:00:00Z");return isNaN(d)?k:d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric",timeZone:"UTC"})}
+function f2(x){return Number(x||0).toFixed(2)+"%"}
+function cmpPrep(rows){return rows.filter(Boolean).map(function(r){var d=Math.round(+r.days||0);return Object.assign({},r,{days:d,stage:stage(d),b:bidx(d),mkt:r.mkt||"(none)",branch:r.branch||"(none)",tot:+r.tot||0,rent:+r.rent||0,port:+r.port||0,adv:+r.adv||0})})}
+function agg(a){
+  var t={n:a.length,tot:sum(a,"tot"),rent:sum(a,"rent"),port:sum(a,"port")};
+  [1,2,3].forEach(function(s){var x=a.filter(function(r){return r.stage==s});t["n"+s]=x.length;t["t"+s]=sum(x,"tot");t["p"+s]=sum(x,"port")});
+  var np=a.filter(function(r){return r.days>=91});t.nplP=sum(np,"port");t.npl=t.port?t.nplP/t.port*100:0;return t
+}
+function dlt(a,b,good,f){f=f||fmt;var d=b-a;if(Math.abs(d)<0.005)return'<span class="cn">0</span>';var c=!good?"cn":((d>0)==(good>0)?"cg":"cb");return'<span class="'+c+'">'+(d>0?"▲ ":"▼ ")+f(Math.abs(d))+'</span>'}
+function pct(a,b){if(!a)return"";var p=(b-a)/a*100;return' <span class="cn">('+(p>0?"+":"")+p.toFixed(1)+'%)</span>'}
+function dcol(d,g){return Math.abs(d)<0.005||!g?"var(--pr)":((d>0)==(g>0)?"var(--s1)":"var(--s3)")}
+var KP=[["Customers","n",0,fmt],["Total Arrears","tot",-1,fmt],["Rental Arrears","rent",-1,fmt],["Portfolio","port",1,fmt],["Stage 1 customers","n1",1,fmt],["Stage 2 customers","n2",-1,fmt],["Stage 3 customers","n3",-1,fmt],["Stage 3 arrears","t3",-1,fmt],["NPL Ratio","npl",-1,f2],["NPL Portfolio (91+)","nplP",-1,fmt]];
+
+function cmpShow(){$("cmp").classList.add("on");document.body.style.overflow="hidden";cmpInit()}
+function cmpHide(){$("cmp").classList.remove("on");document.body.style.overflow=""}
+$("cmpb").onclick=function(){cmpPushed=true;location.hash="compare"};
+$("cmBack").onclick=function(){if(cmpPushed&&location.hash=="#compare")history.back();else location.hash=""};
+window.addEventListener("hashchange",function(){if(location.hash=="#compare")cmpShow();else cmpHide()});
+
+function cmpInit(){
+  if(!ccfg().url){$("cbody").innerHTML='<div class="card">Online storage is not set up, so saved dates cannot be loaded.</div>';return}
+  $("cbody").innerHTML='<div class="card mu">Loading saved dates...</div>';
+  sget("snapmeta").then(function(j){
+    SM=j||{};var ks=Object.keys(SM).sort().reverse();
+    if(!ks.length){$("cbody").innerHTML='<div class="card"><b>No saved dates yet.</b><br><span class="mu">Every Excel upload from now on is saved as a dated snapshot. Upload on two different dates, then come back here to compare.</span></div>';$("cmA").innerHTML=$("cmB").innerHTML="";return}
+    var o=ks.map(function(k){var m=SM[k]||{};return'<option value="'+k+'">'+dlab(k)+' ('+(m.n||"?")+' fac)</option>'}).join("");
+    $("cmA").innerHTML=o;$("cmB").innerHTML=o;
+    $("cmA").value=ks[1]||ks[0];$("cmB").value=ks[0];
+    if(ks.length<2){$("cbody").innerHTML='<div class="card"><b>Only 1 saved date ('+dlab(ks[0])+').</b><br><span class="mu">Upload another day\'s Excel files (different "data as at" date) to start comparing.</span></div>';return}
+    cmpRun()
+  })
+}
+function cmpSnap(k){
+  if(SNAP[k])return Promise.resolve(SNAP[k]);
+  return sget("snaps/"+k).then(function(j){if(!j||!j.rows)return null;var rows=Array.isArray(j.rows)?j.rows:Object.keys(j.rows).map(function(x){return j.rows[x]});return SNAP[k]=cmpPrep(rows)})
+}
+function cmpRun(){
+  var ka=$("cmA").value,kb=$("cmB").value;if(!ka||!kb)return;
+  if(ka>kb){$("cmA").value=kb;$("cmB").value=ka;ka=$("cmA").value;kb=$("cmB").value}
+  if(ka==kb){$("cbody").innerHTML='<div class="card">Please select two different dates.</div>';return}
+  $("cbody").innerHTML='<div class="card mu">Loading snapshots...</div>';
+  Promise.all([cmpSnap(ka),cmpSnap(kb)]).then(function(r){
+    if(!r[0]||!r[1]){$("cbody").innerHTML='<div class="card" style="color:var(--s3)">Could not load one of the snapshots from the online database.</div>';return}
+    CA=r[0];CB=r[1];
+    var all=CA.concat(CB),keep=function(id,k){var v=$(id).value,s=Array.from(new Set(all.map(function(x){return x[k]}))).sort();$(id).innerHTML='<option value="">All</option>'+s.map(function(x){return'<option>'+esc(x)+'</option>'}).join("");if(s.indexOf(v)>=0)$(id).value=v};
+    keep("cmBr","branch");keep("cmOf","mkt");CF="";TBL={};cmpRender()
+  })
+}
+$("cmA").onchange=$("cmB").onchange=cmpRun;
+$("cmGo").onclick=function(){SNAP={};cmpRun()};
+$("cmBr").onchange=$("cmOf").onchange=function(){CF="";TBL={};cmpRender()};
+$("cmXl").onclick=function(){cmpXl()};
+function cmpFilt(rows){var b=$("cmBr").value,o=$("cmOf").value;return rows.filter(function(r){return(!b||r.branch===b)&&(!o||r.mkt===o)})}
+function grp(a,b,k){var m={};a.forEach(function(r){(m[r[k]]=m[r[k]]||{a:[],b:[]}).a.push(r)});b.forEach(function(r){(m[r[k]]=m[r[k]]||{a:[],b:[]}).b.push(r)});return Object.keys(m).map(function(n){return{name:n,A:agg(m[n].a),B:agg(m[n].b)}})}
+function flat(g){return g.map(function(x){return{name:x.name,nA:x.A.n,nB:x.B.n,tA:x.A.tot,tB:x.B.tot,dT:x.B.tot-x.A.tot,dP:x.B.port-x.A.port,s3A:x.A.n3,s3B:x.B.n3,nlA:x.A.npl,nlB:x.B.npl,dN:x.B.npl-x.A.npl}})}
+function gb(l,a,b,mx,txt){return'<div class="gb"><div class="l" title="'+esc(l)+'">'+esc(l)+'</div><div class="bb"><div class="t"><i style="width:'+Math.max(a/mx*100,.5)+'%;background:#8aa0cf"></i></div><div class="t"><i style="width:'+Math.max(b/mx*100,.5)+'%;background:var(--pr)"></i></div></div><div class="v">'+txt+'</div></div>'}
+function stk(l,T){var t=T.p1+T.p2+T.p3,p=function(s){return t?T["p"+s]/t*100:0};return'<div class="sbr"><div class="l">'+l+'</div><div class="sb">'+[1,2,3].map(function(s){return T["p"+s]?'<span style="width:'+p(s)+'%;background:var(--s'+s+')" title="Stage '+s+': '+p(s).toFixed(1)+'%"></span>':""}).join("")+'</div><div class="v" style="width:190px">S1 '+p(1).toFixed(1)+'% • S2 '+p(2).toFixed(1)+'% • S3 '+p(3).toFixed(1)+'%</div></div>'}
+function num(k){return function(r){return r[k]==null?"-":fmt(r[k])}}
+function dcl(k,g,f){return function(r){return dlt(0,r[k],g,f)}}
+function gcols(first){return[{k:"name",l:first,h:function(r){return esc(r.name)}},{k:"nA",l:"Cust A",n:1,h:num("nA")},{k:"nB",l:"Cust B",n:1,h:num("nB")},{k:"tA",l:"Arrears A",n:1,h:num("tA")},{k:"tB",l:"Arrears B",n:1,h:num("tB")},{k:"dT",l:"Δ Arrears",n:1,h:dcl("dT",-1)},{k:"dP",l:"Δ Portfolio",n:1,h:dcl("dP",1)},{k:"s3A",l:"Stage3 A",n:1,h:num("s3A")},{k:"s3B",l:"Stage3 B",n:1,h:num("s3B")},{k:"nlA",l:"NPL% A",n:1,h:function(r){return f2(r.nlA)}},{k:"nlB",l:"NPL% B",n:1,h:function(r){return f2(r.nlB)}},{k:"dN",l:"Δ NPL",n:1,h:dcl("dN",-1,f2)}]}
+function stg(v){return v==null?"-":'<span class="tag s'+v+'">'+v+'</span>'}
+var CCOLS=[{k:"fac",l:"Fac No",h:function(r){return esc(r.fac)}},{k:"name",l:"Name",h:function(r){return esc(r.name)}},{k:"mkt",l:"Mkt Officer",h:function(r){return esc(r.mkt)}},{k:"branch",l:"Branch",h:function(r){return esc(r.branch)}},
+ {k:"dA",l:"Days A",n:1,h:num("dA")},{k:"dB",l:"Days B",n:1,h:num("dB")},{k:"dD",l:"Δ Days",n:1,h:function(r){return r.dA==null||r.dB==null?"-":dlt(r.dA,r.dB,-1)}},
+ {k:"sA",l:"Stage A",h:function(r){return stg(r.sA)}},{k:"sB",l:"Stage B",h:function(r){return stg(r.sB)}},
+ {k:"tA",l:"Arrears A",n:1,h:num("tA")},{k:"tB",l:"Arrears B",n:1,h:num("tB")},{k:"dT",l:"Δ Arrears",n:1,h:dcl("dT",-1)},
+ {k:"stt",l:"Status",h:function(r){var f=r.f;return(f.nw?'<span class="tag fl">New</span> ':"")+(f.cl?'<span class="tag fl">Not in B</span> ':"")+(f.sw?'<span class="tag s3">Stage worse</span> ':"")+(f.si?'<span class="tag s1">Stage better</span>':"")}}];
+function tset(id,cols,rows,sk,sd,ps){TBL[id]={cols:cols,rows:rows,sk:sk,sd:sd,pg:0,ps:ps||0};trender(id)}
+function trender(id){
+  var T=TBL[id],rows=T.rows.slice().sort(function(x,y){var p=x[T.sk],q=y[T.sk];if(p==null)p=-1e18;if(q==null)q=-1e18;return(p>q?1:p<q?-1:0)*T.sd});
+  var pc=T.ps?Math.max(1,Math.ceil(rows.length/T.ps)):1;if(T.pg>=pc)T.pg=pc-1;
+  var vis=T.ps?rows.slice(T.pg*T.ps,T.pg*T.ps+T.ps):rows;
+  $(id).innerHTML='<div class="tw" style="max-height:'+(T.ps?560:340)+'px"><table><tr>'+T.cols.map(function(c){return'<th data-k="'+c.k+'"'+(c.n?' class=n':'')+'>'+c.l+(T.sk==c.k?(T.sd>0?" ▲":" ▼"):"")+'</th>'}).join("")+'</tr>'+
+   vis.map(function(r){return'<tr>'+T.cols.map(function(c){return'<td'+(c.n?' class=n':'')+'>'+c.h(r)+'</td>'}).join("")+'</tr>'}).join("")+'</table></div>'+
+   (T.ps?'<div class="pg"><button data-pg="-1">◀</button><span>Page '+(T.pg+1)+' / '+pc+' • '+rows.length+' rows</span><button data-pg="1">▶</button></div>':"")
+}
+$("cbody").addEventListener("click",function(e){
+  var t=e.target,ch=t.closest("[data-cf]");
+  if(ch){CF=ch.dataset.cf;cmpCust();return}
+  var box=t.closest("[data-tbl]");if(!box||!TBL[box.id])return;var T=TBL[box.id];
+  var th=t.closest("th");if(th&&th.dataset.k){if(T.sk==th.dataset.k)T.sd*=-1;else{T.sk=th.dataset.k;T.sd=-1}trender(box.id);return}
+  var pb=t.closest("[data-pg]");if(pb){T.pg=Math.max(0,T.pg+ +pb.dataset.pg);trender(box.id)}
+});
+var CHIPS=[["","All"],["up","Arrears ▲"],["dn","Arrears ▼"],["sw","Stage worse"],["si","Stage better"],["nw","New in B"],["cl","Not in B"]];
+function cmpCust(){
+  var c=CMP.cust,cnt={};CHIPS.forEach(function(x){cnt[x[0]]=x[0]?c.filter(function(r){return r.f[x[0]]}).length:c.length});
+  $("cchips").innerHTML=CHIPS.map(function(x){return'<span class="chip'+(CF==x[0]?" on":"")+'" data-cf="'+x[0]+'">'+x[1]+' ('+cnt[x[0]]+')</span>'}).join("");
+  var rows=CF?c.filter(function(r){return r.f[CF]}):c,o=TBL.ctab;
+  tset("ctab",CCOLS,rows,o?o.sk:"dT",o?o.sd:-1,100)
+}
+function cmpRender(){
+  var a=cmpFilt(CA),b=cmpFilt(CB),A=agg(a),B=agg(b),ka=$("cmA").value,kb=$("cmB").value,la=dlab(ka),lb=dlab(kb),h="";
+  // customers
+  var MA={},MB={};a.forEach(function(r){MA[r.fac]=r});b.forEach(function(r){MB[r.fac]=r});
+  var cust=Object.keys(Object.assign({},MA,MB)).map(function(f){
+    var x=MA[f],y=MB[f],o={fac:f,name:(y||x).name,mkt:(y||x).mkt,branch:(y||x).branch,dA:x?x.days:null,dB:y?y.days:null,sA:x?x.stage:null,sB:y?y.stage:null,tA:x?x.tot:null,tB:y?y.tot:null,dT:(y?y.tot:0)-(x?x.tot:0)};
+    o.f={nw:!x&&!!y,cl:!!x&&!y,up:!!x&&!!y&&y.tot>x.tot,dn:!!x&&!!y&&y.tot<x.tot,sw:!!x&&!!y&&y.stage>x.stage,si:!!x&&!!y&&y.stage<x.stage};return o});
+  var og=flat(grp(a,b,"mkt")),bg=flat(grp(a,b,"branch"));
+  CMP={A:A,B:B,la:la,lb:lb,ka:ka,kb:kb,cust:cust,og:og,bg:bg};
+  h+='<div class="mu" style="margin-bottom:12px"><span class="lgd" style="background:#8aa0cf"></span>A: <b>'+la+'</b> &nbsp; <span class="lgd" style="background:var(--pr)"></span>B: <b>'+lb+'</b> &nbsp;•&nbsp; <span class="cg">Green = improved</span> • <span class="cb">Red = worse</span></div>';
+  h+='<div class="dk">'+KP.map(function(x){var va=A[x[1]],vb=B[x[1]],d=vb-va;return'<div class="kpi" style="border-left-color:'+dcol(d,x[2])+'"><span>'+x[0]+'</span><b>'+x[3](vb)+'</b><div class="sm">A: '+x[3](va)+' &nbsp;'+dlt(va,vb,x[2],x[3])+(x[1]=="npl"?"":pct(va,vb))+'</div></div>'}).join("")+'</div>';
+  // charts
+  var smx=Math.max.apply(null,[1].concat([1,2,3].map(function(s){return Math.max(A["t"+s],B["t"+s])})));
+  var c1=[1,2,3].map(function(s){return gb("Stage "+s,A["t"+s],B["t"+s],smx,A["n"+s]+" → "+B["n"+s]+" cust<br>"+fmt(A["t"+s])+" → "+fmt(B["t"+s])+" "+dlt(A["t"+s],B["t"+s],-1))}).join("");
+  var bs=BK.map(function(_,i){return[a.filter(function(r){return r.b==i}),b.filter(function(r){return r.b==i})]});
+  var bmx=Math.max.apply(null,[1].concat(bs.map(function(x){return Math.max(sum(x[0],"tot"),sum(x[1],"tot"))})));
+  var c2=bs.map(function(x,i){var ta=sum(x[0],"tot"),tb=sum(x[1],"tot");return gb(BK[i][0],ta,tb,bmx,x[0].length+" → "+x[1].length+" cust<br>"+fmt(ta)+" → "+fmt(tb)+" "+dlt(ta,tb,-1))}).join("");
+  h+='<div class="g2"><div class="card"><h3>Stage wise – Total Arrears</h3>'+c1+'</div><div class="card"><h3>Arrears Bucket wise</h3>'+c2+'</div></div>';
+  h+='<div class="card"><h3>Portfolio – Stage mix (%)</h3>'+stk(la+" (A)",A)+stk(lb+" (B)",B)+'</div>';
+  var og2=grp(a,b,"mkt").filter(function(x){return x.A.port||x.B.port}).sort(function(x,y){return y.B.npl-x.B.npl}),omx=Math.max.apply(null,[1].concat(og2.map(function(x){return Math.max(x.A.npl,x.B.npl)})));
+  h+='<div class="card"><h3>NPL Ratio by Mkt Officer <small>(A vs B)</small></h3><div style="max-height:420px;overflow:auto">'+(og2.map(function(x){return gb(x.name,x.A.npl,x.B.npl,omx,f2(x.A.npl)+" → "+f2(x.B.npl)+" "+dlt(x.A.npl,x.B.npl,-1,f2))}).join("")||'<span class="mu">No data</span>')+'</div></div>';
+  // migration matrix
+  var mx=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  cust.forEach(function(r){if(r.sA&&r.sB)mx[r.sA-1][r.sB-1]++;else if(r.sA)mx[r.sA-1][3]++;else if(r.sB)mx[3][r.sB-1]++});
+  var rl=["Stage 1","Stage 2","Stage 3","New in B"];
+  h+='<div class="card"><h3>Stage movement (customers) <small>A → B</small></h3><div class="tw" style="max-height:none"><table class="mxt"><tr><th>A ↓ / B →</th><th>Stage 1</th><th>Stage 2</th><th>Stage 3</th><th>Not in B</th></tr>'+
+   mx.map(function(row,i){return'<tr><th>'+rl[i]+'</th>'+row.map(function(v,j){var cl=i<3&&j<3?(j>i?"mxb":j<i?"mxg":""):(i==3&&j==2?"mxb":i==3&&j==0?"mxg":"");return'<td class="'+cl+'">'+v+'</td>'}).join("")+'</tr>'}).join("")+'</table></div><small class="mu">Red = moved to a worse stage, Green = moved to a better stage.</small></div>';
+  h+='<div class="g2"><div class="card"><h3>Mkt Officer wise comparison</h3><div id="otab" data-tbl="1"></div></div><div class="card"><h3>Branch wise comparison</h3><div id="btab" data-tbl="1"></div></div></div>';
+  h+='<div class="card"><h3>Customer wise comparison</h3><div class="chips" id="cchips" style="margin:0 0 10px"></div><div id="ctab" data-tbl="1"></div></div>';
+  $("cbody").innerHTML=h;
+  tset("otab",gcols("Mkt Officer"),og,"dT",-1,0);tset("btab",gcols("Branch"),bg,"dT",-1,0);cmpCust();
+}
+function cmpXl(){
+  if(!CMP){alert("Select two dates first.");return}
+  var wb=XLSX.utils.book_new(),A=CMP.A,B=CMP.B,add=function(n,rows){XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),n)};
+  add("Summary",KP.map(function(x){var o={Metric:x[0]};o["A "+CMP.la]=A[x[1]];o["B "+CMP.lb]=B[x[1]];o.Change=B[x[1]]-A[x[1]];return o}));
+  var gm=function(r,first){var o={};o[first]=r.name;o["Cust A"]=r.nA;o["Cust B"]=r.nB;o["Arrears A"]=r.tA;o["Arrears B"]=r.tB;o["Change Arrears"]=r.dT;o["Change Portfolio"]=r.dP;o["Stage3 A"]=r.s3A;o["Stage3 B"]=r.s3B;o["NPL% A"]=+r.nlA.toFixed(2);o["NPL% B"]=+r.nlB.toFixed(2);o["Change NPL"]=+r.dN.toFixed(2);return o};
+  add("Officer",CMP.og.map(function(r){return gm(r,"Mkt Officer")}));add("Branch",CMP.bg.map(function(r){return gm(r,"Branch")}));
+  add("Customers",CMP.cust.map(function(r){return{"Fac No":r.fac,Name:r.name,"Mkt Officer":r.mkt,Branch:r.branch,"Days A":r.dA,"Days B":r.dB,"Stage A":r.sA,"Stage B":r.sB,"Arrears A":r.tA,"Arrears B":r.tB,"Change Arrears":r.dT,Status:[r.f.nw?"New in B":"",r.f.cl?"Not in B":"",r.f.sw?"Stage worse":"",r.f.si?"Stage better":"",r.f.up?"Arrears up":"",r.f.dn?"Arrears down":""].filter(Boolean).join(", ")}}));
+  XLSX.writeFile(wb,"Compare_"+CMP.ka+"_vs_"+CMP.kb+".xlsx")
+}
+
 try{DATA=JSON.parse(localStorage.getItem("arr_data")||"null")}catch(e){DATA=null}
 if(DATA&&DATA.meta)DATA.meta.src="Saved on this device";
 load(DATA||{rows:[]});hload();
@@ -725,6 +897,7 @@ try{
     }).catch(function(){})
 }catch(e){}
 
+if(location.hash=="#compare")cmpShow();
 $("cs").onclick=function(){
   var c=ccfg();
   var u=prompt("Firebase Realtime Database URL (e.g. https://your-project-default-rtdb.firebaseio.com)\nLeave empty to turn online storage off:",c.url||"");
