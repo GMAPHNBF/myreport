@@ -102,6 +102,43 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 .upBar span{display:block;height:100%;width:0;background:var(--pr);transition:width .25s}
 #upMsg{font-size:12px;color:var(--mu);margin-top:6px}
 #upSum{font-weight:600;font-size:12.5px;margin-top:6px}
+/* ===== UI polish + larger text ===== */
+body{font-size:15.5px}
+header{box-shadow:0 1px 8px rgba(16,24,40,.07)}
+h3{font-size:17px;margin:0 0 12px;font-weight:700}
+.card{border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(16,24,40,.07),0 1px 2px rgba(16,24,40,.04)}
+.kpi{border-radius:14px;padding:14px 16px;border-left-width:5px;box-shadow:0 1px 3px rgba(16,24,40,.07)}
+.kpi b{font-size:25px}.kpi span{font-size:13.5px}
+button,select,input{padding:9px 12px;border-radius:10px}
+.f label,.mb label,.cmph label{font-size:13px}
+table{font-size:14px}th,td{padding:9px 12px}th{font-size:13px}
+.chip{font-size:13.5px;padding:6px 13px}.tag{font-size:12.5px;padding:3px 10px}.badge{font-size:13px}
+.fb h4{font-size:13px}.bar .l{width:100px;font-size:13.5px}.bar .v{width:170px;font-size:13px}
+.sbr .v{font-size:12.5px}.gb .l{font-size:13.5px}.gb .v{font-size:12.5px}
+.look .r div span,#info .f div span{font-size:12.5px}
+.sbar{padding:14px 18px;border-radius:16px}.sbar input{font-size:17px;padding:13px 16px}
+/* search results */
+.sres{margin:-2px 0 16px}
+.sres .sh2{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;font-weight:700;font-size:17px;margin:0 2px 10px}
+.sres .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.rc{background:var(--card);border:1px solid var(--bd);border-left:5px solid var(--pr);border-radius:14px;padding:14px 16px;box-shadow:0 2px 8px rgba(16,24,40,.08)}
+.rc[data-s="1"]{border-left-color:var(--s1)}.rc[data-s="2"]{border-left-color:var(--s2)}.rc[data-s="3"]{border-left-color:var(--s3)}
+.rc.dn{opacity:.6}.rc .h{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.rc .fn{font-weight:700;font-size:16.5px}.rc .nm{color:var(--mu);font-size:14.5px;margin-top:2px}
+.rc .g{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:12px;font-size:14.5px}
+.rc .g span{display:block;font-size:12px;color:var(--mu)}
+.rc label{display:flex;align-items:center;gap:7px;margin-top:12px;font-size:14px}
+.rc input[type=checkbox]{width:18px;height:18px;padding:0}
+mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
+.sres .none{background:var(--card);border:1px dashed var(--bd);border-radius:12px;padding:18px;text-align:center;color:var(--mu);font-size:15px}
+@media(max-width:700px){
+ body{font-size:15px}.card{padding:12px}.kpi{padding:10px 12px}.kpi b{font-size:19px}.kpi span{font-size:12.5px}
+ .bar .l{width:82px;font-size:12.5px}.bar .v{width:112px;font-size:12px}.sbr .v{font-size:11.5px}.gb .l{font-size:12.5px}.gb .v{font-size:11.5px}
+ .cc .g{font-size:14px}.cc .g span{font-size:12px}.cc label{font-size:14px}
+ .sbar{padding:11px 12px}.sbar input{font-size:16px;padding:12px}
+ .sres .grid{grid-template-columns:1fr}.rc .g{font-size:14.5px}
+ #ot,#ot th,#ot td{font-size:12.5px}
+}
 </style>
 </head>
 <body>
@@ -157,6 +194,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 
 <main>
 <div class="sbar"><span class="si">&#128269;</span><input id="q" type="search" placeholder="Search: Name / VF Fac No / Reg No / Officer / Branch / Tel..." autocomplete="off"><button id="qx" title="Clear search">&#10005;</button></div>
+<div class="sres" id="sres"></div>
 <div class="card" id="info" style="border-left:4px solid var(--s2)"></div>
 <div class="card look" id="look"><h3>Fac No Search</h3><div class="f"><input id="fq" placeholder="Fac No (e.g. VF250201107747)" size="30"><button id="fgo" class="p">Check</button></div><div id="lres" class="mu" style="margin-top:8px">Type a Fac No and click Check to see its Stage, Arrears and Done status.</div></div>
 <div class="kpis" id="kpis"></div>
@@ -214,6 +252,33 @@ var stage=function(d){return d>=90?3:d>=30?2:1};
 var bidx=function(d){for(var i=0;i<BK.length;i++)if(d>=BK[i][1]&&d<=BK[i][2])return i;return 8};
 function dim(d){return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()}
 var HIST=[],USER=null;try{HIST=JSON.parse(localStorage.getItem("arr_hist")||"[]");USER=JSON.parse(sessionStorage.getItem("arr_user")||"null")}catch(e){}
+/* ===== SEARCH RESULTS PANEL (under the search bar) ===== */
+function qmatch(r,qt){
+  var h=[r.fac,r.name,r.reg,r.town,r.tel,r.mkt,r.branch,r.desc,r.fu].join(" ").toLowerCase(),hn=h.replace(/[^a-z0-9]/g,"");
+  for(var i=0;i<qt.length;i++){var t=qt[i],tn=t.replace(/[^a-z0-9]/g,"");if(h.indexOf(t)<0&&!(tn&&hn.indexOf(tn)>=0))return false}
+  return true
+}
+function hl(t,re){
+  t=String(t==null?"":t);if(!re)return esc(t);
+  var o="",i=0,m;re.lastIndex=0;
+  while((m=re.exec(t))){if(!m[0]){re.lastIndex++;continue}o+=esc(t.slice(i,m.index))+"<mark>"+esc(m[0])+"</mark>";i=m.index+m[0].length}
+  return o+esc(t.slice(i))
+}
+function sres(){
+  var box=$("sres"),q=$("q").value.toLowerCase().trim();
+  if(!q||typeof R=="undefined"||!R||!R.length){box.innerHTML="";return}
+  var qt=q.split(/\s+/).filter(Boolean),a=R.filter(function(r){return qmatch(r,qt)}).sort(function(x,y){return y.tot-x.tot});
+  if(!a.length){box.innerHTML='<div class="none">No customer found for “'+esc(q)+'”.</div>';return}
+  var re=new RegExp(qt.map(function(w){return w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}).join("|"),"gi"),MAXR=24;
+  box.innerHTML='<div class="sh2"><span>&#128269; '+a.length+' result'+(a.length>1?"s":"")+'</span><span class="mu" style="font-weight:400;font-size:13px">Total Arrears '+fmt(sum(a,"tot"))+' • Portfolio '+fmt(sum(a,"port"))+'</span></div><div class="grid">'+
+  a.slice(0,MAXR).map(function(r){
+    var dd=done[r.fac];
+    return'<div class="rc'+(dd?" dn":"")+'" data-s="'+r.stage+'"><div class="h"><div><div class="fn">'+hl(r.fac,re)+'</div><div class="nm">'+hl(r.name,re)+'</div></div><div style="text-align:right"><span class="tag s'+r.stage+'">Stage '+r.stage+'</span><div style="margin-top:5px">'+(r.r1?'<span class="tag fl">1st</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span>':"")+'</div></div></div>'+
+    '<div class="g"><div><span>Arrears Days</span>'+r.days+' ('+BK[r.b][0]+')</div><div><span>Total Arrears</span><b>'+fmt(r.tot)+'</b></div><div><span>Rental Arrears</span>'+fmt(r.rent)+'</div><div><span>Portfolio</span>'+fmt(r.port)+'</div><div><span>Mkt Officer</span>'+hl(r.mkt,re)+'</div><div><span>Branch</span>'+hl(r.branch,re)+'</div><div><span>Reg No</span>'+hl(r.reg||"-",re)+'</div><div><span>Tel</span>'+hl(r.tel||"-",re)+'</div></div>'+
+    '<label><input type="checkbox" data-sd="'+esc(r.fac)+'"'+(dd?" checked":"")+'> Done</label></div>'
+  }).join("")+'</div>'+(a.length>MAXR?'<div class="mu" style="margin:8px 2px 0">Showing the first '+MAXR+' of '+a.length+'. Type more to narrow down, or see the full list below.</div>':"");
+}
+$("sres").addEventListener("change",function(e){var t=e.target;if(t.hasAttribute&&t.hasAttribute("data-sd")){setDone(t.getAttribute("data-sd"),t.checked);draw()}});
 var OFM={};
 function onm(x){var s=String(x==null?"":x).replace(/\s+/g," ").trim();if(!s)return"";var k=s.toLowerCase().replace(/[^a-z0-9]/g,"");if(!k)return s;return OFM[k]||(OFM[k]=s)}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
@@ -317,10 +382,7 @@ function filt(skipB){
     var dd=!!done[r.fac];
     if(dn==="1"&&!dd)return false;
     if(dn==="0"&&dd)return false;
-    if(qt.length){
-      var h=[r.fac,r.name,r.reg,r.town,r.tel,r.mkt,r.branch,r.desc,r.fu].join(" ").toLowerCase(),hn=h.replace(/[^a-z0-9]/g,"");
-      for(var i=0;i<qt.length;i++){var t=qt[i],tn=t.replace(/[^a-z0-9]/g,"");if(h.indexOf(t)<0&&!(tn&&hn.indexOf(tn)>=0))return false}
-    }
+    if(qt.length&&!qmatch(r,qt))return false;
     if(!skipB&&any&&!bkSel[r.b])return false;
     return true;
   });
@@ -328,6 +390,7 @@ function filt(skipB){
 function sum(a,k){return a.reduce(function(s,r){return s+(+r[k]||0)},0)}
 
 function draw(){
+  try{sres()}catch(e){}
   $("meta").textContent="As at "+asAt.toDateString()+" • "+R.length+" facilities • "+dim(asAt)+" days month";
   $("pnote").textContent="PNPL = Arrears Days "+$("p1").value+" – "+$("p2").value+" (91 + "+dim(asAt)+" days in month). Stage 1 = 0–29, Stage 2 = 30–89, Stage 3 = 90+";
   var a=filt(false),b=filt(true);
