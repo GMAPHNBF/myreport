@@ -132,7 +132,9 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
     <div class="row"><button class="p" id="go">Upload &amp; Replace</button><button class="mc">Close</button><button id="lo">Logout</button></div>
     <div style="border-top:1px solid var(--bd);margin-top:12px;padding-top:10px">
       <b>&#128197; Month-end report (manual)</b>
-      <div class="mu" style="font-size:12px;margin:4px 0 8px">Select the two Excel files above, then click here to save them as the month-end report for Compare. Current dashboard data is NOT changed.</div>
+      <div class="mu" style="font-size:12px;margin:4px 0 8px">Select the last month-end Excel files here (separate from today's files above), then click Save. Current dashboard data is NOT changed.</div>
+      <label>1. Month-end: Branch Wise RentalArrears (.xlsx, one or many)<input type="file" id="fma" accept=".xlsx,.xls" multiple></label>
+      <label>2. Month-end: Destinity LE DailySummary (.xlsx, one or many)<input type="file" id="fmb" accept=".xlsx,.xls" multiple></label>
       <label>Month-end date (optional &ndash; empty = date inside the file)<input type="date" id="meDate"></label>
       <button id="goME">Save as Month-end report</button>
     </div>
@@ -564,8 +566,8 @@ function upFinish(summary,isError){
    ============================================================ */
 function runUpload(meOnly){
   if(!USER){alert("Please login first.");return}
-  var filesA=Array.from($("fa").files||[]);
-  var filesB=Array.from($("fb").files||[]);
+  var filesA=Array.from($(meOnly?"fma":"fa").files||[]);
+  var filesB=Array.from($(meOnly?"fmb":"fb").files||[]);
   var all=filesA.concat(filesB);
   if(!all.length){alert("Please select the Excel files.");return}
 
