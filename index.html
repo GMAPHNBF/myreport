@@ -867,7 +867,7 @@ function agg(a){
 function dlt(a,b,good,f){f=f||fmt;var d=b-a;if(Math.abs(d)<0.005)return'<span class="cn">0</span>';var c=!good?"cn":((d>0)==(good>0)?"cg":"cb");return'<span class="'+c+'">'+(d>0?"▲ ":"▼ ")+f(Math.abs(d))+'</span>'}
 function pct(a,b){if(!a)return"";var p=(b-a)/a*100;return' <span class="cn">('+(p>0?"+":"")+p.toFixed(1)+'%)</span>'}
 function dcol(d,g){return Math.abs(d)<0.005||!g?"var(--pr)":((d>0)==(g>0)?"var(--s1)":"var(--s3)")}
-var KP=[["Customers","n",0,fmt],["Total Arrears","tot",-1,fmt],["Rental Arrears","rent",-1,fmt],["Portfolio","port",1,fmt],["Stage 1 customers","n1",1,fmt],["Stage 2 customers","n2",-1,fmt],["Stage 3 customers","n3",-1,fmt],["Stage 3 arrears","t3",-1,fmt],["NPL Ratio","npl",-1,f2],["NPL Portfolio (91+)","nplP",-1,fmt]];
+var KP=[["Customers","n",-1,fmt],["Total Arrears","tot",-1,fmt],["Rental Arrears","rent",-1,fmt],["Portfolio","port",-1,fmt],["Stage 1 customers","n1",1,fmt],["Stage 2 customers","n2",-1,fmt],["Stage 3 customers","n3",-1,fmt],["Stage 3 arrears","t3",-1,fmt],["NPL Ratio","npl",-1,f2],["NPL Portfolio (91+)","nplP",-1,fmt]];
 
 function cmpShow(){$("cmp").classList.add("on");document.body.style.overflow="hidden";cmpInit()}
 function cmpHide(){$("cmp").classList.remove("on");document.body.style.overflow=""}
@@ -893,13 +893,20 @@ function cmpInit(){
 }
 function cmpSnap(k){
   if(SNAP[k])return Promise.resolve(SNAP[k]);
-  return sget("snaps/"+k).then(function(j){if(!j||!j.rows)return null;var rows=Array.isArray(j.rows)?j.rows:Object.keys(j.rows).map(function(x){return j.rows[x]});return SNAP[k]=cmpPrep(rows)})
+  return sget("snaps/"+k).then(function(j){
+    if(!j||!j.rows) return null;
+    var rows=Array.isArray(j.rows)?j.rows:Object.keys(j.rows).map(function(x){return j.rows[x]});
+    return SNAP[k]=cmpPrep(rows);
+  }).catch(function(e){ console.error("Error loading snapshot:", e); return null; });
 }
 function cmpRun(){
   var ka=$("cmA").value;if(!ka||!CURR)return;
   $("cbody").innerHTML='<div class="card mu">Loading month-end report...</div>';
   cmpSnap(ka).then(function(sa){
-    if(!sa){$("cbody").innerHTML='<div class="card" style="color:var(--s3)">Could not load the month-end report from the online database.</div>';return}
+    if(!sa){
+      $("cbody").innerHTML='<div class="card" style="color:var(--s3)"><b>දෝෂයකි!</b><br>මෙම දිනයට අදාළ මාසික දත්ත (Month-end snapshot) Database එකේ සොයාගත නොහැක. කරුණාකර මුලින්ම "Month-end report" එක සාර්ථකව උඩුගත කර ඇත්දැයි තහවුරු කරගන්න.</div>';
+      return;
+    }
     CA=sa;CB=CURR.rows;
     var all=CA.concat(CB),keep=function(id,k){var v=$(id).value,s=Array.from(new Set(all.map(function(x){return x[k]}))).sort();$(id).innerHTML='<option value="">All</option>'+s.map(function(x){return'<option>'+esc(x)+'</option>'}).join("");if(s.indexOf(v)>=0)$(id).value=v};
     keep("cmBr","branch");keep("cmOf","mkt");CF="";TBL={};cmpRender()
@@ -916,7 +923,16 @@ function gb(l,a,b,mx,txt){return'<div class="gb"><div class="l" title="'+esc(l)+
 function stk(l,T){var t=T.p1+T.p2+T.p3,p=function(s){return t?T["p"+s]/t*100:0};return'<div class="sbr"><div class="l">'+l+'</div><div class="sb">'+[1,2,3].map(function(s){return T["p"+s]?'<span style="width:'+p(s)+'%;background:var(--s'+s+')" title="Stage '+s+': '+p(s).toFixed(1)+'%"></span>':""}).join("")+'</div><div class="v" style="width:250px">S1 '+p(1).toFixed(1)+'% ('+T.n1+') • S2 '+p(2).toFixed(1)+'% ('+T.n2+') • S3 '+p(3).toFixed(1)+'% ('+T.n3+')</div></div>'}
 function num(k){return function(r){return r[k]==null?"-":fmt(r[k])}}
 function dcl(k,g,f){return function(r){return dlt(0,r[k],g,f)}}
-function gcols(first){return[{k:"name",l:first,h:function(r){return esc(r.name)}},{k:"nA",l:"Cust A",n:1,h:num("nA")},{k:"nB",l:"Cust B",n:1,h:num("nB")},{k:"tA",l:"Arrears A",n:1,h:num("tA")},{k:"tB",l:"Arrears B",n:1,h:num("tB")},{k:"dT",l:"Δ Arrears",n:1,h:dcl("dT",-1)},{k:"dP",l:"Δ Portfolio",n:1,h:dcl("dP",1)},{k:"s3A",l:"Stage3 A",n:1,h:num("s3A")},{k:"s3B",l:"Stage3 B",n:1,h:num("s3B")},{k:"nlA",l:"NPL% A",n:1,h:function(r){return f2(r.nlA)}},{k:"nlB",l:"NPL% B",n:1,h:function(r){return f2(r.nlB)}},{k:"dN",l:"Δ NPL",n:1,h:dcl("dN",-1,f2)}]}
+function gcols(first){return[
+  {k:"name",l:first,h:function(r){return esc(r.name)}},
+  {k:"nA",l:"Cust A",n:1,h:num("nA")},{k:"nB",l:"Cust B",n:1,h:num("nB")},
+  {k:"tA",l:"Arrears A",n:1,h:num("tA")},{k:"tB",l:"Arrears B",n:1,h:num("tB")},
+  {k:"dT",l:"Δ Arrears",n:1,h:dcl("dT",-1)},
+  {k:"dP",l:"Δ Portfolio",n:1,h:dcl("dP",-1)},
+  {k:"s3A",l:"Stage3 A",n:1,h:num("s3A")},{k:"s3B",l:"Stage3 B",n:1,h:num("s3B")},
+  {k:"nlA",l:"NPL% A",n:1,h:function(r){return f2(r.nlA)}},{k:"nlB",l:"NPL% B",n:1,h:function(r){return f2(r.nlB)}},
+  {k:"dN",l:"Δ NPL",n:1,h:dcl("dN",-1,f2)}
+]}
 function stg(v){return v==null?"-":'<span class="tag s'+v+'">'+v+'</span>'}
 var CCOLS=[{k:"fac",l:"Fac No",h:function(r){return esc(r.fac)}},{k:"name",l:"Name",h:function(r){return esc(r.name)}},{k:"mkt",l:"Mkt Officer",h:function(r){return esc(r.mkt)}},{k:"branch",l:"Branch",h:function(r){return esc(r.branch)}},
  {k:"dA",l:"Days A",n:1,h:num("dA")},{k:"dB",l:"Days B",n:1,h:num("dB")},{k:"dD",l:"Δ Days",n:1,h:function(r){return r.dA==null||r.dB==null?"-":dlt(r.dA,r.dB,-1)}},
@@ -1003,32 +1019,25 @@ function cmpRender(){
   h+='<div class="g2"><div class="card"><h3>Stage wise – Total Arrears</h3>'+c1+'</div><div class="card"><h3>Arrears Bucket wise</h3>'+c2+'</div></div>';
 
   // ==========================================
-  // 5. BEST RECOVERY MARKETING OFFICERS (New)
+  // 5. BEST RECOVERY MARKETING OFFICERS (Corrected Logic)
   // ==========================================
-  function bestRecovery(){
+  function getBestRecovery(){
     var rec = [];
     og.forEach(function(o){
-      var lostA = 0, lostB = 0;
-      a.filter(function(r){return r.mkt===o.name}).forEach(function(r){
-        var match = b.find(function(x){return x.fac===r.fac});
-        if(!match) lostA += r.tot;
-      });
-      b.filter(function(r){return r.mkt===o.name}).forEach(function(r){
-        var match = a.find(function(x){return x.fac===r.fac});
-        if(!match) lostB += r.tot;
-      });
       var dT = o.dT;
       var dP = o.dP;
       var baseT = o.tA || 0;
-      var pctT = baseT ? (dT/baseT)*100 : 0;
-      var activeA = o.nA - (lostA>0?1:0);
-      var pctP = o.A.port ? (dP/o.A.port)*100 : 0;
+      var baseP = o.A.port || 0;
+      
+      // අඩුවීමක් (Recovery) සිදුව ඇත්නම් පමණක් ගණනය කරන්න
+      var pctT = (baseT > 0 && dT < 0) ? (Math.abs(dT)/baseT)*100 : 0;
+      var pctP = (baseP > 0 && dP < 0) ? (Math.abs(dP)/baseP)*100 : 0;
       
       if(o.nB > 0) {
         rec.push({
           name: o.name, nA: o.nA, nB: o.nB, dT: dT, dP: dP, 
           pctT: pctT, pctP: pctP,
-          score: (pctT * 0.6) + (pctP * 0.4) // Weighted score
+          score: (pctT * 0.6) + (pctP * 0.4) // Arrears 60% + Portfolio 40%
         });
       }
     });
@@ -1036,39 +1045,17 @@ function cmpRender(){
     rec.sort(function(x,y){return y.score - x.score});
     
     return rec.map(function(r, i){
-      var cls = r.score > 0 ? "cg" : "cb";
-      var sign = r.score > 0 ? "▲" : "▼";
-      return '<tr><td>'+(i+1)+'</td><td><b>'+esc(r.name)+'</b></td><td class=n>'+r.nA+' → '+r.nB+'</td><td class=n>'+dlt(r.dT, 0, -1)+'</td><td class=n>'+dlt(r.dP, 0, 1)+'</td><td class=n>'+f2(r.pctT)+'</td><td class=n>'+f2(r.pctP)+'</td><td class=n><span class="'+cls+'">'+sign+' '+f2(Math.abs(r.score))+'</span></td></tr>';
+      var tHtml = r.dT < 0 ? '<span class="cg">▼ '+fmt(Math.abs(r.dT))+'</span>' : '<span class="cn">0</span>';
+      var pHtml = r.dP < 0 ? '<span class="cg">▼ '+fmt(Math.abs(r.dP))+'</span>' : '<span class="cn">0</span>';
+      var sHtml = r.score > 0 ? '<span class="cg">▲ '+r.score.toFixed(1)+'</span>' : '<span class="cn">0</span>';
+      return '<tr><td>'+(i+1)+'</td><td><b>'+esc(r.name)+'</b></td><td class=n>'+r.nA+' → '+r.nB+'</td><td class=n>'+tHtml+'</td><td class=n>'+pHtml+'</td><td class=n>'+r.pctT.toFixed(1)+'%</td><td class=n>'+r.pctP.toFixed(1)+'%</td><td class=n>'+sHtml+'</td></tr>';
     }).join("");
   }
+  
   h+='<div class="card"><h3>🏆 Best Recovery Marketing Officers</h3>';
-  h+='<div class="mu" style="margin-bottom:10px">Ranked by the highest reduction in Total Arrears (%) and highest reduction in Portfolio (%) from A to B.</div>';
-  h+='<div class="tw" style="max-height:none"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Cust A → B</th><th class=n>Change Arrears</th><th class=n>Change Portfolio</th><th class=n>Arrears Recov %</th><th class=n>Portfolio Recov %</th><th class=n>Score</th></tr>';
-  h+=bestRecovery() || '<tr><td colspan="8" class="mu" style="text-align:center">No data available</td></tr>';
-  h+='</table></div></div>';
-
-  // ==========================================
-  // 6. BEST RECOVERY BY PORTFOLIO (New)
-  // ==========================================
-  function bestPortfolioRecovery(){
-    var p = [];
-    og.forEach(function(o){
-      if(o.A.port > 0) {
-        var pctP = (o.dP / o.A.port) * 100;
-        if(o.dP < 0) {
-          p.push({name: o.name, pA: o.A.port, pB: o.B.port, dP: o.dP, pctP: pctP});
-        }
-      }
-    });
-    p.sort(function(x,y){return x.pctP - y.pctP}); // Most negative first (highest recovery)
-    return p.map(function(r, i){
-      return '<tr><td>'+(i+1)+'</td><td><b>'+esc(r.name)+'</b></td><td class=n>'+fmt(r.pA)+'</td><td class=n>'+fmt(r.pB)+'</td><td class=n>'+dlt(r.dP, 0, 1)+'</td><td class=n><span class="cg">▲ '+f2(Math.abs(r.pctP))+'</span></td></tr>';
-    }).join("");
-  }
-  h+='<div class="card"><h3>🏆 Best Recovery by Portfolio</h3>';
-  h+='<div class="mu" style="margin-bottom:10px">Marketing Officers with the highest reduction in Portfolio value.</div>';
-  h+='<div class="tw" style="max-height:none"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Portfolio A</th><th class=n>Portfolio B</th><th class=n>Difference</th><th class=n>Recovery %</th></tr>';
-  h+=bestPortfolioRecovery() || '<tr><td colspan="6" class="mu" style="text-align:center">No data available</td></tr>';
+  h+='<div class="mu" style="margin-bottom:10px">Ranked by the highest reduction (Recovery) in Total Arrears and Portfolio from A to B.</div>';
+  h+='<div class="tw" style="max-height:none"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Cust A → B</th><th class=n>Arrears Recovered</th><th class=n>Portfolio Recovered</th><th class=n>Arrears %</th><th class=n>Portfolio %</th><th class=n>Score</th></tr>';
+  h+=getBestRecovery() || '<tr><td colspan="8" class="mu" style="text-align:center">No data available</td></tr>';
   h+='</table></div></div>';
 
   // Migration matrix
