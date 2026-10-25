@@ -249,7 +249,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
  <div class="cmph">
   <button id="duBack" class="p">&#8592; Dashboard</button>
   <b style="font-size:16px;align-self:center">&#128197; Facilities Due</b>
-  <label>Due date<input type="date" id="duDt"></label>
+  <label>Due Day<select id="duDay"></select></label>
   <button id="duXl">&#11015; Excel</button>
  </div>
  <div class="cmpm">
@@ -966,17 +966,22 @@ function lIso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"
 function duShow(){$("due").classList.add("on");document.body.style.overflow="hidden";duInit()}
 function duHide(){$("due").classList.remove("on");if(!$("cmp").classList.contains("on"))document.body.style.overflow=""}
 function duInit(){
-  if(!$("duDt").value)$("duDt").value=lIso(new Date());
+  var cnt={},tdy=new Date().getDate(),dv=$("duDay").value;
+  R.forEach(function(r){var x=+r.due;if(x>0)cnt[x]=(cnt[x]||0)+1});
+  var op='<option value="">Today (day '+tdy+') - '+(cnt[tdy]||0)+' fac</option>';
+  for(var i=1;i<=31;i++)if(cnt[i])op+='<option value="'+i+'">Day '+i+' - '+cnt[i]+' fac</option>';
+  $("duDay").innerHTML=op;if(dv&&cnt[dv])$("duDay").value=dv;
   var keep=function(id,k){var v=$(id).value,s=Array.from(new Set(R.map(function(r){return r[k]||"(none)"}))).sort();$(id).innerHTML='<option value="">All</option>'+s.map(function(x){return"<option>"+esc(x)+"</option>"}).join("");if(s.indexOf(v)>=0)$(id).value=v};
   keep("duOf","mkt");keep("duDe","desc");duRender()
 }
+function o2day(){return $("duDay").value||new Date().getDate()}
 function duGrant(r){var g=String(r.grant||"").slice(0,10);if(g)return g;var m=/^[A-Za-z]{2}(\d{2})(\d{2})/.exec(r.fac||"");return m?"20"+m[1]+"-"+m[2]+"-01":""}
 function duList(){
-  var dt=$("duDt").value,d=dt?new Date(dt+"T00:00:00"):new Date(),day=d.getDate(),last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  var sel=$("duDay").value,d=new Date(),day=sel?+sel:d.getDate(),last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(),isTd=!sel;
   var of=$("duOf").value,de=$("duDe").value,gd=$("duGd").value,st=$("duSt").value,q=$("duQ").value.trim().toLowerCase(),cut="";
   if(gd){var x=new Date(d);x.setMonth(x.getMonth()-(gd=="A"?12:+gd));cut=lIso(x)}
   var hasDue=R.some(function(r){return+r.due>0});
-  var all=R.filter(function(r){var x=+r.due;return x>0&&(x===day||(day===last&&x>last))});
+  var all=R.filter(function(r){var x=+r.due;return x>0&&(x===day||(isTd&&day===last&&x>last))});
   var rows=all.filter(function(r){
     if(of&&(r.mkt||"(none)")!==of)return false;if(de&&(r.desc||"(none)")!==de)return false;if(st&&String(r.stage)!==st)return false;
     if(gd){var g=duGrant(r);if(!g)return false;if(gd=="A"?g>=cut:g<cut)return false}
@@ -991,7 +996,7 @@ function duRender(){
   var ts=sum(rows,"tot"),rs=sum(rows,"rent"),m={};
   rows.forEach(function(r){var k=r.mkt||"(none)",x=m[k]||(m[k]={n:0,t:0,r:0,s3:0});x.n++;x.t+=+r.tot||0;x.r+=+r.rent||0;if(r.stage==3)x.s3++});
   var ol=Object.keys(m).sort(function(a,c){return m[c].t-m[a].t});
-  var h='<div class="dk" style="margin:12px 0"><div class="kpi"><span>Due on day '+o.day+' ('+dlab(lIso(o.date))+')</span><b>'+fmt(rows.length)+'</b></div><div class="kpi"><span>Total Arrears</span><b>'+fmt(ts)+'</b></div><div class="kpi"><span>Rental Arrears</span><b>'+fmt(rs)+'</b></div><div class="kpi"><span>Stage 3 (90+)</span><b>'+fmt(rows.filter(function(r){return r.stage==3}).length)+'</b></div></div>';
+  var h='<div class="dk" style="margin:12px 0"><div class="kpi"><span>Due on day '+o.day+($("duDay").value?'':' (today)')+'</span><b>'+fmt(rows.length)+'</b></div><div class="kpi"><span>Total Arrears</span><b>'+fmt(ts)+'</b></div><div class="kpi"><span>Rental Arrears</span><b>'+fmt(rs)+'</b></div><div class="kpi"><span>Stage 3 (90+)</span><b>'+fmt(rows.filter(function(r){return r.stage==3}).length)+'</b></div></div>';
   if(rows.length!==o.all.length)h+='<div class="mu" style="margin-bottom:8px">Showing '+fmt(rows.length)+' of '+fmt(o.all.length)+' facilities due on this day (filters applied).</div>';
   h+='<div class="card"><h3>Mkt Officer wise <small>(click an officer to filter)</small></h3><div class="tw" style="max-height:340px"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Facilities Due</th><th class=n>Stage 3</th><th class=n>Rental Arrears</th><th class=n>Total Arrears</th></tr>'+
     (ol.length?ol.map(function(k,i){var x=m[k];return'<tr class="duo" data-o="'+esc(k)+'" style="cursor:pointer"><td>'+(i+1)+'</td><td><b>'+esc(k)+'</b></td><td class=n>'+fmt(x.n)+'</td><td class=n>'+fmt(x.s3)+'</td><td class=n>'+fmt(x.r)+'</td><td class=n>'+fmt(x.t)+'</td></tr>'}).join(""):'<tr><td colspan="6" class="mu" style="text-align:center">No facilities due</td></tr>')+'</table></div></div>';
@@ -1003,9 +1008,9 @@ function duRender(){
 }
 $("dub").onclick=function(){location.hash="due"};
 $("duBack").onclick=function(){location.hash=""};
-["duDt","duOf","duDe","duGd","duSt"].forEach(function(id){$(id).onchange=duRender});
+["duDay","duOf","duDe","duGd","duSt"].forEach(function(id){$(id).onchange=duRender});
 $("duQ").oninput=duRender;
-$("duXl").onclick=function(){dl(DUROWS.map(function(r){return{"Fac No":r.fac,Name:r.name,"Mkt Officer":r.mkt,Branch:r.branch,Description:r.desc,"Grant Date":duGrant(r),Stage:r.stage,"Arrears Days":r.days,"Rental Arrears":r.rent,"Total Arrears":r.tot,Due:r.due,Tel:r.tel}}),"Due_"+($("duDt").value||"today"))};
+$("duXl").onclick=function(){dl(DUROWS.map(function(r){return{"Fac No":r.fac,Name:r.name,"Mkt Officer":r.mkt,Branch:r.branch,Description:r.desc,"Grant Date":duGrant(r),Stage:r.stage,"Arrears Days":r.days,"Rental Arrears":r.rent,"Total Arrears":r.tot,Due:r.due,Tel:r.tel}}),"Due_day"+o2day())};
 
 
 var CURR=null;
