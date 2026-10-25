@@ -233,6 +233,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
   <label>Mkt Officer<select id="cmOf"><option value="">All</option></select></label>
   <label>Description<select id="cmDe"><option value="">All</option></select></label>
   <label>Grant Date<select id="cmGd"><option value="">All</option><option value="3">Last 3 Months</option><option value="6">Last 6 Months</option><option value="12">Last 12 Months</option><option value="A">After 12 Months</option></select></label>
+  <label>Grant Month<select id="cmMo"><option value="">All</option></select></label>
   <button id="cmGo" class="p">&#8635; Compare</button>
   <button id="cmXl">&#11015; Excel</button>
  </div>
@@ -916,15 +917,25 @@ function cmpRun(){
 }
 $("cmA").onchange=cmpRun;
 $("cmGo").onclick=function(){SNAP={};cmpInit()};
-$("cmBr").onchange=$("cmOf").onchange=$("cmDe").onchange=$("cmGd").onchange=function(){CF="";TBL={};cmpRender()};
+$("cmBr").onchange=$("cmOf").onchange=$("cmDe").onchange=$("cmGd").onchange=$("cmMo").onchange=function(){CF="";TBL={};cmpRender()};
 $("cmXl").onclick=function(){cmpXl()};
-function cmpFilt(rows){
-  var b=$("cmBr").value,o=$("cmOf").value,d=$("cmDe").value,g=$("cmGd").value,cut="";
+function mlab(k){var d=new Date(k+"-01T00:00:00Z");return isNaN(d)?k:d.toLocaleDateString("en-GB",{month:"short",year:"numeric",timeZone:"UTC"})}
+function cmpFilt(rows,skMo,skGd){
+  var b=$("cmBr").value,o=$("cmOf").value,d=$("cmDe").value,g=skGd?"":$("cmGd").value,mo=skMo?"":$("cmMo").value,cut="";
   if(g&&CURR){var x=new Date(CURR.key+"T00:00:00Z");x.setUTCMonth(x.getUTCMonth()-(g=="A"?12:+g));cut=x.toISOString().slice(0,10)}
   return rows.filter(function(r){
     if(b&&r.branch!==b)return false;if(o&&r.mkt!==o)return false;if(d&&r.desc!==d)return false;
-    if(g){var gd=String(r.grant||"").slice(0,10);if(!gd)return false;if(g=="A"?gd>=cut:gd<cut)return false}
+    var gd=String(r.grant||"").slice(0,10);
+    if(g){if(!gd)return false;if(g=="A"?gd>=cut:gd<cut)return false}
+    if(mo&&gd.slice(0,7)!==mo)return false;
     return true})
+}
+function moOpts(){
+  var sel=$("cmMo").value,m={};
+  cmpFilt(CB,true).forEach(function(r){var k=String(r.grant||"").slice(0,7);if(!/^\d{4}-\d\d$/.test(k))return;var x=m[k]||(m[k]={n:0,p:0});x.n++;x.p+=r.port});
+  var ks=Object.keys(m).sort().reverse();
+  $("cmMo").innerHTML='<option value="">All</option>'+ks.map(function(k){return'<option value="'+k+'">'+mlab(k)+' • '+m[k].n+' fac • '+fmt(m[k].p)+'</option>'}).join("");
+  if(m[sel])$("cmMo").value=sel
 }
 function grp(a,b,k){var m={};a.forEach(function(r){(m[r[k]]=m[r[k]]||{a:[],b:[]}).a.push(r)});b.forEach(function(r){(m[r[k]]=m[r[k]]||{a:[],b:[]}).b.push(r)});return Object.keys(m).map(function(n){return{name:n,A:agg(m[n].a),B:agg(m[n].b)}})}
 function flat(g){return g.map(function(x){return{name:x.name,nA:x.A.n,nB:x.B.n,tA:x.A.tot,tB:x.B.tot,dT:x.B.tot-x.A.tot,dP:x.B.port-x.A.port,pA:x.A.port,pB:x.B.port,s3A:x.A.n3,s3B:x.B.n3,nlA:x.A.npl,nlB:x.B.npl,dN:x.B.npl-x.A.npl}})}
@@ -973,6 +984,7 @@ function cmpCust(){
 }
 
 function cmpRender(){
+  moOpts();
   var a=cmpFilt(CA),b=cmpFilt(CB),A=agg(a),B=agg(b),ka=$("cmA").value,kb=CURR.key,la=dlab(ka),lb=dlab(kb),h="";
   
   var MA={},MB={};a.forEach(function(r){MA[r.fac]=r});b.forEach(function(r){MB[r.fac]=r});
@@ -1057,6 +1069,43 @@ function cmpRender(){
   h+='<div class="tw" style="max-height:none"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Cust A → B</th><th class=n>Portfolio A → B</th><th class=n>Arrears / Portfolio A → B</th><th class=n>Ratio Change</th><th class=n>Arrears Change</th><th class=n>Arrears Recovered %</th><th class=n>Portfolio Points</th><th class=n>Score</th></tr>';
   h+=getBestRecovery() || '<tr><td colspan="10" class="mu" style="text-align:center">No data available</td></tr>';
   h+='</table></div></div>';
+
+  // ==========================================
+  // 6. BEST LENDING MARKETING OFFICERS + monthly lending chart
+  // ==========================================
+  var moV=$("cmMo").value,gdV=$("cmGd").value,c12d=new Date(kb+"T00:00:00Z");c12d.setUTCMonth(c12d.getUTCMonth()-12);var c12=c12d.toISOString().slice(0,10),lp,ll;
+  if(moV){lp=function(g){return g.slice(0,7)==moV};ll=mlab(moV)}
+  else if(gdV=="A"){lp=function(g){return g<c12};ll="granted after 12 months"}
+  else{var mm=gdV?+gdV:3,cd=new Date(kb+"T00:00:00Z");cd.setUTCMonth(cd.getUTCMonth()-mm);var cs=cd.toISOString().slice(0,10);lp=function(g){return g>=cs&&g<=kb};ll="last "+mm+" months"}
+  var LR=cmpFilt(CB,true).filter(function(r){var g=String(r.grant||"").slice(0,10);return g&&lp(g)}),LM={};
+  LR.forEach(function(r){var x=LM[r.mkt]||(LM[r.mkt]={n:0,p:0,t:0});x.n++;x.p+=r.port;x.t+=r.tot});
+  var LK=Object.keys(LM),lmP=1,lmN=1,lsP=0;LK.forEach(function(k){lmP=Math.max(lmP,LM[k].p);lmN=Math.max(lmN,LM[k].n);lsP+=LM[k].p});
+  var LL=LK.map(function(k){var x=LM[k];return{name:k,n:x.n,p:x.p,t:x.t,sc:x.p/lmP*60+x.n/lmN*40}}).sort(function(x,y){return y.sc-x.sc});
+  h+='<div class="card"><h3>💰 Best Lending Marketing Officers <small>('+ll+')</small></h3>';
+  h+='<div class="mu" style="margin-bottom:10px">Ranked by lending (facilities granted) in the selected period, using the <b>Grant Month</b> / <b>Grant Date</b> filters (default: last 3 months). Score = 60% Portfolio granted + 40% number of facilities granted (highest = full marks). Only facilities still in the report are counted.</div>';
+  h+='<div class="tw" style="max-height:none"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Facilities Granted</th><th class=n>Portfolio Granted</th><th class=n>Avg / Facility</th><th class=n>Share of Lending</th><th class=n>Arrears / Portfolio</th><th class=n>Score</th></tr>';
+  h+=LL.length?LL.map(function(r,i){return'<tr><td>'+(i+1)+'</td><td><b>'+esc(r.name)+'</b></td><td class=n>'+fmt(r.n)+'</td><td class=n>'+fmt(r.p)+'</td><td class=n>'+fmt(r.n?r.p/r.n:0)+'</td><td class=n>'+(lsP?r.p/lsP*100:0).toFixed(1)+'%</td><td class=n>'+(r.p?r.t/r.p*100:0).toFixed(2)+'%</td><td class=n><span class="cg">'+r.sc.toFixed(1)+'</span></td></tr>'}).join(""):'<tr><td colspan="8" class="mu" style="text-align:center">No facilities granted in this period</td></tr>';
+  h+='</table></div></div>';
+
+  // monthly lending chart (last 12 months) - for selected officer, or all officers
+  var cm=[],ck=new Date(kb+"T00:00:00Z");ck.setUTCDate(1);
+  for(var q=11;q>=0;q--){var dq=new Date(Date.UTC(ck.getUTCFullYear(),ck.getUTCMonth()-q,1));cm.push(dq.toISOString().slice(0,7))}
+  var CMD={};cm.forEach(function(k){CMD[k]={n:0,p:0}});
+  cmpFilt(CB,true,true).forEach(function(r){var k=String(r.grant||"").slice(0,7);if(CMD[k]){CMD[k].n++;CMD[k].p+=r.port}});
+  var cMx=1,cTn=0,cTp=0;cm.forEach(function(k){cMx=Math.max(cMx,CMD[k].p);cTn+=CMD[k].n;cTp+=CMD[k].p});
+  var shortM=function(v){return v>=1e6?(v/1e6).toFixed(1)+"M":v>=1e3?(v/1e3).toFixed(0)+"K":String(Math.round(v))};
+  var svg='<svg viewBox="0 0 720 240" style="width:100%;max-width:900px;display:block"><line x1="10" y1="190" x2="710" y2="190" style="stroke:var(--bd)"/>';
+  cm.forEach(function(k,i){
+    var x=CMD[k],bh=x.p/cMx*140,bx=18+i*58,hl=moV==k;
+    svg+='<g><title>'+mlab(k)+': '+x.n+' facilities, Portfolio '+fmt(x.p)+'</title><rect x="'+bx+'" y="'+(190-bh)+'" width="42" height="'+Math.max(bh,x.n?2:0)+'" rx="3" style="fill:'+(hl?'var(--s2)':'var(--pr)')+'"/>'+
+      '<text x="'+(bx+21)+'" y="'+(190-bh-16)+'" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--tx)">'+(x.n?x.n+" fac":"")+'</text>'+
+      '<text x="'+(bx+21)+'" y="'+(190-bh-5)+'" text-anchor="middle" font-size="9" style="fill:var(--mu)">'+(x.n?shortM(x.p):"")+'</text>'+
+      '<text x="'+(bx+21)+'" y="206" text-anchor="middle" font-size="10" style="fill:var(--mu)">'+mlab(k).slice(0,3)+'</text>'+
+      '<text x="'+(bx+21)+'" y="219" text-anchor="middle" font-size="9" style="fill:var(--mu)">'+k.slice(2,4)+'</text></g>'
+  });
+  svg+='</svg>';
+  var who=$("cmOf").value||"All officers";
+  h+='<div class="card"><h3>📈 Monthly Lending (Grants) – '+esc(who)+' <small>last 12 months</small></h3>'+svg+'<div class="mu" style="margin-top:6px">Total: <b>'+fmt(cTn)+'</b> facilities granted • Portfolio <b>'+fmt(cTp)+'</b>. Each bar = Portfolio of facilities granted that month (number of facilities above the bar). Select a <b>Mkt Officer</b> to see only that officer\'s lending.</div></div>';
 
   // Migration matrix
   var mx=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
