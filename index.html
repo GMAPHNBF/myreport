@@ -67,6 +67,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 }
 /* compare page */
 .duhome{display:inline-block;background:#1c64f2;color:#fff!important;text-decoration:none;font-weight:700;font-size:14px;padding:9px 14px;border-radius:10px}
+.tbl .duca{padding:3px 8px;font-size:12px;margin:0 4px 3px 0;white-space:nowrap}
 .duc{display:none}.dut{display:block}
 .duk{border:1px solid var(--bd);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--card)}
 .duh{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:2px}
@@ -153,6 +154,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 </head>
 <body>
 <header style="justify-content:flex-end">
+  <a class="duhome" href="https://gmaphnbf.github.io/HNBFGMAP/" style="margin-right:auto">&#127968; HOME</a>
   <button id="dub" style="background:#0e9f6e;color:#fff;border-color:#0e9f6e;position:relative">&#128197; Due Today<span id="dubg" style="display:none;position:absolute;top:-8px;right:-8px;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:10px;background:#e02424;color:#fff;font-size:11px;font-weight:700;line-height:20px;text-align:center;border:2px solid var(--bg,#fff)"></span></button>
   <button id="cmpb" style="background:#7a5af8;color:#fff;border-color:#7a5af8">&#8644; Compare</button>
   <button class="p" id="upb">&#8679; Upload</button>
@@ -257,7 +259,6 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 <div class="cmpv" id="due">
  <div class="cmph">
   <button id="duBack" class="p">&#8592; Dashboard</button>
-  <a class="duhome" href="https://gmaphnbf.github.io/HNBFGMAP/">&#127968; HOME</a>
   <b style="font-size:16px;align-self:center">&#128197; Facilities Due</b>
   <label>Due Day<select id="duDay"></select></label>
   <button id="duXl">&#11015; Excel</button>
@@ -312,7 +313,7 @@ function sres(){
   a.slice(0,MAXR).map(function(r){
     var dd=done[r.fac];
     return'<div class="rc'+(dd?" dn":"")+'" data-s="'+r.stage+'"><div class="h"><div><div class="fn">'+hl(r.fac,re)+'</div><div class="nm">'+hl(r.name,re)+'</div></div><div style="text-align:right"><span class="tag s'+r.stage+'">Stage '+r.stage+'</span><div style="margin-top:5px">'+(r.r1?'<span class="tag fl">1st</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span>':"")+'</div></div></div>'+
-    '<div class="g"><div><span>Arrears Days</span>'+r.days+' ('+BK[r.b][0]+')</div><div><span>Total Arrears</span><b>'+fmt(r.tot)+'</b></div><div><span>Rental Arrears</span>'+fmt(r.rent)+'</div><div><span>Portfolio</span>'+fmt(r.port)+'</div><div><span>Mkt Officer</span>'+hl(r.mkt,re)+'</div><div><span>Branch</span>'+hl(r.branch,re)+'</div><div><span>Reg No</span>'+hl(r.reg||"-",re)+'</div><div><span>Tel</span>'+hl(r.tel||"-",re)+'</div></div>'+
+    '<div class="g"><div><span>Arrears Days</span>'+r.days+' ('+BK[r.b][0]+')</div><div><span>Total Arrears</span><b>'+fmt(r.tot)+'</b></div><div><span>Rental Arrears</span>'+fmt(r.rent)+'</div><div><span>Portfolio</span>'+fmt(r.port)+'</div><div><span>Mkt Officer</span>'+hl(r.mkt,re)+'</div><div><span>Branch</span>'+hl(r.branch,re)+'</div><div><span>Reg No</span>'+hl(r.reg||"-",re)+'</div><div style="grid-column:1/-1"><span>Tel</span><div class="duw">'+duCall(r.tel)+'</div></div></div>'+
     '<label><input type="checkbox" data-sd="'+esc(r.fac)+'"'+(dd?" checked":"")+'> Done</label></div>'
   }).join("")+'</div>'+(a.length>MAXR?'<div class="mu" style="margin:8px 2px 0">Showing the first '+MAXR+' of '+a.length+'. Type more to narrow down, or see the full list below.</div>':"");
 }
@@ -525,7 +526,7 @@ function cards(a,ps){
   $("cl").innerHTML=a.slice(page*ps,page*ps+ps).map(function(r){
     var dd=done[r.fac];
     var it=function(l,v){return"<div><span>"+l+"</span>"+v+"</div>"};
-    return'<div class="cc'+(dd?" dn":"")+'"><div class="h"><div><b>'+r.fac+'</b><div class="mu">'+r.name+'</div></div><div style="text-align:right"><span class="tag s'+r.stage+'">Stage '+r.stage+'</span><div style="margin-top:4px">'+(r.r1?'<span class="tag fl">1st</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span>':"")+'</div></div></div><div class="g">'+it("Arrears Days",r.days+" ("+BK[r.b][0]+")")+it("Total Arrears",fmt(r.tot))+it("Rental Arrears",fmt(r.rent))+it("Portfolio",fmt(r.port))+it("Mkt Officer",r.mkt||"-")+it("Branch",r.branch||"-")+it("Grant Date",r.grant||"-")+it("Last Paid",r.lpd||"-")+it("Tel",r.tel?'<a href="tel:'+r.tel+'">'+r.tel+'</a>':"-")+it("No Of O/S",(+r.nos).toFixed(2))+'</div><label><input type=checkbox data-f="'+r.fac+'"'+(dd?" checked":"")+'> Done</label></div>'
+    return'<div class="cc'+(dd?" dn":"")+'"><div class="h"><div><b>'+r.fac+'</b><div class="mu">'+r.name+'</div></div><div style="text-align:right"><span class="tag s'+r.stage+'">Stage '+r.stage+'</span><div style="margin-top:4px">'+(r.r1?'<span class="tag fl">1st</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span>':"")+'</div></div></div><div class="g">'+it("Arrears Days",r.days+" ("+BK[r.b][0]+")")+it("Total Arrears",fmt(r.tot))+it("Rental Arrears",fmt(r.rent))+it("Portfolio",fmt(r.port))+it("Mkt Officer",r.mkt||"-")+it("Branch",r.branch||"-")+it("Grant Date",r.grant||"-")+it("Last Paid",r.lpd||"-")+'<div style="grid-column:1/-1"><span>Tel</span><div class="duw">'+duCall(r.tel)+'</div></div>'+it("No Of O/S",(+r.nos).toFixed(2))+'</div><label><input type=checkbox data-f="'+r.fac+'"'+(dd?" checked":"")+'> Done</label></div>'
   }).join("")
 }
 function table(a){
@@ -540,6 +541,7 @@ function table(a){
         var v=r[c[0]];
         if(c[0]=="stage")return'<td><span class="tag s'+v+'">Stage '+v+'</span>';
         if(c[0]=="b")return"<td>"+BK[v][0];
+        if(c[0]=="tel")return"<td>"+duCall(v);
         if(num[c[0]])return"<td class=n>"+(c[0]=="nos"?(+v).toFixed(2):fmt(v));
         return"<td>"+(v==null?"":v)
       }).join("")+
