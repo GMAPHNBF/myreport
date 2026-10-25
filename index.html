@@ -66,6 +66,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
  button{padding:9px 12px}
 }
 /* compare page */
+.duhome{display:inline-block;background:#1c64f2;color:#fff!important;text-decoration:none;font-weight:700;font-size:14px;padding:9px 14px;border-radius:10px}
 .duc{display:none}.dut{display:block}
 .duk{border:1px solid var(--bd);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--card)}
 .duh{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:2px}
@@ -256,6 +257,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 <div class="cmpv" id="due">
  <div class="cmph">
   <button id="duBack" class="p">&#8592; Dashboard</button>
+  <a class="duhome" href="https://gmaphnbf.github.io/HNBFGMAP/">&#127968; HOME</a>
   <b style="font-size:16px;align-self:center">&#128197; Facilities Due</b>
   <label>Due Day<select id="duDay"></select></label>
   <button id="duXl">&#11015; Excel</button>
@@ -983,7 +985,19 @@ function duInit(){
   keep("duOf","mkt");keep("duDe","desc");duRender()
 }
 function o2day(){return $("duDay").value||new Date().getDate()}
-function duPhones(t){var o=[],seen={};String(t||"").split(/[\/,;&]|\s{2,}/).forEach(function(x){var d=x.replace(/[^\d+]/g,"");if(d.replace(/\D/g,"").length>=9&&!seen[d]){seen[d]=1;o.push(d)}});return o}
+function duPhones(t){
+  var o=[],seen={},add=function(n){if(n&&!seen[n]){seen[n]=1;o.push(n)}};
+  String(t==null?"":t).split(/[\/,;&|]|\s{2,}|\s-\s|\n/).forEach(function(part){
+    var d=part.replace(/\D/g,"");
+    if(d.indexOf("94")==0&&d.length>=11&&(d.length-2)%9==0||d.indexOf("94")==0&&d.length==11)d="0"+d.slice(2);
+    while(d.length>=9){
+      var k=d[0]=="0"?10:(d[0]=="7"?9:10),x=d.slice(0,k);
+      if(x.length<9)break;
+      add(x.length==9&&x[0]=="7"?"0"+x:x);d=d.slice(k)
+    }
+  });
+  return o
+}
 function duCall(t){var p=duPhones(t);return p.length?p.map(function(n){return'<a class="duca" href="tel:'+n+'">&#128222; '+n+'</a>'}).join(""):'<span class="mu">no phone</span>'}
 function duBadge(){
   var d=new Date(),day=d.getDate(),last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(),n=R.filter(function(r){var x=+r.due;return x>0&&(x===day||(day===last&&x>last))}).length,b=$("dubg");
