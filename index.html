@@ -910,7 +910,7 @@ function cmpRun(){
     CA=sa;CB=CURR.rows;
     var all=CA.concat(CB),keep=function(id,k){var v=$(id).value,s=Array.from(new Set(all.map(function(x){return x[k]}))).sort();$(id).innerHTML='<option value="">All</option>'+s.map(function(x){return'<option>'+esc(x)+'</option>'}).join("");if(s.indexOf(v)>=0)$(id).value=v};
     keep("cmBr","branch");keep("cmOf","mkt");CF="";TBL={};cmpRender()
-  })
+  }).catch(function(e){console.error(e);$("cbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Error:</b> '+esc(String(e&&e.message||e))+'</div>'})
 }
 $("cmA").onchange=cmpRun;
 $("cmGo").onclick=function(){SNAP={};cmpInit()};
@@ -918,7 +918,7 @@ $("cmBr").onchange=$("cmOf").onchange=function(){CF="";TBL={};cmpRender()};
 $("cmXl").onclick=function(){cmpXl()};
 function cmpFilt(rows){var b=$("cmBr").value,o=$("cmOf").value;return rows.filter(function(r){return(!b||r.branch===b)&&(!o||r.mkt===o)})}
 function grp(a,b,k){var m={};a.forEach(function(r){(m[r[k]]=m[r[k]]||{a:[],b:[]}).a.push(r)});b.forEach(function(r){(m[r[k]]=m[r[k]]||{a:[],b:[]}).b.push(r)});return Object.keys(m).map(function(n){return{name:n,A:agg(m[n].a),B:agg(m[n].b)}})}
-function flat(g){return g.map(function(x){return{name:x.name,nA:x.A.n,nB:x.B.n,tA:x.A.tot,tB:x.B.tot,dT:x.B.tot-x.A.tot,dP:x.B.port-x.A.port,s3A:x.A.n3,s3B:x.B.n3,nlA:x.A.npl,nlB:x.B.npl,dN:x.B.npl-x.A.npl}})}
+function flat(g){return g.map(function(x){return{name:x.name,nA:x.A.n,nB:x.B.n,tA:x.A.tot,tB:x.B.tot,dT:x.B.tot-x.A.tot,dP:x.B.port-x.A.port,pA:x.A.port,pB:x.B.port,s3A:x.A.n3,s3B:x.B.n3,nlA:x.A.npl,nlB:x.B.npl,dN:x.B.npl-x.A.npl}})}
 function gb(l,a,b,mx,txt){return'<div class="gb"><div class="l" title="'+esc(l)+'">'+esc(l)+'</div><div class="bb"><div class="t"><i style="width:'+Math.max(a/mx*100,.5)+'%;background:#8aa0cf"></i></div><div class="t"><i style="width:'+Math.max(b/mx*100,.5)+'%;background:var(--pr)"></i></div></div><div class="v">'+txt+'</div></div>'}
 function stk(l,T){var t=T.p1+T.p2+T.p3,p=function(s){return t?T["p"+s]/t*100:0};return'<div class="sbr"><div class="l">'+l+'</div><div class="sb">'+[1,2,3].map(function(s){return T["p"+s]?'<span style="width:'+p(s)+'%;background:var(--s'+s+')" title="Stage '+s+': '+p(s).toFixed(1)+'%"></span>':""}).join("")+'</div><div class="v" style="width:250px">S1 '+p(1).toFixed(1)+'% ('+T.n1+') • S2 '+p(2).toFixed(1)+'% ('+T.n2+') • S3 '+p(3).toFixed(1)+'% ('+T.n3+')</div></div>'}
 function num(k){return function(r){return r[k]==null?"-":fmt(r[k])}}
@@ -1027,7 +1027,7 @@ function cmpRender(){
       var dT = o.dT;
       var dP = o.dP;
       var baseT = o.tA || 0;
-      var baseP = o.A.port || 0;
+      var baseP = o.pA || 0;
       
       // අඩුවීමක් (Recovery) සිදුව ඇත්නම් පමණක් ගණනය කරන්න
       var pctT = (baseT > 0 && dT < 0) ? (Math.abs(dT)/baseT)*100 : 0;
