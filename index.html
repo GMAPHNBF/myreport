@@ -228,7 +228,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
   <button id="cmBack" class="p">&#8592; Dashboard</button>
   <b style="font-size:16px;align-self:center">&#8644; Compare Dates</b>
   <label>A: Last month-end report<select id="cmA"></select></label>
-  <label>B: Today's report<select id="cmB"></select></label>
+  <label>B: Latest uploaded report<select id="cmB"></select></label>
   <label>Branch<select id="cmBr"><option value="">All</option></select></label>
   <label>Mkt Officer<select id="cmOf"><option value="">All</option></select></label>
   <button id="cmGo" class="p">&#8635; Compare</button>
@@ -885,7 +885,7 @@ function cmpInit(){
     var rows=Array.isArray(cur.rows)?cur.rows:Object.keys(cur.rows).map(function(x){return cur.rows[x]});
     CURR={key:(cur.asAt||"").slice(0,10)||new Date().toISOString().slice(0,10),rows:cmpPrep(rows)};
     var ks=Object.keys(SM).filter(function(k){return isME(k)&&k<CURR.key}).sort().reverse();
-    $("cmB").innerHTML='<option>Today ('+dlab(CURR.key)+')</option>';$("cmB").disabled=true;
+    $("cmB").innerHTML='<option>'+dlab(CURR.key)+' (uploaded report)</option>';$("cmB").disabled=true;
     if(!ks.length){$("cmA").innerHTML="";$("cbody").innerHTML='<div class="card"><b>No previous month-end report saved yet.</b><br><span class="mu">Upload the report on the last day of the month (30/31, or 28/29 in Feb). That one is kept, and later reports are compared against it.</span></div>';return}
     $("cmA").innerHTML=ks.map(function(k){var m=SM[k]||{};return'<option value="'+k+'">Month-end '+dlab(k)+' ('+(m.n||"?")+' fac)</option>'}).join("");
     cmpRun()
@@ -964,7 +964,7 @@ function cmpCust(){
 }
 
 function cmpRender(){
-  var a=cmpFilt(CA),b=cmpFilt(CB),A=agg(a),B=agg(b),ka=$("cmA").value,kb=CURR.key,la="Month-end "+dlab(ka),lb="Today "+dlab(kb),h="";
+  var a=cmpFilt(CA),b=cmpFilt(CB),A=agg(a),B=agg(b),ka=$("cmA").value,kb=CURR.key,la=dlab(ka),lb=dlab(kb),h="";
   
   var MA={},MB={};a.forEach(function(r){MA[r.fac]=r});b.forEach(function(r){MB[r.fac]=r});
   var cust=Object.keys(Object.assign({},MA,MB)).map(function(f){
@@ -1021,9 +1021,12 @@ function cmpRender(){
   // ==========================================
   // 5. BEST RECOVERY MARKETING OFFICERS (Corrected Logic)
   // ==========================================
+  var cutD=new Date(kb+"T00:00:00Z");cutD.setUTCMonth(cutD.getUTCMonth()-3);var cutK=cutD.toISOString().slice(0,10),actO={};
+  CB.forEach(function(r){var g=String(r.grant||"").slice(0,10);if(g&&g>=cutK&&g<=kb)actO[r.mkt]=1});
   function getBestRecovery(){
     var rec = [];
     og.forEach(function(o){
+      if(!actO[o.name])return;
       var dT = o.dT;
       var dP = o.dP;
       var baseT = o.tA || 0;
@@ -1053,7 +1056,7 @@ function cmpRender(){
   }
   
   h+='<div class="card"><h3>🏆 Best Recovery Marketing Officers</h3>';
-  h+='<div class="mu" style="margin-bottom:10px">Ranked by the highest reduction (Recovery) in Total Arrears and Portfolio from A to B.</div>';
+  h+='<div class="mu" style="margin-bottom:10px">Only officers who granted at least one facility in the last 3 months (since '+dlab(cutK)+'). Ranked by the highest reduction (Recovery) in Total Arrears and Portfolio from A to B.</div>';
   h+='<div class="tw" style="max-height:none"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Cust A → B</th><th class=n>Arrears Recovered</th><th class=n>Portfolio Recovered</th><th class=n>Arrears %</th><th class=n>Portfolio %</th><th class=n>Score</th></tr>';
   h+=getBestRecovery() || '<tr><td colspan="8" class="mu" style="text-align:center">No data available</td></tr>';
   h+='</table></div></div>';
