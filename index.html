@@ -1153,7 +1153,7 @@ function cmpRender(){
   var shortM=function(v){return v>=1e6?(v/1e6).toFixed(1)+"M":v>=1e3?(v/1e3).toFixed(0)+"K":String(Math.round(v))};
   var bw=Math.max(14,Math.min(42,Math.floor(700/cm.length)-12)),st=Math.floor(700/cm.length);
   var avOf=function(x){return x.n?x.p/x.n:0},avMx=1;cm.forEach(function(k){avMx=Math.max(avMx,avOf(CMD[k]))});
-  var cAv=cTn?cTp/cTn:0,pts=[];
+  var cAv=cTn?cTp/cTn:0,pts=[],nM=cm.length||1,aN=cTn/nM,aP=cTp/nM,ayl=190-Math.min(aP/cMx,1)*140;
   var svg='<svg viewBox="0 0 720 262" style="width:100%;max-width:900px;display:block"><line x1="10" y1="190" x2="710" y2="190" style="stroke:var(--bd)"/>';
   cm.forEach(function(k,i){
     var x=CMD[k],bh=x.p/cMx*140,bx=14+i*st,hl=moV==k&&!(LF||LT),mid=bx+bw/2,av=avOf(x);
@@ -1167,12 +1167,13 @@ function cmpRender(){
   });
   if(pts.length>1)svg+='<polyline fill="none" stroke-width="2" points="'+pts.map(function(q){return q[0]+","+q[1]}).join(" ")+'" style="stroke:var(--s3)"/>';
   pts.forEach(function(q){svg+='<circle cx="'+q[0]+'" cy="'+q[1]+'" r="3.5" style="fill:var(--s3)"><title>'+mlab(q[2])+' – Avg / facility '+fmt(q[3])+'</title></circle>'});
-  svg+='<text x="10" y="254" font-size="10" style="fill:var(--mu)">Bar = Facility Amount (count on top) &nbsp;•&nbsp; </text><circle cx="262" cy="251" r="3.5" style="fill:var(--s3)"/><text x="270" y="254" font-size="10" style="fill:var(--s3)">Red line and the red number under each month = Avg per facility</text></svg>';
+  if(cTn)svg+='<line x1="10" y1="'+ayl+'" x2="710" y2="'+ayl+'" stroke-dasharray="5 4" stroke-width="1.5" style="stroke:var(--s2)"/><text x="708" y="'+(ayl-4)+'" text-anchor="end" font-size="10" font-weight="700" style="fill:var(--s2)">Avg / month: '+aN.toFixed(1)+' fac • '+shortM(aP)+'</text>';
+  svg+='<text x="10" y="254" font-size="10" style="fill:var(--mu)">Bar = Facility Amount (count on top) &nbsp;•&nbsp; </text><circle cx="262" cy="251" r="3.5" style="fill:var(--s3)"/><text x="270" y="254" font-size="10" style="fill:var(--s3)">Red line / number = Avg per facility &nbsp;•&nbsp; dashed line = monthly average</text></svg>';
   var who=$("cmOf").value||"All officers";
   var tb='<div class="tw" style="max-height:none;margin-top:10px"><table><tr><th>Month</th><th class=n>Facilities</th><th class=n>Facility Amount</th><th class=n>Avg / Facility</th></tr>'+
     cm.map(function(k){var x=CMD[k];return'<tr><td>'+mlab(k)+'</td><td class=n>'+fmt(x.n)+'</td><td class=n>'+fmt(x.p)+'</td><td class=n>'+(x.n?fmt(x.p/x.n):"-")+'</td></tr>'}).join("")+
-    '<tr><td><b>Total / Avg</b></td><td class=n><b>'+fmt(cTn)+'</b></td><td class=n><b>'+fmt(cTp)+'</b></td><td class=n><b>'+(cTn?fmt(cAv):"-")+'</b></td></tr></table></div>';
-  h+='<div class="card"><h3>📈 Monthly Lending (Grants) – '+esc(who)+' <small>'+((LF||LT)?ll:"last 12 months")+'</small></h3><div class="dk" style="margin-bottom:10px"><div class="kpi"><span>Facilities granted</span><b>'+fmt(cTn)+'</b></div><div class="kpi"><span>Facility Amount</span><b>'+fmt(cTp)+'</b></div><div class="kpi"><span>Avg / Facility</span><b>'+(cTn?fmt(cAv):"-")+'</b></div></div>'+svg+tb+'<div class="mu" style="margin-top:6px">Period follows <b>Lending From / To</b> (otherwise last 12 months) and the Lending Status filter. Select a <b>Mkt Officer</b> to see only that officer\'s lending.</div></div>';
+    '<tr><td><b>Total / Avg</b></td><td class=n><b>'+fmt(cTn)+'</b></td><td class=n><b>'+fmt(cTp)+'</b></td><td class=n><b>'+(cTn?fmt(cAv):"-")+'</b></td></tr><tr><td><b>Monthly Avg ('+nM+' months)</b></td><td class=n><b>'+aN.toFixed(1)+'</b></td><td class=n><b>'+fmt(aP)+'</b></td><td class=n>-</td></tr></table></div>';
+  h+='<div class="card"><h3>📈 Monthly Lending (Grants) – '+esc(who)+' <small>'+((LF||LT)?ll:"last 12 months")+'</small></h3><div class="dk" style="margin-bottom:10px"><div class="kpi"><span>Facilities granted</span><b>'+fmt(cTn)+'</b></div><div class="kpi"><span>Facility Amount</span><b>'+fmt(cTp)+'</b></div><div class="kpi"><span>Avg / Facility</span><b>'+(cTn?fmt(cAv):"-")+'</b></div><div class="kpi"><span>Avg facilities / month</span><b>'+aN.toFixed(1)+'</b></div><div class="kpi"><span>Avg amount / month</span><b>'+fmt(aP)+'</b></div></div>'+svg+tb+'<div class="mu" style="margin-top:6px">Period follows <b>Lending From / To</b> (otherwise last 12 months) and the Lending Status filter. Select a <b>Mkt Officer</b> to see only that officer\'s lending.</div></div>';
 
   // Migration matrix
   var mx=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
