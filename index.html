@@ -1033,41 +1033,28 @@ function cmpRender(){
   var cutD=new Date(kb+"T00:00:00Z");cutD.setUTCMonth(cutD.getUTCMonth()-3);var cutK=cutD.toISOString().slice(0,10),actO={};
   CB.forEach(function(r){var g=String(r.grant||"").slice(0,10);if(g&&g>=cutK&&g<=kb)actO[r.mkt]=1});
   function getBestRecovery(){
-    var rec = [];
+    var rec=[];
     og.forEach(function(o){
-      if(!actO[o.name])return;
-      var dT = o.dT;
-      var dP = o.dP;
-      var baseT = o.tA || 0;
-      var baseP = o.pA || 0;
-      
-      // අඩුවීමක් (Recovery) සිදුව ඇත්නම් පමණක් ගණනය කරන්න
-      var pctT = (baseT > 0 && dT < 0) ? (Math.abs(dT)/baseT)*100 : 0;
-      var pctP = (baseP > 0 && dP < 0) ? (Math.abs(dP)/baseP)*100 : 0;
-      
-      if(o.nB > 0) {
-        rec.push({
-          name: o.name, nA: o.nA, nB: o.nB, dT: dT, dP: dP, 
-          pctT: pctT, pctP: pctP,
-          score: (pctT * 0.6) + (pctP * 0.4) // Arrears 60% + Portfolio 40%
-        });
-      }
+      if(!actO[o.name]||!(o.nB>0)||!(o.pB>0))return;
+      var rA=o.pA>0?o.tA/o.pA*100:0, rB=o.tB/o.pB*100;      // Arrears as % of Portfolio
+      var dR=rA-rB;                                          // improvement in percentage points
+      var relR=rA>0?dR/rA*100:0;                             // relative reduction of the ratio
+      var rcv=o.tA>0&&o.dT<0?Math.abs(o.dT)/o.tA*100:0;      // % of arrears recovered
+      rec.push({name:o.name,nA:o.nA,nB:o.nB,pA:o.pA,pB:o.pB,tA:o.tA,tB:o.tB,dT:o.dT,rA:rA,rB:rB,dR:dR,rcv:rcv,score:relR*0.6+rcv*0.4})
     });
-    
-    rec.sort(function(x,y){return y.score - x.score});
-    
-    return rec.map(function(r, i){
-      var tHtml = r.dT < 0 ? '<span class="cg">▼ '+fmt(Math.abs(r.dT))+'</span>' : '<span class="cn">0</span>';
-      var pHtml = r.dP < 0 ? '<span class="cg">▼ '+fmt(Math.abs(r.dP))+'</span>' : '<span class="cn">0</span>';
-      var sHtml = r.score > 0 ? '<span class="cg">▲ '+r.score.toFixed(1)+'</span>' : '<span class="cn">0</span>';
-      return '<tr><td>'+(i+1)+'</td><td><b>'+esc(r.name)+'</b></td><td class=n>'+r.nA+' → '+r.nB+'</td><td class=n>'+tHtml+'</td><td class=n>'+pHtml+'</td><td class=n>'+r.pctT.toFixed(1)+'%</td><td class=n>'+r.pctP.toFixed(1)+'%</td><td class=n>'+sHtml+'</td></tr>';
+    rec.sort(function(x,y){return y.score-x.score});
+    return rec.map(function(r,i){
+      var rc=r.dR>0.005?"cg":r.dR<-0.005?"cb":"cn";
+      var aHtml=r.dT<0?'<span class="cg">▼ '+fmt(Math.abs(r.dT))+'</span>':r.dT>0?'<span class="cb">▲ '+fmt(r.dT)+'</span>':'<span class="cn">0</span>';
+      var sc=r.score>0.005?"cg":r.score<-0.005?"cb":"cn";
+      return '<tr><td>'+(i+1)+'</td><td><b>'+esc(r.name)+'</b></td><td class=n>'+r.nA+' → '+r.nB+'</td><td class=n>'+fmt(r.pA)+' → '+fmt(r.pB)+'</td><td class=n>'+r.rA.toFixed(2)+'% → <b>'+r.rB.toFixed(2)+'%</b></td><td class=n><span class="'+rc+'">'+(r.dR>0.005?"▼ ":r.dR<-0.005?"▲ ":"")+Math.abs(r.dR).toFixed(2)+' pp</span></td><td class=n>'+aHtml+'</td><td class=n>'+r.rcv.toFixed(1)+'%</td><td class=n><span class="'+sc+'">'+r.score.toFixed(1)+'</span></td></tr>';
     }).join("");
   }
-  
+
   h+='<div class="card"><h3>🏆 Best Recovery Marketing Officers</h3>';
-  h+='<div class="mu" style="margin-bottom:10px">Only officers who granted at least one facility in the last 3 months (since '+dlab(cutK)+'). Ranked by the highest reduction (Recovery) in Total Arrears and Portfolio from A to B.</div>';
-  h+='<div class="tw" style="max-height:none"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Cust A → B</th><th class=n>Arrears Recovered</th><th class=n>Portfolio Recovered</th><th class=n>Arrears %</th><th class=n>Portfolio %</th><th class=n>Score</th></tr>';
-  h+=getBestRecovery() || '<tr><td colspan="8" class="mu" style="text-align:center">No data available</td></tr>';
+  h+='<div class="mu" style="margin-bottom:10px">Only officers who granted at least one facility in the last 3 months (since '+dlab(cutK)+'). Judged <b>relative to Portfolio</b>: Arrears ÷ Portfolio % (A → B), and how much that ratio improved. Recovery (arrears reduced) is added on top. Score = 60% ratio improvement + 40% arrears recovered.</div>';
+  h+='<div class="tw" style="max-height:none"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Cust A → B</th><th class=n>Portfolio A → B</th><th class=n>Arrears / Portfolio A → B</th><th class=n>Ratio Change</th><th class=n>Arrears Change</th><th class=n>Arrears Recovered %</th><th class=n>Score</th></tr>';
+  h+=getBestRecovery() || '<tr><td colspan="9" class="mu" style="text-align:center">No data available</td></tr>';
   h+='</table></div></div>';
 
   // Migration matrix
