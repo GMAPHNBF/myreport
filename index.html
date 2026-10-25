@@ -231,6 +231,8 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
   <label>B: Latest uploaded report<select id="cmB"></select></label>
   <label>Branch<select id="cmBr"><option value="">All</option></select></label>
   <label>Mkt Officer<select id="cmOf"><option value="">All</option></select></label>
+  <label>Description<select id="cmDe"><option value="">All</option></select></label>
+  <label>Grant Date<select id="cmGd"><option value="">All</option><option value="3">Last 3 Months</option><option value="6">Last 6 Months</option><option value="12">Last 12 Months</option><option value="A">After 12 Months</option></select></label>
   <button id="cmGo" class="p">&#8635; Compare</button>
   <button id="cmXl">&#11015; Excel</button>
  </div>
@@ -858,7 +860,7 @@ function saveMonthEnd(sk,o,sm){
 }
 function dlab(k){var d=new Date(k+"T00:00:00Z");return isNaN(d)?k:d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric",timeZone:"UTC"})}
 function f2(x){return Number(x||0).toFixed(2)+"%"}
-function cmpPrep(rows){return rows.filter(Boolean).map(function(r){var d=Math.round(+r.days||0);return Object.assign({},r,{days:d,stage:stage(d),b:bidx(d),mkt:onm(r.mkt)||"(none)",branch:r.branch||"(none)",tot:+r.tot||0,rent:+r.rent||0,port:+r.port||0,adv:+r.adv||0})})}
+function cmpPrep(rows){return rows.filter(Boolean).map(function(r){var d=Math.round(+r.days||0);return Object.assign({},r,{days:d,stage:stage(d),b:bidx(d),mkt:onm(r.mkt)||"(none)",branch:r.branch||"(none)",desc:r.desc||"(none)",tot:+r.tot||0,rent:+r.rent||0,port:+r.port||0,adv:+r.adv||0})})}
 function agg(a){
   var t={n:a.length,tot:sum(a,"tot"),rent:sum(a,"rent"),port:sum(a,"port")};
   [1,2,3].forEach(function(s){var x=a.filter(function(r){return r.stage==s});t["n"+s]=x.length;t["t"+s]=sum(x,"tot");t["p"+s]=sum(x,"port")});
@@ -909,14 +911,21 @@ function cmpRun(){
     }
     CA=sa;CB=CURR.rows;
     var all=CA.concat(CB),keep=function(id,k){var v=$(id).value,s=Array.from(new Set(all.map(function(x){return x[k]}))).sort();$(id).innerHTML='<option value="">All</option>'+s.map(function(x){return'<option>'+esc(x)+'</option>'}).join("");if(s.indexOf(v)>=0)$(id).value=v};
-    keep("cmBr","branch");keep("cmOf","mkt");CF="";TBL={};cmpRender()
+    keep("cmBr","branch");keep("cmOf","mkt");keep("cmDe","desc");CF="";TBL={};cmpRender()
   }).catch(function(e){console.error(e);$("cbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Error:</b> '+esc(String(e&&e.message||e))+'</div>'})
 }
 $("cmA").onchange=cmpRun;
 $("cmGo").onclick=function(){SNAP={};cmpInit()};
-$("cmBr").onchange=$("cmOf").onchange=function(){CF="";TBL={};cmpRender()};
+$("cmBr").onchange=$("cmOf").onchange=$("cmDe").onchange=$("cmGd").onchange=function(){CF="";TBL={};cmpRender()};
 $("cmXl").onclick=function(){cmpXl()};
-function cmpFilt(rows){var b=$("cmBr").value,o=$("cmOf").value;return rows.filter(function(r){return(!b||r.branch===b)&&(!o||r.mkt===o)})}
+function cmpFilt(rows){
+  var b=$("cmBr").value,o=$("cmOf").value,d=$("cmDe").value,g=$("cmGd").value,cut="";
+  if(g&&CURR){var x=new Date(CURR.key+"T00:00:00Z");x.setUTCMonth(x.getUTCMonth()-(g=="A"?12:+g));cut=x.toISOString().slice(0,10)}
+  return rows.filter(function(r){
+    if(b&&r.branch!==b)return false;if(o&&r.mkt!==o)return false;if(d&&r.desc!==d)return false;
+    if(g){var gd=String(r.grant||"").slice(0,10);if(!gd)return false;if(g=="A"?gd>=cut:gd<cut)return false}
+    return true})
+}
 function grp(a,b,k){var m={};a.forEach(function(r){(m[r[k]]=m[r[k]]||{a:[],b:[]}).a.push(r)});b.forEach(function(r){(m[r[k]]=m[r[k]]||{a:[],b:[]}).b.push(r)});return Object.keys(m).map(function(n){return{name:n,A:agg(m[n].a),B:agg(m[n].b)}})}
 function flat(g){return g.map(function(x){return{name:x.name,nA:x.A.n,nB:x.B.n,tA:x.A.tot,tB:x.B.tot,dT:x.B.tot-x.A.tot,dP:x.B.port-x.A.port,pA:x.A.port,pB:x.B.port,s3A:x.A.n3,s3B:x.B.n3,nlA:x.A.npl,nlB:x.B.npl,dN:x.B.npl-x.A.npl}})}
 function gb(l,a,b,mx,txt){return'<div class="gb"><div class="l" title="'+esc(l)+'">'+esc(l)+'</div><div class="bb"><div class="t"><i style="width:'+Math.max(a/mx*100,.5)+'%;background:#8aa0cf"></i></div><div class="t"><i style="width:'+Math.max(b/mx*100,.5)+'%;background:var(--pr)"></i></div></div><div class="v">'+txt+'</div></div>'}
