@@ -789,7 +789,7 @@ function runUpload(meOnly){
         delete SNAP[dk];
         saveMonthEnd(dk,o3,sm3).then(function(st){
           if(st=="ok")upFinish('<b>'+rows.length+'</b> facilities saved as the <b>month-end report ('+dlab(dk)+')</b>.<br><span class="mu">Current dashboard data was not changed.</span>',false);
-          else upFinish('<span style="color:var(--s3)">Month-end save '+st+' &ndash; check database rules.</span>',true);
+          else upFinish('<span style="color:var(--s3)">Month-end save '+st+(String(st).indexOf("401")>=0?' &ndash; Firebase is blocking writes to <b>snaps</b> / <b>snapmeta</b>. Add those paths in Firebase Rules, or set the Write key (database secret) on this device using the settings button.':' &ndash; check database rules.')+'</span>',true);
           goBtn.disabled=false;
         });
         return;
@@ -822,7 +822,7 @@ function runUpload(meOnly){
           else msg+='<br><span style="color:var(--s3)">Online save '+s+' – check storage setup.</span>';
           if(s3=="ok")msg+='<br><span style="color:var(--s1)">Month-end report ('+dlab(sk)+') saved for Compare.</span>';
           else if(s3=="skip")msg+='<br><span class="mu">Not a month-end date, so not kept for Compare (current data replaced as usual).</span>';
-          else if(s3!="off")msg+='<br><span style="color:var(--s3)">Month-end save '+s3+' – check database rules.</span>';
+          else if(s3!="off")msg+='<br><span style="color:var(--s3)">Month-end save '+s3+(String(s3).indexOf("401")>=0?' – Firebase Rules do not allow writing to snaps / snapmeta (or set the Write key).':' – check database rules.')+'</span>';
           upFinish(msg,false);
           goBtn.disabled=false;
           setTimeout(function(){$("upProg").classList.remove("on")},3000);
