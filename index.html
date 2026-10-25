@@ -612,7 +612,7 @@ function lendNote(r){
   if(!r||r.st=="skip")return"";
   if(r.st!="ok")return'<br><span style="color:var(--s3)">Lending data save '+r.st+' - check database rules (path: lending).</span>';
   var m=r.meta||{};
-  return'<br><span style="color:var(--s1)">Lending data saved: '+r.n+' facilities in total ('+r.fresh+' from this upload).</span><br><span class="mu">Grant date column: <b>'+esc(m.gc||"Fac No (month only)")+'</b> • Amount column: <b>'+esc(m.ac||"Portfolio")+'</b> • Status: <b>'+esc(m.sc||"Portfolio = 0")+'</b></span>'
+  return'<br><span style="color:var(--s1)">Lending data saved: '+r.n+' facilities in total ('+r.fresh+' from this upload).</span><br><span class="mu">Grant date column: <b>'+esc(m.gc||"Fac No (month only)")+'</b> • Amount column: <b>'+esc(m.ac||"Portfolio")+'</b> • Settled/Repossessed column: <b>'+esc(m.sc||"(not found - scanned all cells)")+'</b></span>'
 }
 function iso(d){return d instanceof Date?d.toISOString().slice(0,10):(d||"")}
 
@@ -729,7 +729,8 @@ function runUpload(meOnly){
         nB++;
         var gc=pickCol(c,[/^grant(ed)?\s*date$/,/grant/,/disburs.*date|date.*disburs/,/agreement.*date/,/(start|release|contract|open).*date/]),
             ac=pickCol(c,[/^(facility|fac|loan|lending|granted|disbursed|net|financed)\s*(amount|amt|value)$/,/(facility|loan|granted|disbursed|financed|lending).*(amount|amt)/,/^(amount financed|financed amount|capital|principal)/],/arrear|rental|advance|portfolio|balance|outstanding|insur|interest|paid/),
-            sc=pickCol(c,[/^(fac(ility)?\s*)?status$/,/settle/,/closed|termin/]);
+            sc=pickCol(c,[/repossess/,/^(fac(ility)?\s*)?(status|state)$/,/status/,/settle/,/closed|termin/]),
+            mo=pickCol(c,[/^(mkt|marketing)\s*officer/]);
         LMETA.gc=LMETA.gc||gc;LMETA.ac=LMETA.ac||ac;LMETA.sc=LMETA.sc||sc;
         g.slice(h+1).forEach(function(r){
           var f=nm(r[c["Fac No"]]);
@@ -737,8 +738,8 @@ function runUpload(meOnly){
             pm[f]={o:nm(r[c["Follow Up Officer"]]),d:nm(r[c["Description"]]),b:nm(r[c["Branch"]]),p:+r[c["Portfolio"]]||0,a:+r[c["Advance"]]||0};
             var gv=gc?toIso(r[c[gc]]):"";
             if(!gv){var fm=/^[A-Za-z]{2}(\d{2})(\d{2})/.exec(f);if(fm&&+fm[2]>=1&&+fm[2]<=12)gv="20"+fm[1]+"-"+fm[2]+"-01"}
-            var pv=+r[c["Portfolio"]]||0,av=ac?(+r[c[ac]]||0):pv,sv=sc?/settl|clos|termin|paid|complet|finish/i.test(nm(r[c[sc]])):pv<=0;
-            LEND[f]={f:f,m:onm(nm(r[c["Follow Up Officer"]])),b:nm(r[c["Branch"]]),d:nm(r[c["Description"]]),g:gv,a:av,p:pv,s:sv?1:0}
+            var pv=+r[c["Portfolio"]]||0,av=ac?(+r[c[ac]]||0):pv,kw=/pre\s*termination|terminat|repossess|settl|clos|complet|written\s*off/i,sv=sc?kw.test(nm(r[c[sc]])):(r.some(function(x){return typeof x=="string"&&kw.test(x)})||pv<=0);
+            LEND[f]={f:f,m:onm(nm(r[c["Follow Up Officer"]])||(mo?nm(r[c[mo]]):"")),b:nm(r[c["Branch"]]),d:nm(r[c["Description"]]),g:gv,a:av,p:pv,s:sv?1:0}
           }
         });
         g.slice(0,h).forEach(function(r){
@@ -786,6 +787,16 @@ function runUpload(meOnly){
     });
 
     // Validate both types present
+    if(nB&&!nA){
+      upSetProgress(90,"Saving lending data...");
+      var onlyArr=Object.keys(LEND).map(function(k){return LEND[k]});
+      saveLending(onlyArr,LMETA).catch(function(e){return{st:"failed: "+e}}).then(function(lr){
+        if(lr.st=="skip")upFinish('<span style="color:var(--s3)">Online storage is not set up, so lending data cannot be saved.</span>',true);
+        else upFinish('<b>'+onlyArr.length+'</b> facilities read from Destinity_LE_DailySummary (Branch Wise RentalArrears not needed).<br><span class="mu">Arrears data on the dashboard was not changed.</span>'+lendNote(lr),lr.st!="ok");
+        goBtn.disabled=false;
+      });
+      return;
+    }
     if(!nA||!nB){
       upFinish('<span style="color:var(--s3)">Missing file type. Need at least one Branch Wise RentalArrears and one Destinity_LE_DailySummary.</span>',true);
       goBtn.disabled=false;
@@ -962,7 +973,7 @@ function cmpFilt(rows,skMo,skGd){
     if(mo&&gd.slice(0,7)!==mo)return false;
     return true})
 }
-function lsrc(){return LEND||CB.map(function(r){return Object.assign({},r,{amt:r.port,set:0})})}
+function lsrc(){return LEND||[]}
 function moOpts(){
   var sel=$("cmMo").value,m={};
   cmpFilt(lsrc(),true,true).forEach(function(r){var k=String(r.grant||"").slice(0,7);if(!/^\d{4}-\d\d$/.test(k))return;var x=m[k]||(m[k]={n:0,p:0});x.n++;x.p+=r.amt});
@@ -1112,16 +1123,15 @@ function cmpRender(){
   else if(moV){lp=function(g){return g.slice(0,7)==moV};ll=mlab(moV)}
   else if(gdV=="A"){lp=function(g){return g<c12};ll="granted after 12 months"}
   else{var mm=gdV?+gdV:3,cd=new Date(kb+"T00:00:00Z");cd.setUTCMonth(cd.getUTCMonth()-mm);var cs=cd.toISOString().slice(0,10);lp=function(g){return g>=cs&&g<=kb};ll="last "+mm+" months"}
-  var CBM={};CB.forEach(function(r){CBM[r.fac]=r});
-  var LS0=lsrc(),LR=cmpFilt(LS0,true,true).filter(function(r){var g=String(r.grant||"").slice(0,10);return g&&lp(g)}),LM={};
-  LR.forEach(function(r){var x=LM[r.mkt]||(LM[r.mkt]={n:0,a:0,p:0,st:0,t:0,pj:0});x.n++;x.a+=r.amt;x.p+=r.port;if(r.set||r.port<=0)x.st++;var q=CBM[r.fac];if(q){x.t+=q.tot;x.pj+=q.port}});
+    var LS0=lsrc(),LR=cmpFilt(LS0,true,true).filter(function(r){var g=String(r.grant||"").slice(0,10);return g&&lp(g)}),LM={};
+  LR.forEach(function(r){var x=LM[r.mkt]||(LM[r.mkt]={n:0,a:0,p:0,st:0});x.n++;x.a+=r.amt;x.p+=r.port;if(r.set)x.st++});
   var LK=Object.keys(LM),lmA=1,lmN=1,lsA=0;LK.forEach(function(k){lmA=Math.max(lmA,LM[k].a);lmN=Math.max(lmN,LM[k].n);lsA+=LM[k].a});
-  var LL=LK.map(function(k){var x=LM[k];return{name:k,n:x.n,a:x.a,p:x.p,st:x.st,run:x.n-x.st,t:x.t,pj:x.pj,sc:x.a/lmA*60+x.n/lmN*40}}).sort(function(x,y){return y.sc-x.sc});
+  var LL=LK.map(function(k){var x=LM[k];return{name:k,n:x.n,a:x.a,p:x.p,st:x.st,run:x.n-x.st,sc:x.a/lmA*60+x.n/lmN*40}}).sort(function(x,y){return y.sc-x.sc});
   var acn=LEND?(LENDM.ac||"Portfolio"):"Portfolio";
   h+='<div class="card"><h3>💰 Best Lending Marketing Officers <small>('+ll+')</small></h3>';
-  h+='<div class="mu" style="margin-bottom:10px">'+(LEND?'Source: <b>Destinity_LE_DailySummary</b> — includes <b>settled</b> facilities ('+fmt(LEND.length)+' facilities saved; grant date: <b>'+esc(LENDM.gc||"Fac No (month only)")+'</b>, lending amount: <b>'+esc(acn)+'</b>).':'<span style="color:var(--s3)">Lending history is not saved yet — upload the Destinity_LE_DailySummary file once. Until then only facilities still in the arrears report are counted.</span>')+' Period: set <b>Lending From / To</b> (otherwise Grant Month / Grant Date filter, default last 3 months). Score = 60% lending amount + 40% number of facilities granted.</div>';
-  h+='<div class="tw" style="max-height:none"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Facilities Granted</th><th class=n>Lending Amount</th><th class=n>Avg / Facility</th><th class=n>Share</th><th class=n>Settled</th><th class=n>Running</th><th class=n>Portfolio Now</th><th class=n>Arrears / Portfolio</th><th class=n>Score</th></tr>';
-  h+=LL.length?LL.map(function(r,i){return'<tr><td>'+(i+1)+'</td><td><b>'+esc(r.name)+'</b></td><td class=n>'+fmt(r.n)+'</td><td class=n>'+fmt(r.a)+'</td><td class=n>'+fmt(r.n?r.a/r.n:0)+'</td><td class=n>'+(lsA?r.a/lsA*100:0).toFixed(1)+'%</td><td class=n>'+fmt(r.st)+'</td><td class=n>'+fmt(r.run)+'</td><td class=n>'+fmt(r.p)+'</td><td class=n>'+(r.pj?(r.t/r.pj*100).toFixed(2)+"%":"-")+'</td><td class=n><span class="cg">'+r.sc.toFixed(1)+'</span></td></tr>'}).join(""):'<tr><td colspan="11" class="mu" style="text-align:center">No facilities granted in this period</td></tr>';
+  h+='<div class="mu" style="margin-bottom:10px">'+(LEND?'Source: <b>Destinity_LE_DailySummary only</b> (not linked to Branch Wise RentalArrears) — includes <b>settled / repossessed / terminated</b> facilities ('+fmt(LEND.length)+' facilities saved; grant date: <b>'+esc(LENDM.gc||"Fac No (month only)")+'</b>, lending amount: <b>'+esc(acn)+'</b>).':'<span style="color:var(--s3)">Lending history is not saved yet — upload the Destinity_LE_DailySummary file (it can be uploaded alone).</span>')+' Period: set <b>Lending From / To</b> (otherwise Grant Month / Grant Date filter, default last 3 months). Score = 60% lending amount + 40% number of facilities granted.</div>';
+  h+='<div class="tw" style="max-height:none"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Facilities Granted</th><th class=n>Lending Amount</th><th class=n>Avg / Facility</th><th class=n>Share</th><th class=n>Settled</th><th class=n>Running</th><th class=n>Portfolio Now</th><th class=n>Score</th></tr>';
+  h+=LL.length?LL.map(function(r,i){return'<tr><td>'+(i+1)+'</td><td><b>'+esc(r.name)+'</b></td><td class=n>'+fmt(r.n)+'</td><td class=n>'+fmt(r.a)+'</td><td class=n>'+fmt(r.n?r.a/r.n:0)+'</td><td class=n>'+(lsA?r.a/lsA*100:0).toFixed(1)+'%</td><td class=n>'+fmt(r.st)+'</td><td class=n>'+fmt(r.run)+'</td><td class=n>'+fmt(r.p)+'</td><td class=n><span class="cg">'+r.sc.toFixed(1)+'</span></td></tr>'}).join(""):'<tr><td colspan="10" class="mu" style="text-align:center">No facilities granted in this period</td></tr>';
   h+='</table></div></div>';
   CMP.lend=LL;
 
