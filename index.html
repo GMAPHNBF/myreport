@@ -66,6 +66,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
  button{padding:9px 12px}
 }
 /* compare page */
+.duf label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
 .cmpv{position:fixed;inset:0;z-index:60;background:var(--bg);overflow:auto;display:none}.cmpv.on{display:block}
 .cmph{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:12px 18px;background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:3}
 .cmph label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
@@ -143,6 +144,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 </head>
 <body>
 <header style="justify-content:flex-end">
+  <button id="dub" style="background:#0e9f6e;color:#fff;border-color:#0e9f6e">&#128197; Due Today</button>
   <button id="cmpb" style="background:#7a5af8;color:#fff;border-color:#7a5af8">&#8644; Compare</button>
   <button class="p" id="upb">&#8679; Upload</button>
   <small id="meta" style="display:none"></small>
@@ -241,6 +243,27 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
   <button id="cmXl">&#11015; Excel</button>
  </div>
  <div class="cmpm" id="cbody"></div>
+</div>
+
+<div class="cmpv" id="due">
+ <div class="cmph">
+  <button id="duBack" class="p">&#8592; Dashboard</button>
+  <b style="font-size:16px;align-self:center">&#128197; Facilities Due</b>
+  <label>Due date<input type="date" id="duDt"></label>
+  <button id="duXl">&#11015; Excel</button>
+ </div>
+ <div class="cmpm">
+  <div class="card" style="padding:12px">
+   <input id="duQ" type="search" placeholder="Search Fac No, name, NIC, town, phone, officer..." style="width:100%;box-sizing:border-box;padding:10px 12px;font-size:14px">
+   <div class="duf" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">
+    <label>Mkt Officer<select id="duOf"><option value="">All</option></select></label>
+    <label>Description<select id="duDe"><option value="">All</option></select></label>
+    <label>Grant Date<select id="duGd"><option value="">All</option><option value="3">Last 3 Months</option><option value="6">Last 6 Months</option><option value="12">Last 12 Months</option><option value="A">After 12 Months</option></select></label>
+    <label>Stage<select id="duSt"><option value="">All</option><option value="1">Stage 1 (0-29 days)</option><option value="2">Stage 2 (30-89 days)</option><option value="3">Stage 3 (90+ days)</option></select></label>
+   </div>
+  </div>
+  <div id="duBody"></div>
+ </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -598,6 +621,20 @@ function grid(wb){return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{h
 function fnd(g,n){for(var i=0;i<Math.min(g.length,30);i++)if(g[i].some(function(c){return String(c).replace(/\s+/g,"").toLowerCase()===n}))return i;return -1}
 function ds(v){return v instanceof Date?v.toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):nm(v)}
 function nm(x){return String(x==null?"":x).replace(/\s+/g," ").trim()}
+function parseDue(v){
+  if(v==null||v==="")return 0;
+  if(v instanceof Date)return isNaN(v)?0:v.getDate();
+  if(typeof v=="number"){if(v>=1&&v<=31)return Math.round(v);if(v>31&&v<80000)return new Date(Math.round((v-25569)*86400000)).getUTCDate();return 0}
+  var s=nm(v),m=/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/.exec(s);if(m)return+m[3];
+  m=/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/.exec(s);if(m)return+m[1];
+  m=/(\d{1,2})/.exec(s);var n=m?+m[1]:0;return n>=1&&n<=31?n:0
+}
+function dueCol(g,h,c){
+  var re=/^due(\s*(day|date|on))?$/i,k=Object.keys(c),i,r,j;
+  for(i=0;i<k.length;i++)if(re.test(k[i]))return c[k[i]];
+  for(r=0;r<=h&&r<g.length;r++)for(j=0;j<(g[r]||[]).length;j++)if(re.test(nm(g[r][j])))return j;
+  return -1
+}
 function toIso(v){if(v instanceof Date){if(isNaN(v))return"";var z=function(n){return("0"+n).slice(-2)};return v.getFullYear()+"-"+z(v.getMonth()+1)+"-"+z(v.getDate())}var s=nm(v);if(!s)return"";var m=/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/.exec(s);if(m)return m[1]+"-"+("0"+m[2]).slice(-2)+"-"+("0"+m[3]).slice(-2);m=/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/.exec(s);if(m)return m[3]+"-"+("0"+m[2]).slice(-2)+"-"+("0"+m[1]).slice(-2);var d=new Date(s);return isNaN(d)?"":d.toISOString().slice(0,10)}
 function pickCol(c,res,ex){var ks=Object.keys(c);for(var i=0;i<res.length;i++)for(var j=0;j<ks.length;j++){var k=ks[j].toLowerCase();if(res[i].test(k)&&!(ex&&ex.test(k)))return ks[j]}return null}
 function stCat(t){t=String(t||"").toLowerCase();if(/current\s*running/.test(t))return"R";if(/repossess/.test(t))return"P";if(/terminat|complet|settl|clos/.test(t))return"S";return"O"}
@@ -772,6 +809,7 @@ function runUpload(meOnly){
             }
           })
         });
+        var duc=dueCol(g,h,c);
         g.slice(h+1).forEach(function(r){
           var f=nm(r[c["FACNo"]]);
           if(!f||f.length<8||seen[f])return;
@@ -781,7 +819,7 @@ function runUpload(meOnly){
             nos:+r[c["No Of O/S"]]||0,rent:+r[c["Rental Arrears"]]||0,
             tot:+r[c["Total Arrears"]]||0,days:+r[c["Arrears Days"]]||0,
             grant:iso(r[c["Grant Date"]]),lpd:iso(r[c["Last Paid Date"]]),
-            lpa:+r[c["Last Paid Amount"]]||0,tel:nm(r[c["Tel Office Home"]]),
+            lpa:+r[c["Last Paid Amount"]]||0,due:duc>=0?parseDue(r[duc]):0,tel:nm(r[c["Tel Office Home"]]),
             mkt0:nm(r[c["Mkt Officer"]]),fu:nm(r[c["Follow up Officer"]]),
             br:nm(r[c["Branch"]])||hb
           })
@@ -921,7 +959,54 @@ function cmpShow(){$("cmp").classList.add("on");document.body.style.overflow="hi
 function cmpHide(){$("cmp").classList.remove("on");document.body.style.overflow=""}
 $("cmpb").onclick=function(){cmpPushed=true;location.hash="compare"};
 $("cmBack").onclick=function(){if(cmpPushed&&location.hash=="#compare")history.back();else location.hash=""};
-window.addEventListener("hashchange",function(){if(location.hash=="#compare")cmpShow();else cmpHide()});
+window.addEventListener("hashchange",function(){if(location.hash=="#compare")cmpShow();else cmpHide();if(location.hash=="#due")duShow();else duHide()});
+/* ===== Due page: facilities whose Due day = selected date's day of month ===== */
+var DUROWS=[];
+function lIso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+function duShow(){$("due").classList.add("on");document.body.style.overflow="hidden";duInit()}
+function duHide(){$("due").classList.remove("on");if(!$("cmp").classList.contains("on"))document.body.style.overflow=""}
+function duInit(){
+  if(!$("duDt").value)$("duDt").value=lIso(new Date());
+  var keep=function(id,k){var v=$(id).value,s=Array.from(new Set(R.map(function(r){return r[k]||"(none)"}))).sort();$(id).innerHTML='<option value="">All</option>'+s.map(function(x){return"<option>"+esc(x)+"</option>"}).join("");if(s.indexOf(v)>=0)$(id).value=v};
+  keep("duOf","mkt");keep("duDe","desc");duRender()
+}
+function duGrant(r){var g=String(r.grant||"").slice(0,10);if(g)return g;var m=/^[A-Za-z]{2}(\d{2})(\d{2})/.exec(r.fac||"");return m?"20"+m[1]+"-"+m[2]+"-01":""}
+function duList(){
+  var dt=$("duDt").value,d=dt?new Date(dt+"T00:00:00"):new Date(),day=d.getDate(),last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  var of=$("duOf").value,de=$("duDe").value,gd=$("duGd").value,st=$("duSt").value,q=$("duQ").value.trim().toLowerCase(),cut="";
+  if(gd){var x=new Date(d);x.setMonth(x.getMonth()-(gd=="A"?12:+gd));cut=lIso(x)}
+  var hasDue=R.some(function(r){return+r.due>0});
+  var all=R.filter(function(r){var x=+r.due;return x>0&&(x===day||(day===last&&x>last))});
+  var rows=all.filter(function(r){
+    if(of&&(r.mkt||"(none)")!==of)return false;if(de&&(r.desc||"(none)")!==de)return false;if(st&&String(r.stage)!==st)return false;
+    if(gd){var g=duGrant(r);if(!g)return false;if(gd=="A"?g>=cut:g<cut)return false}
+    if(q){var t=[r.fac,r.name,r.reg,r.town,r.tel,r.mkt,r.branch].join(" ").toLowerCase();if(t.indexOf(q)<0)return false}
+    return true});
+  return{rows:rows,all:all,day:day,hasDue:hasDue,date:d}
+}
+function duRender(){
+  var o=duList(),rows=o.rows,b=$("duBody");DUROWS=rows;
+  if(!R.length){b.innerHTML='<div class="card mu">No data loaded yet. Upload the reports first.</div>';return}
+  if(!o.hasDue){b.innerHTML='<div class="card" style="color:var(--s3)"><b>Due data not found.</b> Re-upload the <b>Branch Wise RentalArrears</b> Excel files. The file needs a column called <b>Due</b> (day of the month, or a date).</div>';return}
+  var ts=sum(rows,"tot"),rs=sum(rows,"rent"),m={};
+  rows.forEach(function(r){var k=r.mkt||"(none)",x=m[k]||(m[k]={n:0,t:0,r:0,s3:0});x.n++;x.t+=+r.tot||0;x.r+=+r.rent||0;if(r.stage==3)x.s3++});
+  var ol=Object.keys(m).sort(function(a,c){return m[c].t-m[a].t});
+  var h='<div class="dk" style="margin:12px 0"><div class="kpi"><span>Due on day '+o.day+' ('+dlab(lIso(o.date))+')</span><b>'+fmt(rows.length)+'</b></div><div class="kpi"><span>Total Arrears</span><b>'+fmt(ts)+'</b></div><div class="kpi"><span>Rental Arrears</span><b>'+fmt(rs)+'</b></div><div class="kpi"><span>Stage 3 (90+)</span><b>'+fmt(rows.filter(function(r){return r.stage==3}).length)+'</b></div></div>';
+  if(rows.length!==o.all.length)h+='<div class="mu" style="margin-bottom:8px">Showing '+fmt(rows.length)+' of '+fmt(o.all.length)+' facilities due on this day (filters applied).</div>';
+  h+='<div class="card"><h3>Mkt Officer wise <small>(click an officer to filter)</small></h3><div class="tw" style="max-height:340px"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Facilities Due</th><th class=n>Stage 3</th><th class=n>Rental Arrears</th><th class=n>Total Arrears</th></tr>'+
+    (ol.length?ol.map(function(k,i){var x=m[k];return'<tr class="duo" data-o="'+esc(k)+'" style="cursor:pointer"><td>'+(i+1)+'</td><td><b>'+esc(k)+'</b></td><td class=n>'+fmt(x.n)+'</td><td class=n>'+fmt(x.s3)+'</td><td class=n>'+fmt(x.r)+'</td><td class=n>'+fmt(x.t)+'</td></tr>'}).join(""):'<tr><td colspan="6" class="mu" style="text-align:center">No facilities due</td></tr>')+'</table></div></div>';
+  var lim=rows.slice().sort(function(a,c){return(c.days||0)-(a.days||0)}).slice(0,500);
+  h+='<div class="card" style="margin-top:12px"><h3>Facilities due <small>('+fmt(rows.length)+(rows.length>500?', first 500 shown - use Excel for all':'')+')</small></h3><div class="tw" style="max-height:none"><table><tr><th>Fac No</th><th>Name</th><th>Mkt Officer</th><th>Description</th><th>Grant Date</th><th>Stage</th><th class=n>Arrears Days</th><th class=n>Rental Arrears</th><th class=n>Total Arrears</th><th class=n>Due</th><th>Tel</th></tr>'+
+    (lim.length?lim.map(function(r){return'<tr><td>'+esc(r.fac)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.mkt||"(none)")+'</td><td>'+esc(r.desc||"")+'</td><td>'+esc(duGrant(r))+'</td><td>'+r.stage+'</td><td class=n>'+fmt(r.days)+'</td><td class=n>'+fmt(r.rent)+'</td><td class=n>'+fmt(r.tot)+'</td><td class=n>'+r.due+'</td><td>'+esc(r.tel||"")+'</td></tr>'}).join(""):'<tr><td colspan="11" class="mu" style="text-align:center">No facilities due for these filters</td></tr>')+'</table></div></div>';
+  b.innerHTML=h;
+  Array.prototype.forEach.call(b.querySelectorAll(".duo"),function(tr){tr.onclick=function(){$("duOf").value=tr.getAttribute("data-o");duRender()}})
+}
+$("dub").onclick=function(){location.hash="due"};
+$("duBack").onclick=function(){location.hash=""};
+["duDt","duOf","duDe","duGd","duSt"].forEach(function(id){$(id).onchange=duRender});
+$("duQ").oninput=duRender;
+$("duXl").onclick=function(){dl(DUROWS.map(function(r){return{"Fac No":r.fac,Name:r.name,"Mkt Officer":r.mkt,Branch:r.branch,Description:r.desc,"Grant Date":duGrant(r),Stage:r.stage,"Arrears Days":r.days,"Rental Arrears":r.rent,"Total Arrears":r.tot,Due:r.due,Tel:r.tel}}),"Due_"+($("duDt").value||"today"))};
+
 
 var CURR=null;
 function cmpInit(){
@@ -1222,7 +1307,7 @@ try{
     }).catch(function(){})
 }catch(e){}
 
-if(location.hash=="#compare")cmpShow();
+if(location.hash=="#compare")cmpShow();if(location.hash=="#due")duShow();
 $("cs").onclick=function(){
   var c=ccfg();
   var u=prompt("Firebase Realtime Database URL (e.g. https://your-project-default-rtdb.firebaseio.com)\nLeave empty to turn online storage off:",c.url||"");
