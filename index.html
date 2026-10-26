@@ -522,6 +522,8 @@ function draw(){
 var OS=[],BS=[],CUR=[];
 function bar(l,w,v,c,i){return'<div class="bar"'+(i!=null?' data-i="'+i+'"':"")+'><div class="l">'+l+'</div><div class="t"><i style="width:'+Math.max(w*100,.5)+'%;background:'+c+'"></i></div><div class="v">'+v+'</div></div>'}
 var COLS=[["fac","Fac No"],["branch","Branch"],["name","Name"],["reg","Reg No"],["mkt","Mkt Officer"],["desc","Description"],["days","Arrears Days"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["gr","Gross Rental"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["lpa","Last Paid Amt"],["tel","Tel"]];
+var GRDBG={col:"?",hdr:""};
+function colL(i){var t="";i=+i;while(i>=0){t=String.fromCharCode(65+i%26)+t;i=Math.floor(i/26)-1}return t}
 function mrent(r){return +r.gr>0?+r.gr:0}
 function mrentTxt(r){var m=mrent(r);return m>0?fmt(m):"-"}
 function mrentLbl(r){return "Gross Rental"}
@@ -824,7 +826,12 @@ function runUpload(meOnly){
             }
           })
         });
-        var duc=dueCol(g,h,c),grc=-1;Object.keys(c).forEach(function(k){var z=k.toLowerCase().replace(/[^a-z0-9]/g,"");if(grc<0&&z.indexOf("gross")>=0&&z.indexOf("rent")>=0)grc=c[k]});if(grc<0)grc=19;
+        var duc=dueCol(g,h,c),grc=-1,gz=function(x){return String(x==null?"":x).toLowerCase().replace(/[^a-z0-9]/g,"")};
+        Object.keys(c).forEach(function(k){if(grc<0&&gz(k)=="grossrental")grc=c[k]});
+        if(grc<0)for(var gi=Math.max(0,h-4);gi<=Math.min(g.length-1,h+4)&&grc<0;gi++)g[gi].forEach(function(x,i){if(grc<0&&gz(x)=="grossrental")grc=i});
+        if(grc<0)Object.keys(c).forEach(function(k){var z=gz(k);if(grc<0&&z.indexOf("gross")>=0&&z.indexOf("rent")>=0)grc=c[k]});
+        if(grc<0)grc=19;
+        GRDBG.col=colL(grc);GRDBG.hdr=nm(g[h][grc]!=null?g[h][grc]:((g[h-1]&&g[h-1][grc])||(g[h+1]&&g[h+1][grc])||""));
         g.slice(h+1).forEach(function(r){
           var f=nm(r[c["FACNo"]]);
           if(!f||f.length<8||seen[f])return;
@@ -917,7 +924,7 @@ function runUpload(meOnly){
         var isEnd=!!at&&new Date(at.getTime()+864e5).getUTCDate()==1;
         cput(o2).then(function(s){return(isEnd?saveMonthEnd(sk,o2,sm):Promise.resolve("skip")).then(function(s3){return[s,s3]})}).then(function(res){return lendP.then(function(lr){res.push(lr);return res})}).then(function(res){
           var s=res[0],s3=res[1],lr=res[2];
-          var msg="<b>"+rows.length+"</b> facilities loaded from <b>"+all.length+"</b> files.";
+          var msg="<b>"+rows.length+"</b> facilities loaded from <b>"+all.length+"</b> files.";var gn=rows.filter(function(r){return +r.gr>0}).length;msg+=gn?'<br><span style="color:var(--s1)">Gross Rental read from column <b>'+GRDBG.col+'</b> ('+esc(GRDBG.hdr||"no header")+") – "+gn+" facilities have a value.</span>":'<br><span style="color:var(--s3)">Gross Rental NOT found – column <b>'+GRDBG.col+"</b> (\""+esc(GRDBG.hdr||"no header")+"\") is empty.</span>";
           if(s=="off")msg+='<br><span class="mu">Online storage not set up (saved on this device only).</span>';
           else if(s=="ok")msg+='<br><span style="color:var(--s1)">Saved ONLINE – everyone will see this data.</span>';
           else msg+='<br><span style="color:var(--s3)">Online save '+s+' – check storage setup.</span>';
