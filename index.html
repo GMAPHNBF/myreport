@@ -312,8 +312,8 @@ function sres(){
   box.innerHTML='<div class="sh2"><span>&#128269; '+a.length+' result'+(a.length>1?"s":"")+'</span><span class="mu" style="font-weight:400;font-size:13px">Total Arrears '+fmt(sum(a,"tot"))+' • Portfolio '+fmt(sum(a,"port"))+'</span></div><div class="grid">'+
   a.slice(0,MAXR).map(function(r){
     var dd=done[r.fac];
-    return'<div class="rc'+(dd?" dn":"")+'" data-s="'+r.stage+'"><div class="h"><div><div class="fn">'+hl(r.fac,re)+'</div><div class="nm">'+hl(r.name,re)+'</div></div><div style="text-align:right"><span class="tag s'+r.stage+'">Stage '+r.stage+'</span><div style="margin-top:5px">'+(r.r1?'<span class="tag fl">1st</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span>':"")+'</div></div></div>'+
-    '<div class="g"><div><span>Arrears Days</span>'+r.days+' ('+BK[r.b][0]+')</div><div><span>Total Arrears</span><b>'+fmt(r.tot)+'</b></div><div><span>Rental Arrears</span>'+fmt(r.rent)+'</div><div><span>Portfolio</span>'+fmt(r.port)+'</div><div><span>Mkt Officer</span>'+hl(r.mkt,re)+'</div><div><span>Branch</span>'+hl(r.branch,re)+'</div><div><span>Reg No</span>'+hl(r.reg||"-",re)+'</div><div><span>Last Paid</span>'+esc(r.lpd||"-")+'</div><div><span>Last Paid Amt</span>'+fmt(r.lpa)+'</div><div style="grid-column:1/-1"><span>Tel</span><div class="duw">'+duCall(r.tel)+'</div></div></div>'+
+    return'<div class="rc'+(dd?" dn":"")+'" data-s="'+r.stage+'"><div class="h"><div><div class="fn">'+hl(r.fac,re)+'</div><div class="nm">'+hl(r.name,re)+'</div></div><div style="text-align:right"><span class="tag s'+r.stage+'">Stage '+r.stage+'</span><div style="margin-top:5px">'+(r.r1?'<span class="tag fl">1st Rental</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span>':"")+'</div></div></div>'+
+    '<div class="g"><div><span>Arrears Days</span>'+r.days+' ('+BK[r.b][0]+')</div><div><span>Total Arrears</span><b>'+fmt(r.tot)+'</b></div><div><span>Rental Arrears</span><b>'+fmt(r.rent)+'</b></div><div><span>'+mrentLbl(r)+'</span><b>'+mrentTxt(r)+'</b></div><div><span>No Of O/S (rentals)</span>'+fmt(r.nos)+'</div><div><span>Rental Due Day</span>'+(+r.due>0?'Day '+r.due:'-')+'</div><div><span>Grant Date</span>'+esc(r.grant?String(r.grant).slice(0,10):'-')+'</div><div><span>Portfolio</span>'+fmt(r.port)+'</div><div><span>Advance</span>'+fmt(r.adv)+'</div><div><span>Mkt Officer</span>'+hl(r.mkt,re)+'</div><div><span>Branch</span>'+hl(r.branch,re)+'</div><div><span>Reg No</span>'+hl(r.reg||"-",re)+'</div><div><span>Last Paid</span>'+esc(r.lpd||"-")+'</div><div><span>Last Paid Amt</span>'+fmt(r.lpa)+'</div><div style="grid-column:1/-1"><span>Tel</span><div class="duw">'+duCall(r.tel)+'</div></div></div>'+
     '<label><input type="checkbox" data-sd="'+esc(r.fac)+'"'+(dd?" checked":"")+'> Done</label></div>'
   }).join("")+'</div>'+(a.length>MAXR?'<div class="mu" style="margin:8px 2px 0">Showing the first '+MAXR+' of '+a.length+'. Type more to narrow down, or see the full list below.</div>':"");
 }
@@ -521,19 +521,22 @@ function draw(){
 }
 var OS=[],BS=[],CUR=[];
 function bar(l,w,v,c,i){return'<div class="bar"'+(i!=null?' data-i="'+i+'"':"")+'><div class="l">'+l+'</div><div class="t"><i style="width:'+Math.max(w*100,.5)+'%;background:'+c+'"></i></div><div class="v">'+v+'</div></div>'}
-var COLS=[["fac","Fac No"],["branch","Branch"],["name","Name"],["reg","Reg No"],["mkt","Mkt Officer"],["desc","Description"],["days","Arrears Days"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["lpa","Last Paid Amt"],["tel","Tel"]];
+var COLS=[["fac","Fac No"],["branch","Branch"],["name","Name"],["reg","Reg No"],["mkt","Mkt Officer"],["desc","Description"],["days","Arrears Days"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["gr","Gross Rental"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["lpa","Last Paid Amt"],["tel","Tel"]];
+function mrent(r){return +r.gr>0?+r.gr:(+r.nos>0?Math.round((+r.rent||0)/+r.nos):0)}
+function mrentTxt(r){var m=mrent(r);return m>0?fmt(m):"-"}
+function mrentLbl(r){return +r.gr>0?"Gross Rental":"Gross Rental (approx)"}
 function cards(a,ps){
   $("cl").innerHTML=a.slice(page*ps,page*ps+ps).map(function(r){
     var dd=done[r.fac];
     var it=function(l,v){return"<div><span>"+l+"</span>"+v+"</div>"};
-    return'<div class="cc'+(dd?" dn":"")+'"><div class="h"><div><b>'+r.fac+'</b><div class="mu">'+r.name+'</div></div><div style="text-align:right"><span class="tag s'+r.stage+'">Stage '+r.stage+'</span><div style="margin-top:4px">'+(r.r1?'<span class="tag fl">1st</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span>':"")+'</div></div></div><div class="g">'+it("Arrears Days",r.days+" ("+BK[r.b][0]+")")+it("Total Arrears",fmt(r.tot))+it("Rental Arrears",fmt(r.rent))+it("Portfolio",fmt(r.port))+it("Mkt Officer",r.mkt||"-")+it("Branch",r.branch||"-")+it("Grant Date",r.grant||"-")+it("Last Paid",r.lpd||"-")+it("Last Paid Amt",fmt(r.lpa))+'<div style="grid-column:1/-1"><span>Tel</span><div class="duw">'+duCall(r.tel)+'</div></div>'+it("No Of O/S",(+r.nos).toFixed(2))+'</div><label><input type=checkbox data-f="'+r.fac+'"'+(dd?" checked":"")+'> Done</label></div>'
+    return'<div class="cc'+(dd?" dn":"")+'"><div class="h"><div><b>'+r.fac+'</b><div class="mu">'+r.name+'</div></div><div style="text-align:right"><span class="tag s'+r.stage+'">Stage '+r.stage+'</span><div style="margin-top:4px">'+(r.r1?'<span class="tag fl">1st</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span>':"")+'</div></div></div><div class="g">'+it("Arrears Days",r.days+" ("+BK[r.b][0]+")")+it("Total Arrears",fmt(r.tot))+it("Rental Arrears",fmt(r.rent))+it(mrentLbl(r),mrentTxt(r))+it("Portfolio",fmt(r.port))+it("Mkt Officer",r.mkt||"-")+it("Branch",r.branch||"-")+it("Grant Date",r.grant||"-")+it("Last Paid",r.lpd||"-")+it("Last Paid Amt",fmt(r.lpa))+'<div style="grid-column:1/-1"><span>Tel</span><div class="duw">'+duCall(r.tel)+'</div></div>'+it("No Of O/S",(+r.nos).toFixed(2))+'</div><label><input type=checkbox data-f="'+r.fac+'"'+(dd?" checked":"")+'> Done</label></div>'
   }).join("")
 }
 function table(a){
   a=a.slice().sort(function(x,y){var p=x[sortK],q=y[sortK];return(p>q?1:p<q?-1:0)*sortD});CUR=a;
   var ps=100,pc=Math.max(1,Math.ceil(a.length/ps));if(page>=pc)page=pc-1;
   cards(a,ps);$("th").textContent="Customers ("+a.length+")";$("pi").textContent="Page "+(page+1)+" / "+pc;
-  var num={days:1,nos:1,rent:1,tot:1,port:1,adv:1,lpa:1};
+  var num={days:1,nos:1,rent:1,gr:1,tot:1,port:1,adv:1,lpa:1};
   $("tb").innerHTML="<tr><th>Done"+COLS.map(function(c){return'<th data-k="'+c[0]+'"'+(num[c[0]]?' class=n':'')+'>'+c[1]+(sortK==c[0]?(sortD>0?" ▲":" ▼"):"")}).join("")+"<th>Flags</tr>"+
     a.slice(page*ps,page*ps+ps).map(function(r){
       var dd=done[r.fac];
@@ -565,7 +568,7 @@ function setDone(f,v){if(v)done[f]=1;else delete done[f];try{localStorage.setIte
    EXCEL EXPORT
    ============================================================ */
 function dl(rows,name){var ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Report");XLSX.writeFile(wb,name+".xlsx")}
-$("e1").onclick=function(){dl(CUR.map(function(r){return{"Fac No":r.fac,Branch:r.branch,Name:r.name,"Reg No":r.reg,Town:r.town,"Mkt Officer":r.mkt,Description:r.desc,"Follow Up":r.fu,"Arrears Days":r.days,Stage:r.stage,Bucket:BK[r.b][0],"No Of O/S":r.nos,"Rental Arrears":r.rent,"Total Arrears":r.tot,Portfolio:r.port,Advance:r.adv,"Fac Age":r.last12?"Last 12 Months":"After 12 Months","1st Rental":r.r1?"Yes":"","Null Payment":r.np?"Yes":"","Last Paid Amt":r.lpa,"PNPL":pn(r)?"Yes":"",Done:done[r.fac]?"Yes":"","Grant Date":r.grant,"Last Paid":r.lpd,Tel:r.tel}}),({PN:"PNPL_List",R1:"1st_Rental_List",NP:"Null_Payment_List"}[$("fg").value]||"Arrears_Filtered"))};
+$("e1").onclick=function(){dl(CUR.map(function(r){return{"Fac No":r.fac,Branch:r.branch,Name:r.name,"Reg No":r.reg,Town:r.town,"Mkt Officer":r.mkt,Description:r.desc,"Follow Up":r.fu,"Arrears Days":r.days,Stage:r.stage,Bucket:BK[r.b][0],"No Of O/S":r.nos,"Gross Rental":mrent(r),"Rental Arrears":r.rent,"Total Arrears":r.tot,Portfolio:r.port,Advance:r.adv,"Fac Age":r.last12?"Last 12 Months":"After 12 Months","1st Rental":r.r1?"Yes":"","Null Payment":r.np?"Yes":"","Last Paid Amt":r.lpa,"PNPL":pn(r)?"Yes":"",Done:done[r.fac]?"Yes":"","Grant Date":r.grant,"Last Paid":r.lpd,Tel:r.tel}}),({PN:"PNPL_List",R1:"1st_Rental_List",NP:"Null_Payment_List"}[$("fg").value]||"Arrears_Filtered"))};
 $("e2").onclick=function(){dl(OS.map(function(o){return{"Mkt Officer":o.Officer,Customers:o.n,"Rental Arrears":o.r,"Total Arrears":o.t,Portfolio:o.p,"Stage 1":o.s1,"Stage 2":o.s2,"Stage 3":o.s3,PNPL:o.pn,Done:o.d}}),"MktOfficer_Summary")};
 $("e3").onclick=function(){dl(BS.map(function(x,i){return{Bucket:BK[i][0],Customers:x.length,"Rental Arrears":sum(x,"rent"),"Total Arrears":sum(x,"tot"),Portfolio:sum(x,"port")}}),"Bucket_Summary")};
 
@@ -821,7 +824,7 @@ function runUpload(meOnly){
             }
           })
         });
-        var duc=dueCol(g,h,c);
+        var duc=dueCol(g,h,c),grc=-1;Object.keys(c).forEach(function(k){if(grc<0&&k.toLowerCase().replace(/[^a-z0-9]/g,"")=="grossrental")grc=c[k]});
         g.slice(h+1).forEach(function(r){
           var f=nm(r[c["FACNo"]]);
           if(!f||f.length<8||seen[f])return;
@@ -831,7 +834,7 @@ function runUpload(meOnly){
             nos:+r[c["No Of O/S"]]||0,rent:+r[c["Rental Arrears"]]||0,
             tot:+r[c["Total Arrears"]]||0,days:+r[c["Arrears Days"]]||0,
             grant:iso(r[c["Grant Date"]]),lpd:iso(r[c["Last Paid Date"]]),
-            lpa:+r[c["Last Paid Amount"]]||0,due:duc>=0?parseDue(r[duc]):0,tel:nm(r[c["Tel Office Home"]]),
+            lpa:+r[c["Last Paid Amount"]]||0,gr:grc>=0?(+String(r[grc]).replace(/,/g,"")||0):0,due:duc>=0?parseDue(r[duc]):0,tel:nm(r[c["Tel Office Home"]]),
             mkt0:nm(r[c["Mkt Officer"]]),fu:nm(r[c["Follow up Officer"]]),
             br:nm(r[c["Branch"]])||hb
           })
