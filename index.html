@@ -824,7 +824,7 @@ function runUpload(meOnly){
             }
           })
         });
-        var duc=dueCol(g,h,c),grc=-1;Object.keys(c).forEach(function(k){if(grc<0&&k.toLowerCase().replace(/[^a-z0-9]/g,"")=="grossrental")grc=c[k]});
+        var duc=dueCol(g,h,c),grc=-1;Object.keys(c).forEach(function(k){var z=k.toLowerCase().replace(/[^a-z0-9]/g,"");if(grc<0&&z.indexOf("gross")>=0&&z.indexOf("rent")>=0)grc=c[k]});if(grc<0)grc=19;
         g.slice(h+1).forEach(function(r){
           var f=nm(r[c["FACNo"]]);
           if(!f||f.length<8||seen[f])return;
