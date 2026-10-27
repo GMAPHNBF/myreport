@@ -1213,14 +1213,14 @@ function cmpRender(){
   // ==========================================
   // 3. STAGE WISE & 4. ARREARS BUCKET (Clear Difference)
   // ==========================================
-  var smx=Math.max.apply(null,[1].concat([1,2,3].map(function(s){return Math.max(A["t"+s],B["t"+s])})));
-  var c1=[1,2,3].map(function(s){return gb("Stage "+s,A["t"+s],B["t"+s],smx,A["n"+s]+" → "+B["n"+s]+" cust<br>"+fmt(A["t"+s])+" → "+fmt(B["t"+s])+" "+dlt(A["t"+s],B["t"+s],-1))}).join("");
+  var smx=Math.max.apply(null,[1].concat([1,2,3].map(function(s){return Math.max(A["p"+s],B["p"+s])})));
+  var c1=[1,2,3].map(function(s){return gb("Stage "+s,A["p"+s],B["p"+s],smx,A["n"+s]+" → "+B["n"+s]+" cust<br>"+fmt(A["p"+s])+" → "+fmt(B["p"+s])+" "+dlt(A["p"+s],B["p"+s],s==1?1:-1))}).join("");
   
   var bs=BK.map(function(_,i){return[a.filter(function(r){return r.b==i}),b.filter(function(r){return r.b==i})]});
-  var bmx=Math.max.apply(null,[1].concat(bs.map(function(x){return Math.max(sum(x[0],"tot"),sum(x[1],"tot"))})));
-  var c2=bs.map(function(x,i){var ta=sum(x[0],"tot"),tb=sum(x[1],"tot");return gb(BK[i][0],ta,tb,bmx,x[0].length+" → "+x[1].length+" cust<br>"+fmt(ta)+" → "+fmt(tb)+" "+dlt(ta,tb,-1))}).join("");
+  var bmx=Math.max.apply(null,[1].concat(bs.map(function(x){return Math.max(sum(x[0],"port"),sum(x[1],"port"))})));
+  var c2=bs.map(function(x,i){var ta=sum(x[0],"port"),tb=sum(x[1],"port");return gb(BK[i][0],ta,tb,bmx,x[0].length+" → "+x[1].length+" cust<br>"+fmt(ta)+" → "+fmt(tb)+" "+dlt(ta,tb,i<2?1:-1))}).join("");
   
-  h+='<div class="g2"><div class="card"><h3>Stage wise – Total Arrears</h3>'+c1+'</div><div class="card"><h3>Arrears Bucket wise</h3>'+c2+'</div></div>';
+  h+='<div class="g2"><div class="card"><h3>Stage wise – Portfolio</h3>'+c1+'</div><div class="card"><h3>Arrears Bucket wise – Portfolio</h3>'+c2+'</div></div>';
 
   // ==========================================
   // 5. BEST RECOVERY MARKETING OFFICERS (Corrected Logic)
