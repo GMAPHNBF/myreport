@@ -1218,7 +1218,7 @@ function cmpRender(){
   
   var bs=BK.map(function(_,i){return[a.filter(function(r){return r.b==i}),b.filter(function(r){return r.b==i})]});
   var bmx=Math.max.apply(null,[1].concat(bs.map(function(x){return Math.max(sum(x[0],"port"),sum(x[1],"port"))})));
-  var c2=bs.map(function(x,i){var ta=sum(x[0],"port"),tb=sum(x[1],"port");return gb(BK[i][0],ta,tb,bmx,x[0].length+" → "+x[1].length+" cust<br>"+fmt(ta)+" → "+fmt(tb)+" "+dlt(ta,tb,i<2?1:-1))}).join("");
+  var c2=bs.map(function(x,i){var ta=sum(x[0],"port"),tb=sum(x[1],"port");return gb(BK[i][0],ta,tb,bmx,x[0].length+" → "+x[1].length+" cust<br>"+fmt(ta)+" → "+fmt(tb)+" "+dlt(ta,tb,i==0?1:-1))}).join("");
   
   h+='<div class="g2"><div class="card"><h3>Stage wise – Portfolio</h3>'+c1+'</div><div class="card"><h3>Arrears Bucket wise – Portfolio</h3>'+c2+'</div></div>';
 
