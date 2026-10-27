@@ -521,7 +521,7 @@ function draw(){
 }
 var OS=[],BS=[],CUR=[];
 function bar(l,w,v,c,i){return'<div class="bar"'+(i!=null?' data-i="'+i+'"':"")+'><div class="l">'+l+'</div><div class="t"><i style="width:'+Math.max(w*100,.5)+'%;background:'+c+'"></i></div><div class="v">'+v+'</div></div>'}
-var COLS=[["fac","Fac No"],["branch","Branch"],["name","Name"],["reg","Reg No"],["mkt","Mkt Officer"],["desc","Description"],["days","Arrears Days"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["gr","Gross Rental"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["lpa","Last Paid Amt"],["tel","Tel"]];
+var COLS=[["fac","Fac No"],["branch","Branch"],["name","Name"],["reg","Reg No"],["omni","Omni Cust No"],["mkt","Mkt Officer"],["desc","Description"],["days","Arrears Days"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["gr","Gross Rental"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["lpa","Last Paid Amt"],["tel","Tel"],["addr","Address"]];
 var GRDBG={col:"?",hdr:""},ADBG={ad:"",om:""};
 function colL(i){var t="";i=+i;while(i>=0){t=String.fromCharCode(65+i%26)+t;i=Math.floor(i/26)-1}return t}
 function mrent(r){return +r.gr>0?+r.gr:0}
@@ -548,6 +548,7 @@ function table(a){
         if(c[0]=="b")return"<td>"+BK[v][0];
         if(c[0]=="tel")return"<td>"+duCall(v);
         if(num[c[0]])return"<td class=n>"+(c[0]=="nos"?(+v).toFixed(2):fmt(v));
+        if(c[0]=="addr"||c[0]=="omni")return"<td>"+esc(v==null?"":v);
         return"<td>"+(v==null?"":v)
       }).join("")+
       "<td>"+(r.r1?'<span class="tag fl">1st</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span>':"")}).join("");
