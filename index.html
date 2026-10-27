@@ -230,7 +230,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 <small class="mu" id="pnote"></small></div>
 <div class="card"><h3>Portfolio – Stage Percentage</h3><div id="dn3" class="g3"></div><h3 style="margin-top:14px">Portfolio Stage mix by Mkt Officer (%)</h3><div id="om2"></div></div>
 <div class="card"><h3>NPL Ratio <small>(NPL = Portfolio with Arrears Days 91 and above • Ratio = NPL Portfolio ÷ Total Portfolio)</small></h3><div class="g2"><div id="npg"></div><div id="npo" style="max-height:330px;overflow:auto"></div></div></div>
-<div class="g2"><div class="card"><h3>Stage wise</h3><div id="c1"></div></div><div class="card"><h3>Arrears Bucket wise (click to filter)</h3><div id="c2"></div></div></div>
+<div class="g2"><div class="card"><h3>Stage wise <span class="mu" style="font-size:12px;font-weight:400">(count | Total Arrears)</span></h3><div id="c1"></div></div><div class="card"><h3>Arrears Bucket wise (click to filter) <span class="mu" style="font-size:12px;font-weight:400">(count | Total Arrears)</span></h3><div id="c2"></div></div></div>
 <div class="card"><div class="f" style="justify-content:space-between"><h3>Mkt Officer wise summary</h3><button id="e2">⬇ Excel</button></div><div class="tw" style="max-height:340px"><table id="ot"></table></div></div>
 <div class="card"><div class="f" style="justify-content:space-between"><h3 id="th">Customers</h3><div class="f"><button id="e1" class="p">⬇ Download filtered (Excel)</button><button id="e3">⬇ Bucket summary (Excel)</button></div></div>
 <div class="tw tbl"><table id="tb"></table></div><div class="cl" id="cl"></div><div class="pg"><button id="pv">◀</button><span id="pi"></span><button id="nx">▶</button></div></div>
@@ -455,7 +455,7 @@ function draw(){
   var mx=Math.max.apply(null,[1].concat([1,2,3].map(function(s){return sum(a.filter(function(r){return r.stage==s}),"tot")})));
   $("c1").innerHTML=[1,2,3].map(function(s){
     var x=a.filter(function(r){return r.stage==s}),t=sum(x,"tot");
-    return bar("Stage "+s,t/mx,x.length+" | "+fmt(t),"var(--s"+s+")")
+    return bar("Stage "+s,t/mx,x.length+" | "+fmt(t)+'<br><small class="mu">Portfolio '+fmt(sum(x,"port"))+"</small>","var(--s"+s+")")
   }).join("");
 
   function donut(title,vals,fm,cn){
@@ -495,7 +495,7 @@ function draw(){
   $("npo").innerHTML='<div class="mu" style="font-size:12px;margin-bottom:4px">NPL ratio by Mkt Officer</div>'+(no.map(function(x){var r=x[2]?x[1]/x[2]*100:0;return bar(x[0],r/mxr,r.toFixed(1)+'% | '+fmt(x[1]),r<5?"var(--s1)":r<10?"var(--s2)":"var(--s3)")}).join("")||'<span class="mu">No data</span>');
 
   var bs=BK.map(function(_,i){return b.filter(function(r){return r.b==i})}),m2=Math.max.apply(null,[1].concat(bs.map(function(x){return sum(x,"tot")})));
-  $("c2").innerHTML=bs.map(function(x,i){var t=sum(x,"tot");return bar(BK[i][0],t/m2,x.length+" | "+fmt(t),bkSel[i]?"var(--pr)":"#8aa0cf",i)}).join("");
+  $("c2").innerHTML=bs.map(function(x,i){var t=sum(x,"tot");return bar(BK[i][0],t/m2,x.length+" | "+fmt(t)+'<br><small class="mu">Portfolio '+fmt(sum(x,"port"))+"</small>",bkSel[i]?"var(--pr)":"#8aa0cf",i)}).join("");
 
   var om={};
   a.forEach(function(r){
