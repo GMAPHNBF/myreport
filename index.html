@@ -279,7 +279,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 <div class="cmpv" id="od">
  <div class="cmph">
   <button id="odBack" class="p">&#8592; Dashboard</button>
-  <b style="font-size:16px;align-self:center">&#9889; PNPL + 1 Day Payment</b>
+  <b style="font-size:16px;align-self:center">&#9889; 1 Day Payment</b>
   <button id="odXl">&#11015; Excel</button>
  </div>
  <div class="cmpm">
@@ -288,7 +288,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
    <div class="duf" style="display:flex;flex-wrap:wrap;gap:10px">
     <label>Mkt Officer<select id="odOf"><option value="">All</option></select></label>
     <label>Description<select id="odDe"><option value="">All</option></select></label>
-    <label>Status<select id="odSt"><option value="">All</option><option value="N">PNPL list (current)</option><option value="E">Added (due 1st)</option></select></label>
+    <label>Status<select id="odSt"><option value="">All</option><option value="N">PNPL (kept)</option><option value="E">Added (due 1st, next month)</option><option value="X">Removed (due 1st, this month)</option></select></label>
    </div>
   </div>
   <div id="odBody"></div>
@@ -1085,7 +1085,7 @@ function odBase(){
   var p1=+$("p1").value||91,p2=+$("p2").value||(91+dim(asAt||new Date())),g=odGap();
   return R.map(function(r){
     var d=+r.days||0,nw=d>=p1&&d<=p2,pj=d+g,en=!nw&&+r.due===1&&pj>=p1&&pj<=p2;
-    return nw||en?{r:r,pj:pj,st:nw?"N":"E"}:null}).filter(Boolean)
+    return nw||en?{r:r,pj:pj,st:nw?(+r.due===1?"X":"N"):"E"}:null}).filter(Boolean)
 }
 function odInit(){
   var keep=function(id,k,src){var v=$(id).value,s=Array.from(new Set(src.map(function(x){return x.r[k]||"(none)"}))).sort();$(id).innerHTML='<option value="">All</option>'+s.map(function(x){return"<option>"+esc(x)+"</option>"}).join("");if(s.indexOf(v)>=0)$(id).value=v};
@@ -1093,17 +1093,17 @@ function odInit(){
 }
 function odRender(){
   var b=$("odBody"),all=odBase(),p1=+$("p1").value||91,p2=+$("p2").value||(91+dim(asAt||new Date())),g=odGap();
-  $("odNote").innerHTML='<b>PNPL list</b> (Arrears Days '+p1+' – '+p2+') <b>+ Added</b>: facilities with Due day <b>1</b> whose days, after +'+g+' days until the next 1st, will fall in this range.';
+  $("odNote").innerHTML='<b>PNPL list</b> (Arrears Days '+p1+' – '+p2+') <b>– Removed</b>: facilities with Due day <b>1</b> in the current PNPL list drop out. <b>+ Added</b>: Due day <b>1</b> facilities whose days (+'+g+' days until the next 1st) will fall in this range come in.';
   if(!R.length){b.innerHTML='<div class="card mu">No data loaded yet. Upload the reports first.</div>';return}
   if(!R.some(function(r){return+r.due>0})){b.innerHTML='<div class="card" style="color:var(--s3)"><b>Due data not found.</b> Re-upload the <b>Branch Wise RentalArrears</b> Excel files (needs a <b>Due</b> column).</div>';return}
   var of=$("odOf").value,de=$("odDe").value,st=$("odSt").value;
-  var rows=all.filter(function(x){var r=x.r;if(of&&(r.mkt||"(none)")!==of)return false;if(de&&(r.desc||"(none)")!==de)return false;if(st&&x.st!==st)return false;return true});
+  var rows=all.filter(function(x){var r=x.r;if(of&&(r.mkt||"(none)")!==of)return false;if(de&&(r.desc||"(none)")!==de)return false;if(st?x.st!==st:x.st==="X")return false;return true});
   ODROWS=rows;
   var nN=rows.filter(function(x){return x.st==="N"}).length,rr=rows.map(function(x){return x.r}),m={};
   rows.forEach(function(x){var k=x.r.mkt||"(none)",o=m[k]||(m[k]={n:0,e:0,t:0,r:0});o.n++;if(x.st==="E")o.e++;o.t+=+x.r.tot||0;o.r+=+x.r.rent||0});
   var ol=Object.keys(m).sort(function(a,c){return m[c].t-m[a].t});
-  var tag=function(x){return x.st==="N"?'<span class="tag fl">PNPL</span>':'<span class="tag s2">Added (due 1st)</span>'};
-  var h='<div class="dk" style="margin:12px 0"><div class="kpi"><span>Total (PNPL + Added)</span><b>'+fmt(rows.length)+'</b></div><div class="kpi"><span>PNPL list (current)</span><b>'+fmt(nN)+'</b></div><div class="kpi"><span>Added (due 1st)</span><b>'+fmt(rows.length-nN)+'</b></div><div class="kpi"><span>Rental Arrears</span><b>'+fmt(sum(rr,"rent"))+'</b></div><div class="kpi"><span>Total Arrears</span><b>'+fmt(sum(rr,"tot"))+'</b></div></div>';
+  var tag=function(x){return x.st==="N"?'<span class="tag fl">PNPL</span>':x.st==="X"?'<span class="tag s3">Removed</span>':'<span class="tag s2">Added (due 1st)</span>'};
+  var h='<div class="dk" style="margin:12px 0"><div class="kpi"><span>New list (PNPL - Removed + Added)</span><b>'+fmt(rows.length)+'</b></div><div class="kpi"><span>PNPL (kept)</span><b>'+fmt(nN)+'</b></div><div class="kpi"><span>Added (due 1st)</span><b>'+fmt(rows.length-nN)+'</b></div><div class="kpi"><span>Removed (due 1st)</span><b>'+fmt(all.filter(function(x){return x.st==="X"&&(!of||(x.r.mkt||"(none)")===of)&&(!de||(x.r.desc||"(none)")===de)}).length)+'</b></div><div class="kpi"><span>Rental Arrears</span><b>'+fmt(sum(rr,"rent"))+'</b></div><div class="kpi"><span>Total Arrears</span><b>'+fmt(sum(rr,"tot"))+'</b></div></div>';
   h+='<div class="card"><h3>Mkt Officer wise <small>(click an officer to filter)</small></h3><div class="tw" style="max-height:340px"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Facilities</th><th class=n>Added</th><th class=n>Rental Arrears</th><th class=n>Total Arrears</th></tr>'+
     (ol.length?ol.map(function(k,i){var o=m[k];return'<tr class="odo" data-o="'+esc(k)+'" style="cursor:pointer"><td>'+(i+1)+'</td><td><b>'+esc(k)+'</b></td><td class=n>'+fmt(o.n)+'</td><td class=n>'+fmt(o.e)+'</td><td class=n>'+fmt(o.r)+'</td><td class=n>'+fmt(o.t)+'</td></tr>'}).join(""):'<tr><td colspan="6" class="mu" style="text-align:center">No facilities</td></tr>')+'</table></div></div>';
   var lim=rows.slice().sort(function(a,c){return(c.r.days||0)-(a.r.days||0)}).slice(0,500);
@@ -1117,7 +1117,7 @@ function odRender(){
 $("odb").onclick=function(){location.hash="oneday"};
 $("odBack").onclick=function(){location.hash=""};
 ["odOf","odDe","odSt"].forEach(function(id){$(id).onchange=odRender});
-$("odXl").onclick=function(){dl(ODROWS.map(function(x){var r=x.r;return{"Fac No":r.fac,Name:r.name,"Mkt Officer":r.mkt,Branch:r.branch,Description:r.desc,Status:x.st==="N"?"PNPL list":"Added (due 1st)",Stage:r.stage,"Arrears Days":r.days,"Days on next 1st":x.pj,"Rental Arrears":r.rent,"Total Arrears":r.tot,Due:r.due,"Last Paid Date":r.lpd||"","Last Paid Amount":r.lpa||0,Tel:r.tel}}),"1Day_Payment")};
+$("odXl").onclick=function(){dl(ODROWS.map(function(x){var r=x.r;return{"Fac No":r.fac,Name:r.name,"Mkt Officer":r.mkt,Branch:r.branch,Description:r.desc,Status:x.st==="N"?"PNPL list":x.st==="X"?"Removed (due 1st)":"Added (due 1st)",Stage:r.stage,"Arrears Days":r.days,"Days on next 1st":x.pj,"Rental Arrears":r.rent,"Total Arrears":r.tot,Due:r.due,"Last Paid Date":r.lpd||"","Last Paid Amount":r.lpa||0,Tel:r.tel}}),"1Day_Payment")};
 
 var CURR=null;
 function cmpInit(){
