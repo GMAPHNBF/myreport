@@ -1196,10 +1196,12 @@ function bkRun(){
     keep("bkOf","mkt");keep("bkDe","desc");
 
     BKDATA={all:all,ka:ka,kb:CURR.key,la:kaL,lb:kbL,gap:gapDays,a:a,b:b};
+    bkClearExtra();
     bkRender();
   }).catch(function(e){$("bkBody").innerHTML='<div class="card" style="color:var(--s3)">Error: '+esc(String(e&&e.message||e))+'</div>'})
 }
 
+var BKX={bA:null,bB:null}; // matrix cell filter
 function bkFilt(){
   if(!BKDATA)return[];
   var of=$("bkOf").value,de=$("bkDe").value,gd=$("bkGd").value,mv=$("bkMv").value;
@@ -1209,12 +1211,26 @@ function bkFilt(){
     if(of&&r.mkt!==of)return false;
     if(de&&r.desc!==de)return false;
     if(mv&&r.mv!==mv)return false;
+    if(BKX.bA!=null&&r.bA!==BKX.bA)return false;
+    if(BKX.bB!=null&&r.bB!==BKX.bB)return false;
     if(gd){
       var g=r.grant;if(!g)return false;
       if(gd==="A"?g>=cut:g<cut)return false;
     }
     return true;
   });
+}
+function bkClearExtra(){BKX={bA:null,bB:null}}
+function bkActiveLabel(){
+  var bits=[];
+  if($("bkOf").value)bits.push("Officer: "+$("bkOf").value);
+  if($("bkDe").value)bits.push("Desc: "+$("bkDe").value);
+  if($("bkGd").value)bits.push("Grant: "+$("bkGd").options[$("bkGd").selectedIndex].text);
+  if($("bkMv").value)bits.push("Move: "+$("bkMv").options[$("bkMv").selectedIndex].text);
+  if(BKX.bA!=null&&BKX.bB!=null)bits.push("Matrix: "+BK[BKX.bA][0]+" → "+BK[BKX.bB][0]);
+  else if(BKX.bA!=null)bits.push("From: "+BK[BKX.bA][0]);
+  else if(BKX.bB!=null)bits.push("To: "+BK[BKX.bB][0]);
+  return bits;
 }
 
 function bkRender(){
@@ -1231,14 +1247,20 @@ function bkRender(){
   var h='';
   h+='<div class="mu" style="margin-bottom:12px"><span class="lgd" style="background:#8aa0cf"></span>A: <b>'+la+'</b> (month-end) &nbsp; <span class="lgd" style="background:var(--pr)"></span>B: <b>'+lb+'</b> (current) &nbsp;•&nbsp; Gap ≈ <b>'+gap+'</b> days &nbsp;•&nbsp; <span class="cg">Green = improved</span> • <span class="cb">Red = worsened</span> • Forced = natural +1 bucket from calendar</div>';
 
+  var mvOn=$("bkMv").value;
+  function kpi(col,key,title,sub,n){
+    var on=mvOn===key?' outline:2px solid var(--pr);box-shadow:0 0 0 3px rgba(36,87,214,.2);':'';
+    return'<div class="kpi bk-kpi" data-mv="'+key+'" style="border-left-color:'+col+';cursor:pointer;'+on+'" title="Click to show these customers"><span>'+title+'</span><b>'+fmt(n)+'</b><div class="sm">'+sub+'</div></div>';
+  }
   h+='<div class="dk">'+
-    '<div class="kpi" style="border-left-color:var(--s1)"><span>Good (improved)</span><b>'+fmt(cnt.good)+'</b><div class="sm">Moved to lower age bucket</div></div>'+
-    '<div class="kpi" style="border-left-color:var(--s3)"><span>Bad (worsened)</span><b>'+fmt(cnt.bad)+'</b><div class="sm">Moved to higher bucket (not forced)</div></div>'+
-    '<div class="kpi" style="border-left-color:var(--s2)"><span>Forced aging</span><b>'+fmt(cnt.forced)+'</b><div class="sm">+1 bucket only (calendar ~'+gap+' days)</div></div>'+
-    '<div class="kpi" style="border-left-color:var(--pr)"><span>No change</span><b>'+fmt(cnt.same)+'</b><div class="sm">Same bucket in A &amp; B</div></div>'+
-    '<div class="kpi" style="border-left-color:#7a5af8"><span>New in B</span><b>'+fmt(cnt.new)+'</b><div class="sm">Not in month-end</div></div>'+
-    '<div class="kpi" style="border-left-color:#6b7585"><span>Not in B</span><b>'+fmt(cnt.closed)+'</b><div class="sm">Closed / left portfolio</div></div>'+
+    kpi('var(--s1)','good','Good (improved)','Moved to lower age bucket · click',cnt.good)+
+    kpi('var(--s3)','bad','Bad (worsened)','Higher bucket (not forced) · click',cnt.bad)+
+    kpi('var(--s2)','forced','Forced aging','+1 bucket (calendar ~'+gap+' days) · click',cnt.forced)+
+    kpi('var(--pr)','same','No change','Same bucket in A &amp; B · click',cnt.same)+
+    kpi('#7a5af8','new','New in B','Not in month-end · click',cnt.new)+
+    kpi('#6b7585','closed','Not in B','Closed / left · click',cnt.closed)+
   '</div>';
+  h+='<div class="mu" style="margin:-4px 0 10px;font-size:12.5px">👆 Click any KPI / matrix cell / officer / description → customer list filters below. <button type="button" id="bkClr" style="padding:4px 10px;font-size:12px;margin-left:6px">&#10005; Clear list filters</button></div>';
 
   h+='<div class="card" style="border-left:4px solid var(--s2)"><h3>How movement is classified</h3>'+
     '<div class="mu" style="font-size:13.5px;line-height:1.55">'+
@@ -1249,21 +1271,22 @@ function bkRender(){
     'Filters (Officer / Description / Grant Date / Movement type) apply to every section and to the customer list below.'+
     '</div></div>';
 
-  h+='<div class="card"><h3>Bucket movement matrix <small>A (rows) → B (columns)</small></h3><div class="tw" style="max-height:none;overflow:auto"><table class="mxt"><tr><th>A ↓ / B →</th>';
+  h+='<div class="card"><h3>Bucket movement matrix <small>A (rows) → B (columns) · click a cell</small></h3><div class="tw" style="max-height:none;overflow:auto"><table class="mxt"><tr><th>A ↓ / B →</th>';
   BK.forEach(function(bk){h+='<th style="font-size:11px">'+bk[0]+'</th>'});
   h+='</tr>';
   mat.forEach(function(row,i){
-    h+='<tr><th style="font-size:11px;text-align:left">'+BK[i][0]+'</th>';
+    h+='<tr><th style="font-size:11px;text-align:left;cursor:pointer" class="bk-from" data-ba="'+i+'" title="Click: all from '+BK[i][0]+'">'+BK[i][0]+'</th>';
     row.forEach(function(v,j){
       var cl="";
       if(i===j&&v)cl="mxg";
       else if(j>i&&v)cl="mxb";
       else if(j<i&&v)cl="mxg";
-      h+='<td class="'+cl+'">'+(v||"")+'</td>';
+      var sel=(BKX.bA===i&&BKX.bB===j)?'outline:2px solid var(--pr);font-weight:700;':'';
+      h+='<td class="'+cl+' bk-cell" data-ba="'+i+'" data-bb="'+j+'" style="cursor:pointer;'+sel+'" title="'+BK[i][0]+' → '+BK[j][0]+' · click for list">'+(v||"")+'</td>';
     });
     h+='</tr>';
   });
-  h+='</table></div><small class="mu">Green diagonal / left = same or improved. Red right = worsened.</small></div>';
+  h+='</table></div><small class="mu">Green = same/improved · Red = worsened · Click cell or row label to filter the customer list.</small></div>';
 
   var om={};
   rows.forEach(function(r){
@@ -1295,7 +1318,10 @@ function bkRender(){
     var order={bad:0,forced:1,good:2,same:3,new:4,closed:5};
     return (order[a.mv]||9)-(order[c.mv]||9)||(c.dB||0)-(a.dB||0);
   }).slice(0,400);
-  h+='<div class="card"><h3>Customer list <small>('+fmt(rows.length)+(rows.length>400?', first 400 shown – use Excel for all':'')+')</small></h3>';
+  var act=bkActiveLabel();
+  h+='<div class="card" id="bkList"><h3>Customer list <small>('+fmt(rows.length)+(rows.length>400?', first 400 shown – use Excel for all':'')+')</small></h3>';
+  if(act.length)h+='<div style="margin:0 0 10px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--bd);font-size:13px"><b>Filtered:</b> '+act.map(function(x){return'<span class="tag fl" style="margin:2px">'+esc(x)+'</span>'}).join(" ")+' <button type="button" id="bkClr2" style="padding:3px 8px;font-size:12px;margin-left:6px">Clear</button></div>';
+  else h+='<div class="mu" style="margin-bottom:8px">Click a KPI, matrix cell, officer or description above to filter this list.</div>';
   h+='<div class="tw" style="max-height:520px"><table><tr><th>Fac No</th><th>Name</th><th>Mkt Officer</th><th>Description</th><th>Grant</th><th>Bucket A</th><th>Bucket B</th><th>Days A→B</th><th class=n>Arrears A→B</th><th>Movement</th></tr>';
   h+=lim.length?lim.map(function(r){
     var tag=r.mv==="good"?'s1':r.mv==="bad"?'s3':r.mv==="forced"?'s2':'fl';
@@ -1304,12 +1330,49 @@ function bkRender(){
   h+='</table></div></div>';
 
   $("bkBody").innerHTML=h;
+  function goList(){var el=$("bkList");if(el)try{el.scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}}
+  function re(){bkRender();goList()}
+  Array.prototype.forEach.call($("bkBody").querySelectorAll(".bk-kpi"),function(el){
+    el.onclick=function(){
+      var k=el.getAttribute("data-mv");
+      $("bkMv").value=($("bkMv").value===k)?"":k;
+      bkClearExtra();re();
+    }
+  });
+  Array.prototype.forEach.call($("bkBody").querySelectorAll(".bk-cell"),function(el){
+    el.onclick=function(){
+      var ba=+el.getAttribute("data-ba"),bb=+el.getAttribute("data-bb");
+      if(BKX.bA===ba&&BKX.bB===bb){bkClearExtra()}
+      else{BKX.bA=ba;BKX.bB=bb}
+      re();
+    }
+  });
+  Array.prototype.forEach.call($("bkBody").querySelectorAll(".bk-from"),function(el){
+    el.onclick=function(){
+      var ba=+el.getAttribute("data-ba");
+      if(BKX.bA===ba&&BKX.bB==null){bkClearExtra()}
+      else{BKX.bA=ba;BKX.bB=null}
+      re();
+    }
+  });
   Array.prototype.forEach.call($("bkBody").querySelectorAll(".bko"),function(tr){
-    tr.onclick=function(){$("bkOf").value=tr.getAttribute("data-o");bkRender()}
+    tr.onclick=function(){
+      var v=tr.getAttribute("data-o");
+      $("bkOf").value=($("bkOf").value===v)?"":v;re();
+    }
   });
   Array.prototype.forEach.call($("bkBody").querySelectorAll(".bkd"),function(tr){
-    tr.onclick=function(){$("bkDe").value=tr.getAttribute("data-d");bkRender()}
+    tr.onclick=function(){
+      var v=tr.getAttribute("data-d");
+      $("bkDe").value=($("bkDe").value===v)?"":v;re();
+    }
   });
+  var clr=function(){
+    $("bkOf").value="";$("bkDe").value="";$("bkGd").value="";$("bkMv").value="";
+    bkClearExtra();bkRender();
+  };
+  if($("bkClr"))$("bkClr").onclick=clr;
+  if($("bkClr2"))$("bkClr2").onclick=clr;
 }
 
 $("bkA").onchange=bkRun;
