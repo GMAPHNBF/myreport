@@ -159,6 +159,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
   <a class="duhome" href="https://gmaphnbf.github.io/HNBFGMAP/" style="margin-right:auto">&#127968; HOME</a>
   <button id="dub" style="background:#0e9f6e;color:#fff;border-color:#0e9f6e;position:relative">&#128197; Due Today<span id="dubg" style="display:none;position:absolute;top:-8px;right:-8px;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:10px;background:#e02424;color:#fff;font-size:11px;font-weight:700;line-height:20px;text-align:center;border:2px solid var(--bg,#fff)"></span></button>
   <button id="cmpb" style="background:#7a5af8;color:#fff;border-color:#7a5af8">&#8644; Compare</button>
+  <button id="bkb" style="background:#e8590c;color:#fff;border-color:#e8590c">&#128202; Bucket Move</button>
   <button class="p" id="upb">&#8679; Upload</button>
   <small id="meta" style="display:none"></small>
 </header>
@@ -203,7 +204,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 
 <button class="fab" id="fab">&#9776; Menu</button>
 <div class="sheet" id="sheet"><div class="sh"><div class="t"><b>Menu</b><button id="sx">&#10005; Close</button></div>
-<h5>Navigate</h5><div class="mg"><a href="https://gmaphnbf.github.io/HNBFGMAP/" rel="noopener">&#8962; Home</a><button data-m="up">&#8679; Upload data</button><button data-m="cmpb">&#8644; Compare dates</button><button data-m="look">&#128269; Fac No search</button><button data-m="flt">&#9776; Filters</button><button data-m="ch">&#9684; Stage chart</button><button data-m="npl">&#9201; NPL ratio</button><button data-m="off">&#128101; Officer summary</button><button data-m="cus">&#9776; Customers</button></div>
+<h5>Navigate</h5><div class="mg"><a href="https://gmaphnbf.github.io/HNBFGMAP/" rel="noopener">&#8962; Home</a><button data-m="up">&#8679; Upload data</button><button data-m="cmpb">&#8644; Compare dates</button><button data-m="bkb">&#128202; Bucket Move</button><button data-m="look">&#128269; Fac No search</button><button data-m="flt">&#9776; Filters</button><button data-m="ch">&#9684; Stage chart</button><button data-m="npl">&#9201; NPL ratio</button><button data-m="off">&#128101; Officer summary</button><button data-m="cus">&#9776; Customers</button></div>
 <h5>Quick lists</h5><div class="mg"><button id="m_pn" data-m="pnb">PNPL list</button><button id="m_r1" data-m="r1b">1st Rental</button><button id="m_np" data-m="npb">Null Payment</button><button data-m="odb">&#9889; 1 Day Payment</button><button data-m="rs">&#8635; Clear filters</button></div>
 <h5>Download Excel</h5><div class="mg"><button data-m="e1">Filtered list</button><button data-m="e2">Officer summary</button><button data-m="e3">Bucket summary</button></div></div></div>
 
@@ -276,6 +277,22 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
   </div>
   <div id="duBody"></div>
  </div>
+</div>
+
+<div class="cmpv" id="buck">
+ <div class="cmph">
+  <button id="bkBack" class="p">&#8592; Dashboard</button>
+  <b style="font-size:16px;align-self:center">&#128202; Bucket Movement</b>
+  <label>A: Month-end report<select id="bkA"></select></label>
+  <label>B: Latest uploaded<select id="bkB"></select></label>
+  <label>Mkt Officer<select id="bkOf"><option value="">All</option></select></label>
+  <label>Description<select id="bkDe"><option value="">All</option></select></label>
+  <label>Grant Date<select id="bkGd"><option value="">All</option><option value="3">Last 3 Months</option><option value="6">Last 6 Months</option><option value="12">Last 12 Months</option><option value="A">After 12 Months</option></select></label>
+  <label>Movement<select id="bkMv"><option value="">All</option><option value="good">Good (improved)</option><option value="bad">Bad (worsened)</option><option value="same">No change</option><option value="forced">Forced aging (calendar)</option><option value="new">New in B</option><option value="closed">Not in B</option></select></label>
+  <button id="bkGo" class="p">&#8635; Analyse</button>
+  <button id="bkXl">&#11015; Excel</button>
+ </div>
+ <div class="cmpm" id="bkBody"></div>
 </div>
 
 <div class="modal" id="omm"><div class="mb"><h3>&#128241; Online message</h3><textarea id="omt" readonly style="width:100%;height:300px;font:14px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:10px;resize:vertical"></textarea><div class="err" id="omr" style="color:var(--s1);margin-top:6px"></div><div class="row"><button class="p" id="omc">&#128203; Copy</button><button id="omw" style="background:#25d366;color:#fff;border-color:#25d366">WhatsApp</button><button id="oms">Share</button><button id="omx">Close</button></div></div></div>
@@ -635,7 +652,7 @@ $("sheet").addEventListener("click",function(e){
   if(m=="up"){$("upb").click()}
   else if(m=="flt"){document.querySelector(".fp").classList.add("open");document.querySelector(".fp").scrollIntoView({behavior:"smooth"})}
   else if(MS[m]){var el=$(MS[m]);(el.closest(".card")||el).scrollIntoView({behavior:"smooth"});if(m=="look")$("fq").focus()}
-  else{$(m).click();close=(m=="odb"||m=="cmpb"||m=="e1"||m=="e2"||m=="e3"||m=="rs"||m=="pnb"||m=="r1b"||m=="npb")}
+  else{$(m).click();close=(m=="odb"||m=="cmpb"||m=="bkb"||m=="e1"||m=="e2"||m=="e3"||m=="rs"||m=="pnb"||m=="r1b"||m=="npb")}
   if(close)$("sheet").classList.remove("on")
 });
 
@@ -1018,15 +1035,19 @@ function dcol(d,g){return Math.abs(d)<0.005||!g?"var(--pr)":((d>0)==(g>0)?"var(-
 var KP=[["Customers","n",-1,fmt],["Total Arrears","tot",-1,fmt],["Rental Arrears","rent",-1,fmt],["Portfolio","port",-1,fmt],["Stage 1 customers","n1",1,fmt],["Stage 2 customers","n2",-1,fmt],["Stage 3 customers","n3",-1,fmt],["Stage 3 arrears","t3",-1,fmt],["NPL Ratio","npl",-1,f2],["NPL Portfolio (91+)","nplP",-1,fmt]];
 
 function cmpShow(){$("cmp").classList.add("on");document.body.style.overflow="hidden";cmpInit()}
-function cmpHide(){$("cmp").classList.remove("on");document.body.style.overflow=""}
+function cmpHide(){$("cmp").classList.remove("on");if(!$("due").classList.contains("on")&&!$("buck").classList.contains("on"))document.body.style.overflow=""}
 $("cmpb").onclick=function(){cmpPushed=true;location.hash="compare"};
 $("cmBack").onclick=function(){if(cmpPushed&&location.hash=="#compare")history.back();else location.hash=""};
-window.addEventListener("hashchange",function(){if(location.hash=="#compare")cmpShow();else cmpHide();if(location.hash=="#due")duShow();else duHide()});
+window.addEventListener("hashchange",function(){
+  if(location.hash=="#compare")cmpShow();else cmpHide();
+  if(location.hash=="#due")duShow();else duHide();
+  if(location.hash=="#bucket")bkShow();else bkHide();
+});
 /* ===== Due page: facilities whose Due day = selected date's day of month ===== */
 var DUROWS=[];
 function lIso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
 function duShow(){$("due").classList.add("on");document.body.style.overflow="hidden";duInit()}
-function duHide(){$("due").classList.remove("on");if(!$("cmp").classList.contains("on"))document.body.style.overflow=""}
+function duHide(){$("due").classList.remove("on");if(!$("cmp").classList.contains("on")&&!$("buck").classList.contains("on"))document.body.style.overflow=""}
 function duInit(){
   var cnt={},tdy=new Date().getDate(),dv=$("duDay").value;
   R.forEach(function(r){var x=+r.due;if(x>0)cnt[x]=(cnt[x]||0)+1});
@@ -1090,6 +1111,219 @@ $("duBack").onclick=function(){location.hash=""};
 ["duDay","duOf","duDe","duGd","duSt"].forEach(function(id){$(id).onchange=duRender});
 $("duXl").onclick=function(){dl(DUROWS.map(function(r){return{"Fac No":r.fac,Name:r.name,"Mkt Officer":r.mkt,Branch:r.branch,Description:r.desc,"Grant Date":duGrant(r),Stage:r.stage,"Arrears Days":r.days,"Rental Arrears":r.rent,"Total Arrears":r.tot,Due:r.due,"Last Paid Date":r.lpd||"","Last Paid Amount":r.lpa||0,Tel:r.tel}}),"Due_day"+o2day())};
 
+/* ============================================================
+   BUCKET MOVEMENT PAGE
+   Compare month-end (A) vs current upload (B) by age bucket
+   ============================================================ */
+var BKROWS=[],BKDATA=null,bkPushed=false;
+function bkShow(){$("buck").classList.add("on");document.body.style.overflow="hidden";bkInit()}
+function bkHide(){$("buck").classList.remove("on");if(!$("cmp").classList.contains("on")&&!$("due").classList.contains("on"))document.body.style.overflow=""}
+$("bkb").onclick=function(){bkPushed=true;location.hash="bucket"};
+$("bkBack").onclick=function(){if(bkPushed&&location.hash=="#bucket")history.back();else location.hash=""};
+
+function bkInit(){
+  if(!ccfg().url){$("bkBody").innerHTML='<div class="card">Online storage is not set up, so the saved month-end report cannot be loaded.</div>';return}
+  $("bkBody").innerHTML='<div class="card mu">Loading month-end &amp; current data...</div>';
+  Promise.all([sget("snapmeta"),sget("arrears")]).then(function(r){
+    SM=r[0]||{};
+    var cur=(r[1]&&r[1].rows&&r[1].rows.length)?r[1]:CURD;
+    if(!cur||!cur.rows||!cur.rows.length){$("bkBody").innerHTML='<div class="card">No current data loaded. Upload the Excel files first.</div>';return}
+    var rows=Array.isArray(cur.rows)?cur.rows:Object.keys(cur.rows).map(function(x){return cur.rows[x]});
+    CURR={key:(cur.asAt||"").slice(0,10)||new Date().toISOString().slice(0,10),rows:cmpPrep(rows)};
+    var ks=Object.keys(SM).filter(function(k){return isME(k)&&k<CURR.key}).sort().reverse();
+    $("bkB").innerHTML='<option>'+dlab(CURR.key)+' (uploaded report)</option>';$("bkB").disabled=true;
+    if(!ks.length){$("bkA").innerHTML="";$("bkBody").innerHTML='<div class="card"><b>No previous month-end report saved yet.</b><br><span class="mu">Upload the report on the last day of the month (30/31, or 28/29 in Feb). That snapshot is kept for Bucket Movement &amp; Compare.</span></div>';return}
+    $("bkA").innerHTML=ks.map(function(k){var m=SM[k]||{};return'<option value="'+k+'">Month-end '+dlab(k)+' ('+(m.n||"?")+' fac)</option>'}).join("");
+    bkRun();
+  }).catch(function(e){$("bkBody").innerHTML='<div class="card" style="color:var(--s3)">Error: '+esc(String(e&&e.message||e))+'</div>'})
+}
+
+function bkRun(){
+  var ka=$("bkA").value;if(!ka||!CURR)return;
+  $("bkBody").innerHTML='<div class="card mu">Loading month-end report...</div>';
+  cmpSnap(ka).then(function(sa){
+    if(!sa){$("bkBody").innerHTML='<div class="card" style="color:var(--s3)"><b>Month-end snapshot not found</b> for '+dlab(ka)+'. Please re-upload that month-end report.</div>';return}
+    var a=sa,b=CURR.rows,kaL=dlab(ka),kbL=dlab(CURR.key);
+    var dA=new Date(ka+"T00:00:00Z"),dB=new Date(CURR.key+"T00:00:00Z");
+    var gapDays=Math.max(1,Math.round((dB-dA)/864e5));
+
+    var MA={},MB={};
+    a.forEach(function(r){MA[r.fac]=r});
+    b.forEach(function(r){MB[r.fac]=r});
+
+    var all=[];
+    Object.keys(Object.assign({},MA,MB)).forEach(function(f){
+      var x=MA[f],y=MB[f];
+      var o={
+        fac:f,
+        name:(y||x).name||"",
+        mkt:onm((y||x).mkt)||"(none)",
+        branch:(y||x).branch||"(none)",
+        desc:(y||x).desc||"(none)",
+        grant:String((y||x).grant||"").slice(0,10),
+        dA:x?x.days:null,dB:y?y.days:null,
+        bA:x?x.b:null,bB:y?y.b:null,
+        tA:x?x.tot:null,tB:y?y.tot:null,
+        rA:x?x.rent:null,rB:y?y.rent:null,
+        pA:x?x.port:0,pB:y?y.port:0,
+        sA:x?x.stage:null,sB:y?y.stage:null
+      };
+      if(!x&&y){o.mv="new";o.mvL="New in B"}
+      else if(x&&!y){o.mv="closed";o.mvL="Not in B"}
+      else if(x&&y){
+        var di=y.b-x.b;
+        if(di===0){o.mv="same";o.mvL="No change"}
+        else if(di<0){o.mv="good";o.mvL="Improved (→ lower bucket)"}
+        else {
+          var dayDiff=(y.days||0)-(x.days||0);
+          var forced=(di===1)&&(dayDiff>=gapDays-5)&&(dayDiff<=gapDays+10);
+          if(x.b===0&&y.b===1)forced=true;
+          o.mv=forced?"forced":"bad";
+          o.mvL=forced?"Forced aging (calendar)":"Worsened (→ higher bucket)";
+        }
+      }
+      o.bkAL=o.bA!=null?BK[o.bA][0]:"-";
+      o.bkBL=o.bB!=null?BK[o.bB][0]:"-";
+      all.push(o);
+    });
+
+    var keep=function(id,key){
+      var v=$(id).value;
+      var s=Array.from(new Set(all.map(function(r){return r[key]}))).sort();
+      $(id).innerHTML='<option value="">All</option>'+s.map(function(x){return'<option>'+esc(x)+'</option>'}).join("");
+      if(s.indexOf(v)>=0)$(id).value=v;
+    };
+    keep("bkOf","mkt");keep("bkDe","desc");
+
+    BKDATA={all:all,ka:ka,kb:CURR.key,la:kaL,lb:kbL,gap:gapDays,a:a,b:b};
+    bkRender();
+  }).catch(function(e){$("bkBody").innerHTML='<div class="card" style="color:var(--s3)">Error: '+esc(String(e&&e.message||e))+'</div>'})
+}
+
+function bkFilt(){
+  if(!BKDATA)return[];
+  var of=$("bkOf").value,de=$("bkDe").value,gd=$("bkGd").value,mv=$("bkMv").value;
+  var cut="";
+  if(gd&&CURR){var x=new Date(CURR.key+"T00:00:00Z");x.setUTCMonth(x.getUTCMonth()-(gd==="A"?12:+gd));cut=x.toISOString().slice(0,10)}
+  return BKDATA.all.filter(function(r){
+    if(of&&r.mkt!==of)return false;
+    if(de&&r.desc!==de)return false;
+    if(mv&&r.mv!==mv)return false;
+    if(gd){
+      var g=r.grant;if(!g)return false;
+      if(gd==="A"?g>=cut:g<cut)return false;
+    }
+    return true;
+  });
+}
+
+function bkRender(){
+  if(!BKDATA)return;
+  var rows=bkFilt();BKROWS=rows;
+  var la=BKDATA.la,lb=BKDATA.lb,gap=BKDATA.gap;
+  var cnt={good:0,bad:0,same:0,forced:0,new:0,closed:0};
+  rows.forEach(function(r){if(cnt[r.mv]!=null)cnt[r.mv]++});
+
+  var mat=[];
+  for(var i=0;i<BK.length;i++){mat[i]=[];for(var j=0;j<BK.length;j++)mat[i][j]=0}
+  rows.forEach(function(r){if(r.bA!=null&&r.bB!=null)mat[r.bA][r.bB]++});
+
+  var h='';
+  h+='<div class="mu" style="margin-bottom:12px"><span class="lgd" style="background:#8aa0cf"></span>A: <b>'+la+'</b> (month-end) &nbsp; <span class="lgd" style="background:var(--pr)"></span>B: <b>'+lb+'</b> (current) &nbsp;•&nbsp; Gap ≈ <b>'+gap+'</b> days &nbsp;•&nbsp; <span class="cg">Green = improved</span> • <span class="cb">Red = worsened</span> • Forced = natural +1 bucket from calendar</div>';
+
+  h+='<div class="dk">'+
+    '<div class="kpi" style="border-left-color:var(--s1)"><span>Good (improved)</span><b>'+fmt(cnt.good)+'</b><div class="sm">Moved to lower age bucket</div></div>'+
+    '<div class="kpi" style="border-left-color:var(--s3)"><span>Bad (worsened)</span><b>'+fmt(cnt.bad)+'</b><div class="sm">Moved to higher bucket (not forced)</div></div>'+
+    '<div class="kpi" style="border-left-color:var(--s2)"><span>Forced aging</span><b>'+fmt(cnt.forced)+'</b><div class="sm">+1 bucket only (calendar ~'+gap+' days)</div></div>'+
+    '<div class="kpi" style="border-left-color:var(--pr)"><span>No change</span><b>'+fmt(cnt.same)+'</b><div class="sm">Same bucket in A &amp; B</div></div>'+
+    '<div class="kpi" style="border-left-color:#7a5af8"><span>New in B</span><b>'+fmt(cnt.new)+'</b><div class="sm">Not in month-end</div></div>'+
+    '<div class="kpi" style="border-left-color:#6b7585"><span>Not in B</span><b>'+fmt(cnt.closed)+'</b><div class="sm">Closed / left portfolio</div></div>'+
+  '</div>';
+
+  h+='<div class="card" style="border-left:4px solid var(--s2)"><h3>How movement is classified</h3>'+
+    '<div class="mu" style="font-size:13.5px;line-height:1.55">'+
+    '<b>Same bucket</b> – e.g. month-end was <b>0 Bucket</b> and today still <b>0 Bucket</b> → no change.<br>'+
+    '<b>Forced aging</b> – e.g. month-end <b>0 Bucket</b> → today <b>1 to 29</b> (or any single +1 step) because ~'+gap+' days passed; this is natural calendar aging, not a collection failure.<br>'+
+    '<b>Good</b> – bucket index fell (e.g. month-end <b>1 to 29</b> → today <b>0 Bucket</b>). Customer paid / recovered.<br>'+
+    '<b>Bad</b> – jumped more than one bucket, or +1 that is clearly worse than pure aging.<br>'+
+    'Filters (Officer / Description / Grant Date / Movement type) apply to every section and to the customer list below.'+
+    '</div></div>';
+
+  h+='<div class="card"><h3>Bucket movement matrix <small>A (rows) → B (columns)</small></h3><div class="tw" style="max-height:none;overflow:auto"><table class="mxt"><tr><th>A ↓ / B →</th>';
+  BK.forEach(function(bk){h+='<th style="font-size:11px">'+bk[0]+'</th>'});
+  h+='</tr>';
+  mat.forEach(function(row,i){
+    h+='<tr><th style="font-size:11px;text-align:left">'+BK[i][0]+'</th>';
+    row.forEach(function(v,j){
+      var cl="";
+      if(i===j&&v)cl="mxg";
+      else if(j>i&&v)cl="mxb";
+      else if(j<i&&v)cl="mxg";
+      h+='<td class="'+cl+'">'+(v||"")+'</td>';
+    });
+    h+='</tr>';
+  });
+  h+='</table></div><small class="mu">Green diagonal / left = same or improved. Red right = worsened.</small></div>';
+
+  var om={};
+  rows.forEach(function(r){
+    var m=r.mkt||"(none)";
+    var o=om[m]=om[m]||{n:0,good:0,bad:0,same:0,forced:0,neu:0,clo:0,tA:0,tB:0};
+    o.n++;o[r.mv==="new"?"neu":r.mv==="closed"?"clo":r.mv]++;
+    o.tA+=+r.tA||0;o.tB+=+r.tB||0;
+  });
+  var ol=Object.keys(om).sort(function(a,c){return (om[c].bad+om[c].forced)-(om[a].bad+om[a].forced)});
+  h+='<div class="card"><h3>Mkt Officer wise <small>(click row to filter)</small></h3><div class="tw" style="max-height:360px"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Total</th><th class=n>Good</th><th class=n>Bad</th><th class=n>Forced</th><th class=n>Same</th><th class=n>New</th><th class=n>Closed</th><th class=n>Arrears A → B</th></tr>';
+  h+=ol.length?ol.map(function(k,i){
+    var o=om[k];
+    return'<tr class="bko" data-o="'+esc(k)+'" style="cursor:pointer"><td>'+(i+1)+'</td><td><b>'+esc(k)+'</b></td><td class=n>'+fmt(o.n)+'</td><td class=n><span class="cg">'+fmt(o.good)+'</span></td><td class=n><span class="cb">'+fmt(o.bad)+'</span></td><td class=n>'+fmt(o.forced)+'</td><td class=n>'+fmt(o.same)+'</td><td class=n>'+fmt(o.neu)+'</td><td class=n>'+fmt(o.clo)+'</td><td class=n>'+fmt(o.tA)+' → '+fmt(o.tB)+'</td></tr>';
+  }).join(""):'<tr><td colspan="10" class="mu" style="text-align:center">No data</td></tr>';
+  h+='</table></div></div>';
+
+  var dm={};
+  rows.forEach(function(r){
+    var m=r.desc||"(none)";
+    var o=dm[m]=dm[m]||{n:0,good:0,bad:0,same:0,forced:0,neu:0,clo:0};
+    o.n++;o[r.mv==="new"?"neu":r.mv==="closed"?"clo":r.mv]++;
+  });
+  var dl=Object.keys(dm).sort(function(a,c){return dm[c].n-dm[a].n});
+  h+='<div class="card"><h3>Description wise</h3><div class="tw" style="max-height:280px"><table><tr><th>Description</th><th class=n>Total</th><th class=n>Good</th><th class=n>Bad</th><th class=n>Forced</th><th class=n>Same</th><th class=n>New</th><th class=n>Closed</th></tr>';
+  h+=dl.map(function(k){var o=dm[k];return'<tr class="bkd" data-d="'+esc(k)+'" style="cursor:pointer"><td><b>'+esc(k)+'</b></td><td class=n>'+fmt(o.n)+'</td><td class=n><span class="cg">'+fmt(o.good)+'</span></td><td class=n><span class="cb">'+fmt(o.bad)+'</span></td><td class=n>'+fmt(o.forced)+'</td><td class=n>'+fmt(o.same)+'</td><td class=n>'+fmt(o.neu)+'</td><td class=n>'+fmt(o.clo)+'</td></tr>'}).join("")||'<tr><td colspan="8" class="mu">No data</td></tr>';
+  h+='</table></div></div>';
+
+  var lim=rows.slice().sort(function(a,c){
+    var order={bad:0,forced:1,good:2,same:3,new:4,closed:5};
+    return (order[a.mv]||9)-(order[c.mv]||9)||(c.dB||0)-(a.dB||0);
+  }).slice(0,400);
+  h+='<div class="card"><h3>Customer list <small>('+fmt(rows.length)+(rows.length>400?', first 400 shown – use Excel for all':'')+')</small></h3>';
+  h+='<div class="tw" style="max-height:520px"><table><tr><th>Fac No</th><th>Name</th><th>Mkt Officer</th><th>Description</th><th>Grant</th><th>Bucket A</th><th>Bucket B</th><th>Days A→B</th><th class=n>Arrears A→B</th><th>Movement</th></tr>';
+  h+=lim.length?lim.map(function(r){
+    var tag=r.mv==="good"?'s1':r.mv==="bad"?'s3':r.mv==="forced"?'s2':'fl';
+    return'<tr><td>'+esc(r.fac)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.mkt)+'</td><td>'+esc(r.desc)+'</td><td>'+esc(r.grant||"-")+'</td><td>'+esc(r.bkAL)+'</td><td>'+esc(r.bkBL)+'</td><td class=n>'+(r.dA!=null?r.dA:"-")+' → '+(r.dB!=null?r.dB:"-")+'</td><td class=n>'+(r.tA!=null?fmt(r.tA):"-")+' → '+(r.tB!=null?fmt(r.tB):"-")+'</td><td><span class="tag '+tag+'">'+esc(r.mvL)+'</span></td></tr>';
+  }).join(""):'<tr><td colspan="10" class="mu" style="text-align:center">No facilities match the filters</td></tr>';
+  h+='</table></div></div>';
+
+  $("bkBody").innerHTML=h;
+  Array.prototype.forEach.call($("bkBody").querySelectorAll(".bko"),function(tr){
+    tr.onclick=function(){$("bkOf").value=tr.getAttribute("data-o");bkRender()}
+  });
+  Array.prototype.forEach.call($("bkBody").querySelectorAll(".bkd"),function(tr){
+    tr.onclick=function(){$("bkDe").value=tr.getAttribute("data-d");bkRender()}
+  });
+}
+
+$("bkA").onchange=bkRun;
+$("bkGo").onclick=function(){SNAP={};bkInit()};
+["bkOf","bkDe","bkGd","bkMv"].forEach(function(id){$(id).onchange=function(){bkRender()}});
+$("bkXl").onclick=function(){
+  if(!BKROWS.length){alert("Nothing to export.");return}
+  dl(BKROWS.map(function(r){return{
+    "Fac No":r.fac,Name:r.name,"Mkt Officer":r.mkt,Description:r.desc,"Grant Date":r.grant,
+    "Bucket A":r.bkAL,"Bucket B":r.bkBL,"Days A":r.dA,"Days B":r.dB,
+    "Arrears A":r.tA,"Arrears B":r.tB,"Rental A":r.rA,"Rental B":r.rB,
+    Movement:r.mvL,Type:r.mv
+  }}),"Bucket_Movement_"+($("bkA").value||"")+"_vs_current");
+};
 
 var CURR=null;
 function cmpInit(){
@@ -1390,7 +1624,7 @@ try{
     }).catch(function(){})
 }catch(e){}
 
-if(location.hash=="#compare")cmpShow();if(location.hash=="#due")duShow();
+if(location.hash=="#compare")cmpShow();if(location.hash=="#due")duShow();if(location.hash=="#bucket")bkShow();
 $("cs").onclick=function(){
   var c=ccfg();
   var u=prompt("Firebase Realtime Database URL (e.g. https://your-project-default-rtdb.firebaseio.com)\nLeave empty to turn online storage off:",c.url||"");
