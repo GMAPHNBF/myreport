@@ -352,9 +352,24 @@ $("sres").addEventListener("change",function(e){var t=e.target;if(t.hasAttribute
 
 /* ===== ONLINE MESSAGE (payment instructions per Fac No) ===== */
 function omsg(fac){
+  // Find the customer record
+  var r = R.filter(function(x){return x.fac === fac})[0];
+  
+  var grossRental = r ? mrentTxt(r) : "-";
+  var dueDay     = r && +r.due > 0 ? "Day " + r.due : "-";
+  var totalArr   = r ? fmt(r.tot) : "-";
+  var rentalArr  = r ? fmt(r.rent) : "-";
+  var custName   = r ? r.name : "-";
+  
   return "CDMA \uD83C\uDFE7\u0DC4\u0DDD Online\uD83D\uDCF2 *HNBF* වාරිකය ගෙවිමේ දී \n"+
   "\uD83D\uDED1පහත කරුණු අනුගමනය කරන්න\uD83D\uDED1\n\n"+
   "*FAC NO* : *"+fac+"*\n\n"+
+  "*CUSTOMER DETAILS*\uD83D\uDCCB\n"+
+  "\uD83D\uDC64 Name : "+custName+"\n"+
+  "\uD83D\uDCB0 Gross Rental : *"+grossRental+"*\n"+
+  "\uD83D\uDCC5 Rental Due Day : *"+dueDay+"*\n"+
+  "\uD83D\uDD34 Total Arrears : *"+totalArr+"*\n"+
+  "\uD83D\uDFE1 Rental Arrears : *"+rentalArr+"*\n\n"+
   "*BANK DETAILS*\uD83C\uDFE6\n\n1\uFE0F\u20E3H N B\n     ACOUNT NO-147010079340\n\n\n"+
   "\uD83D\uDC4B(_හැකි සෑම විටම HNB \uD83C\uDFE6ගිණුමට මුදල් \uD83D\uDCB0බැර කිරීම අපහට වඩාත් පහසුවෙ_.)\n\n"+
   "\uD83D\uDED1*\uD83D\uDCB0මුදල් ගෙවීමේදී (REMARK)සඳහා ඉහත \u261D\uFE0Fඅංකය(VF) යෙදීම අනිවාර්ය වේ\u2705.*\n\n"+
