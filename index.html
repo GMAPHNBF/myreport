@@ -1253,8 +1253,8 @@ function bkRender(){
     return'<div class="kpi bk-kpi" data-mv="'+key+'" style="border-left-color:'+col+';cursor:pointer;'+on+'" title="Click to show these customers"><span>'+title+'</span><b>'+fmt(n)+'</b><div class="sm">'+sub+'</div></div>';
   }
   h+='<div class="dk">'+
-    kpi('var(--s1)','good','<span style="color:var(--s1)">⬆️</span> Good (improved)','Bucket පහළට · click',cnt.good)+
-    kpi('var(--s3)','bad','<span style="color:var(--s3)">⬇️</span> Bad (worsened)','Bucket ඉහළට · click',cnt.bad)+
+    kpi('var(--s1)','good','<span style="color:var(--s1)">⬆️</span> Good (improved)','Bucket lower · click',cnt.good)+
+    kpi('var(--s3)','bad','<span style="color:var(--s3)">⬇️</span> Bad (worsened)','Bucket higher · click',cnt.bad)+
     kpi('var(--s2)','forced','<span style="color:var(--s1)">⬆️</span> Forced aging','+1 bucket (calendar ~'+gap+' days) · click',cnt.forced)+
     kpi('var(--pr)','same','No change','Same bucket in A &amp; B · click',cnt.same)+
     kpi('#7a5af8','new','New in B','Not in month-end · click',cnt.new)+
@@ -1441,7 +1441,7 @@ function cmpRun(){
   $("cbody").innerHTML='<div class="card mu">Loading month-end report...</div>';
   cmpSnap(ka).then(function(sa){
     if(!sa){
-      $("cbody").innerHTML='<div class="card" style="color:var(--s3)"><b>දෝෂයකි!</b><br>මෙම දිනයට අදාළ මාසික දත්ත (Month-end snapshot) Database එකේ සොයාගත නොහැක. කරුණාකර මුලින්ම "Month-end report" එක සාර්ථකව උඩුගත කර ඇත්දැයි තහවුරු කරගන්න.</div>';
+      $("cbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Error!</b><br>Month-end snapshot for this date was not found in the database. Please confirm the Month-end report was uploaded successfully first.</div>';
       return;
     }
     CA=sa;CB=CURR.rows;
