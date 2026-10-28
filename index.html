@@ -1116,8 +1116,7 @@ function bmRender(){
   L.forEach(function(o){C[o.t]++;if(o.bB>=0){if(o.paid){C.p++;PA+=o.lpa;if(o.t=="w")PW++;if(o.t=="i")PI++}else C.u++}if(o.aB>=0&&o.bB>=0){M[o.aB][o.bB]++;if(o.aB-o.bB>1)C.j++;if(o.bB-o.aB>1)C.k++;if(o.aB>=2&&o.bB==0)C.q++;if(o.aB==0&&o.bB==1)C.z++;if(o.aB==1&&o.bB==0)C.y++}});
   var both=C.s+C.w+C.i,z0=a.filter(function(r){return r.b==0}).length,z0s=L.filter(function(o){return o.aB==0&&o.bB==0}).length;
   var pc=function(x,t){return t?(x/t*100).toFixed(1)+"%":"-"};
-  var h='<div class="mu" style="margin-bottom:12px">A: <b>'+dlab($("bmA").value)+'</b> (month-end) &nbsp;&rarr;&nbsp; B: <b>'+dlab(BCUR.key)+'</b> &nbsp;&bull;&nbsp; Bucket = Arrears Days range (a customer can move down several buckets, e.g. 120-149 &rarr; 60-89 or 0, when payments are made). <span class="cb">Red = moved to a worse bucket</span> &bull; <span class="cg">Green = improved</span> &bull; <b>Paid</b> = last paid date is after the month-end date. Click any card, matrix cell or group row to list the customers.</div>';
-
+  var h='';
   var mn=function(x){return x?(x/1e6).toFixed(2)+"Mn":""},nz=function(x){return x?fmt(x):""};
   var T=[],GT={s:[0,0],w:[0,0],i:[0,0],c:[0,0]},K4=["s","w","i","c"];
   for(i=0;i<N;i++)T.push({s:[0,0],w:[0,0],i:[0,0],c:[0,0]});
@@ -1129,18 +1128,6 @@ function bmRender(){
   var gn=0,gp=0;K4.forEach(function(k){gn+=GT[k][0];gp+=GT[k][1]});
   ph+='<tr class="gt"><td style="text-align:left">Grand Total</td>'+ks.map(function(k){return'<td class="n" data-m="'+k+'">'+nz(GT[k][0])+'</td><td class="n" data-m="'+k+'">'+mn(GT[k][1])+'</td>'}).join("")+'<td class="n" data-m="all">'+nz(gn)+'</td><td class="n" data-m="all">'+mn(gp)+'</td><td></td></tr></table></div><div class="mu" style="margin-top:6px">ADD = moved to a higher bucket (worse) &bull; Remove = moved to a lower bucket / cleared (better) &bull; Not Move = same bucket &bull; Portfolio = month-end portfolio'+(C.n?' &bull; '+fmt(C.n)+' new customers (not in month-end) are not in this table':'')+'. Click any number or <b>Go</b> to list the customers.</div></div>';
   window.BMSUM={T:T,GT:GT};h+=ph;
-  var cards=[["all","All customers",L.length,"var(--pr)",a.length+" at month-end \u2192 "+b.length+" now"],
-    ["s","Same bucket",C.s,"var(--mu)",pc(C.s,both)+" of matched"],["w","Worsened",C.w,"var(--s3)",pc(C.w,both)+" of matched"],["i","Improved",C.i,"var(--s1)",pc(C.i,both)+" of matched"],
-    ["z","0 Bucket \u2192 1-29",C.z,"var(--s3)","new arrears this month"],["y","1-29 \u2192 0 Bucket",C.y,"var(--s1)","good movement (cleared)"],
-    ["j","Improved 2+ buckets",C.j,"var(--s1)","e.g. 120-149 \u2192 60-89 / 0"],["q","Cleared to 0 (from 30+)",C.q,"var(--s1)","paid up fully"],["k","Worsened 2+ buckets",C.k,"var(--s3)","rolled 2+ forward"],
-    ["p","Paid this month",C.p,"var(--s1)","amount "+fmt(PA)],["u","Not paid this month",C.u,"var(--s3)",pc(C.u,C.p+C.u)+" of customers"],
-    ["n","New (only in B)",C.n,"var(--pr)","not in month-end"],["c","Closed / dropped",C.c,"var(--pr)","not in latest"]];
-  h+='<div class="bmk">'+cards.map(function(c){return'<div class="kc'+(BMSEL.a==null&&BMSEL.r==null&&BMSEL.t==c[0]?" on":"")+'" data-bt="'+c[0]+'" style="border-left-color:'+c[3]+'"><span>'+c[1]+'</span><b>'+fmt(c[2])+'</b><small class="mu">'+c[4]+'</small></div>'}).join("")+'</div>';
-  h+='<div class="card"><h3>0 Bucket retention</h3><div class="sb" style="height:22px"><span style="width:'+(z0?z0s/z0*100:0)+'%;background:var(--s1)"></span><span style="width:'+(z0?(z0-z0s)/z0*100:0)+'%;background:var(--s3)"></span></div><div class="mu" style="margin-top:6px">'+fmt(z0)+' customers were in 0 Bucket at month-end &bull; <b class="cg">'+fmt(z0s)+' still 0 ('+pc(z0s,z0)+')</b> &bull; <b class="cb">'+fmt(z0-z0s)+' moved out ('+pc(z0-z0s,z0)+')</b></div></div>';
-  h+='<div class="card"><h3>Movement matrix (rows = month-end bucket, columns = bucket now)</h3><div class="tw" style="max-height:none"><table class="bmx"><tr><th>Month-end \\ Now'+BK.map(function(k){return'<th>'+k[0]}).join("")+'<th>New</th><th>Total A</th></tr>';
-  for(i=0;i<N;i++){var rt=0;h+='<tr><th style="text-align:left">'+BK[i][0]+'</th>';for(j=0;j<N;j++){var v=M[i][j];rt+=v;h+='<td class="cl '+(!v?"z":i==j?"sm":j>i?"wo":"im")+(BMSEL.a==i&&BMSEL.b==j?" on":"")+'"'+(v?' data-a="'+i+'" data-b="'+j+'"':'')+'>'+(v?fmt(v):"\u00b7")+'</td>'}
-    var cc=L.filter(function(o){return o.aB==i&&o.bB<0}).length;h+='<td class="cl '+(cc?"":"z")+(BMSEL.a==i&&BMSEL.b==-1?" on":"")+'"'+(cc?' data-a="'+i+'" data-b="-1"':'')+'>'+(cc?fmt(cc):"\u00b7")+'</td><td><b>'+fmt(rt+cc)+'</b></td></tr>'}
-  h+='<tr><th style="text-align:left">New</th>';for(j=0;j<N;j++){var nn=L.filter(function(o){return o.aB<0&&o.bB==j}).length;h+='<td class="cl '+(nn?"":"z")+'"'+(nn?' data-a="-1" data-b="'+j+'"':'')+'>'+(nn?fmt(nn):"\u00b7")+'</td>'}h+='<td></td><td></td></tr></table></div></div>';
   var gl={mkt:"Mkt Officer",desc:"Description",branch:"Branch",grant:"Grant Month"};
   h+='<div class="card"><div class="f" style="margin-bottom:8px"><h3 style="margin:0 10px 0 0;align-self:center">Summary by</h3><select id="bmGB">'+Object.keys(gl).map(function(k){return'<option value="'+k+'"'+(k==BMGB?" selected":"")+'>'+gl[k]+'</option>'}).join("")+'</select></div><div class="tw bmg" style="max-height:360px"><table><tr><th>'+gl[BMGB]+'<th class="n">At month-end<th class="n">Same<th class="n">Worsened<th class="n">Improved<th class="n">0 \u2192 1-29<th class="n">1-29 \u2192 0<th class="n">Paid this month<th class="n">Not paid<th class="n">New<th class="n">Closed<th class="n">Worse %</tr>';
   var G={};L.forEach(function(o){var k=BMGB=="grant"?(o.grant||"").slice(0,7)||"(none)":o[BMGB];(G[k]=G[k]||[]).push(o)});
