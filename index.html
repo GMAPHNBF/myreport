@@ -1173,13 +1173,13 @@ function bkRun(){
       else if(x&&y){
         var di=y.b-x.b;
         if(di===0){o.mv="same";o.mvL="No change"}
-        else if(di<0){o.mv="good";o.mvL="🔻 Improved (lower bucket)"}
+        else if(di<0){o.mv="good";o.mvL="🔺 Improved (lower bucket)"}
         else {
           var dayDiff=(y.days||0)-(x.days||0);
           var forced=(di===1)&&(dayDiff>=gapDays-5)&&(dayDiff<=gapDays+10);
           if(x.b===0&&y.b===1)forced=true;
           o.mv=forced?"forced":"bad";
-          o.mvL=forced?"🔺 Forced aging (calendar)":"🔺 Worsened (higher bucket)";
+          o.mvL=forced?"🔺 Forced aging (calendar)":"🔻 Worsened (higher bucket)";
         }
       }
       o.bkAL=o.bA!=null?BK[o.bA][0]:"-";
@@ -1245,7 +1245,7 @@ function bkRender(){
   rows.forEach(function(r){if(r.bA!=null&&r.bB!=null)mat[r.bA][r.bB]++});
 
   var h='';
-  h+='<div class="mu" style="margin-bottom:12px"><span class="lgd" style="background:#8aa0cf"></span>A: <b>'+la+'</b> (month-end) &nbsp; <span class="lgd" style="background:var(--pr)"></span>B: <b>'+lb+'</b> (current) &nbsp;•&nbsp; Gap ≈ <b>'+gap+'</b> days &nbsp;•&nbsp; <span style="color:var(--s1);font-weight:700">🔻 Green = improved / down</span> • <span style="color:var(--s3);font-weight:700">🔺 Red = worsened / up</span> • <span style="color:var(--s2)">🔺 Forced aging</span></div>';
+  h+='<div class="mu" style="margin-bottom:12px"><span class="lgd" style="background:#8aa0cf"></span>A: <b>'+la+'</b> (month-end) &nbsp; <span class="lgd" style="background:var(--pr)"></span>B: <b>'+lb+'</b> (current) &nbsp;•&nbsp; Gap ≈ <b>'+gap+'</b> days &nbsp;•&nbsp; <span style="color:var(--s1);font-weight:700">🔺 Green = Good (up)</span> • <span style="color:var(--s3);font-weight:700">🔻 Red = Bad (down)</span> • <span style="color:var(--s2)">🔺 Forced aging</span></div>';
 
   var mvOn=$("bkMv").value;
   function kpi(col,key,title,sub,n){
@@ -1253,8 +1253,8 @@ function bkRender(){
     return'<div class="kpi bk-kpi" data-mv="'+key+'" style="border-left-color:'+col+';cursor:pointer;'+on+'" title="Click to show these customers"><span>'+title+'</span><b>'+fmt(n)+'</b><div class="sm">'+sub+'</div></div>';
   }
   h+='<div class="dk">'+
-    kpi('var(--s1)','good','<span style="color:var(--s1)">🔻</span> Good (improved)','Bucket පහළට · click',cnt.good)+
-    kpi('var(--s3)','bad','<span style="color:var(--s3)">🔺</span> Bad (worsened)','Bucket ඉහළට · click',cnt.bad)+
+    kpi('var(--s1)','good','<span style="color:var(--s1)">🔺</span> Good (improved)','Bucket පහළට · click',cnt.good)+
+    kpi('var(--s3)','bad','<span style="color:var(--s3)">🔻</span> Bad (worsened)','Bucket ඉහළට · click',cnt.bad)+
     kpi('var(--s2)','forced','<span style="color:var(--s2)">🔺</span> Forced aging','+1 bucket (calendar ~'+gap+' days) · click',cnt.forced)+
     kpi('var(--pr)','same','No change','Same bucket in A &amp; B · click',cnt.same)+
     kpi('#7a5af8','new','New in B','Not in month-end · click',cnt.new)+
@@ -1296,14 +1296,14 @@ function bkRender(){
     o.tA+=+r.tA||0;o.tB+=+r.tB||0;
   });
   var ol=Object.keys(om).sort(function(a,c){return (om[c].bad+om[c].forced)-(om[a].bad+om[a].forced)});
-  h+='<div class="card"><h3>Mkt Officer wise <small>(click row to filter)</small></h3><div class="tw" style="max-height:360px"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Total</th><th class=n><span style="color:var(--s1)">🔻</span> Good</th><th class=n><span style="color:var(--s3)">🔺</span> Bad</th><th class=n><span style="color:var(--s2)">🔺</span> Forced</th><th class=n>Same</th><th class=n>New</th><th class=n>Closed</th><th class=n>Arrears A → B</th></tr>';
+  h+='<div class="card"><h3>Mkt Officer wise <small>(click row to filter)</small></h3><div class="tw" style="max-height:360px"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Total</th><th class=n><span style="color:var(--s1)">🔺</span> Good</th><th class=n><span style="color:var(--s3)">🔻</span> Bad</th><th class=n><span style="color:var(--s2)">🔺</span> Forced</th><th class=n>Same</th><th class=n>New</th><th class=n>Closed</th><th class=n>Arrears A → B</th></tr>';
   h+=ol.length?ol.map(function(k,i){
     var o=om[k];
     var ac="";
-    if(o.tB<o.tA)ac='<span style="color:var(--s1);font-weight:700">🔻 '+fmt(o.tA)+' → '+fmt(o.tB)+'</span>';
-    else if(o.tB>o.tA)ac='<span style="color:var(--s3);font-weight:700">🔺 '+fmt(o.tA)+' → '+fmt(o.tB)+'</span>';
+    if(o.tB<o.tA)ac='<span style="color:var(--s1);font-weight:700">🔺 '+fmt(o.tA)+' → '+fmt(o.tB)+'</span>';
+    else if(o.tB>o.tA)ac='<span style="color:var(--s3);font-weight:700">🔻 '+fmt(o.tA)+' → '+fmt(o.tB)+'</span>';
     else ac=fmt(o.tA)+' → '+fmt(o.tB);
-    return'<tr class="bko" data-o="'+esc(k)+'" style="cursor:pointer"><td>'+(i+1)+'</td><td><b>'+esc(k)+'</b></td><td class=n>'+fmt(o.n)+'</td><td class=n><span style="color:var(--s1);font-weight:700">🔻 '+fmt(o.good)+'</span></td><td class=n><span style="color:var(--s3);font-weight:700">🔺 '+fmt(o.bad)+'</span></td><td class=n><span style="color:var(--s2)">🔺 '+fmt(o.forced)+'</span></td><td class=n>'+fmt(o.same)+'</td><td class=n>'+fmt(o.neu)+'</td><td class=n>'+fmt(o.clo)+'</td><td class=n>'+ac+'</td></tr>';
+    return'<tr class="bko" data-o="'+esc(k)+'" style="cursor:pointer"><td>'+(i+1)+'</td><td><b>'+esc(k)+'</b></td><td class=n>'+fmt(o.n)+'</td><td class=n><span style="color:var(--s1);font-weight:700">🔺 '+fmt(o.good)+'</span></td><td class=n><span style="color:var(--s3);font-weight:700">🔻 '+fmt(o.bad)+'</span></td><td class=n><span style="color:var(--s2)">🔺 '+fmt(o.forced)+'</span></td><td class=n>'+fmt(o.same)+'</td><td class=n>'+fmt(o.neu)+'</td><td class=n>'+fmt(o.clo)+'</td><td class=n>'+ac+'</td></tr>';
   }).join(""):'<tr><td colspan="10" class="mu" style="text-align:center">No data</td></tr>';
   h+='</table></div></div>';
 
@@ -1314,8 +1314,8 @@ function bkRender(){
     o.n++;o[r.mv==="new"?"neu":r.mv==="closed"?"clo":r.mv]++;
   });
   var dl=Object.keys(dm).sort(function(a,c){return dm[c].n-dm[a].n});
-  h+='<div class="card"><h3>Description wise</h3><div class="tw" style="max-height:280px"><table><tr><th>Description</th><th class=n>Total</th><th class=n><span style="color:var(--s1)">🔻</span> Good</th><th class=n><span style="color:var(--s3)">🔺</span> Bad</th><th class=n><span style="color:var(--s2)">🔺</span> Forced</th><th class=n>Same</th><th class=n>New</th><th class=n>Closed</th></tr>';
-  h+=dl.map(function(k){var o=dm[k];return'<tr class="bkd" data-d="'+esc(k)+'" style="cursor:pointer"><td><b>'+esc(k)+'</b></td><td class=n>'+fmt(o.n)+'</td><td class=n><span style="color:var(--s1);font-weight:700">🔻 '+fmt(o.good)+'</span></td><td class=n><span style="color:var(--s3);font-weight:700">🔺 '+fmt(o.bad)+'</span></td><td class=n><span style="color:var(--s2)">🔺 '+fmt(o.forced)+'</span></td><td class=n>'+fmt(o.same)+'</td><td class=n>'+fmt(o.neu)+'</td><td class=n>'+fmt(o.clo)+'</td></tr>'}).join("")||'<tr><td colspan="8" class="mu">No data</td></tr>';
+  h+='<div class="card"><h3>Description wise</h3><div class="tw" style="max-height:280px"><table><tr><th>Description</th><th class=n>Total</th><th class=n><span style="color:var(--s1)">🔺</span> Good</th><th class=n><span style="color:var(--s3)">🔻</span> Bad</th><th class=n><span style="color:var(--s2)">🔺</span> Forced</th><th class=n>Same</th><th class=n>New</th><th class=n>Closed</th></tr>';
+  h+=dl.map(function(k){var o=dm[k];return'<tr class="bkd" data-d="'+esc(k)+'" style="cursor:pointer"><td><b>'+esc(k)+'</b></td><td class=n>'+fmt(o.n)+'</td><td class=n><span style="color:var(--s1);font-weight:700">🔺 '+fmt(o.good)+'</span></td><td class=n><span style="color:var(--s3);font-weight:700">🔻 '+fmt(o.bad)+'</span></td><td class=n><span style="color:var(--s2)">🔺 '+fmt(o.forced)+'</span></td><td class=n>'+fmt(o.same)+'</td><td class=n>'+fmt(o.neu)+'</td><td class=n>'+fmt(o.clo)+'</td></tr>'}).join("")||'<tr><td colspan="8" class="mu">No data</td></tr>';
   h+='</table></div></div>';
 
   var lim=rows.slice().sort(function(a,c){
@@ -1329,21 +1329,21 @@ function bkRender(){
   h+='<div class="tw" style="max-height:520px"><table><tr><th>Fac No</th><th>Name</th><th>Mkt Officer</th><th>Description</th><th>Grant</th><th>Bucket A</th><th>Bucket B</th><th>Days A→B</th><th class=n>Arrears A→B</th><th>Movement</th></tr>';
   h+=lim.length?lim.map(function(r){
     var mark="", col="", tag=r.mv==="good"?"s1":r.mv==="bad"?"s3":r.mv==="forced"?"s2":"fl";
-    if(r.mv==="good"){mark="🔻 ";col="color:var(--s1);font-weight:700"}
-    else if(r.mv==="bad"){mark="🔺 ";col="color:var(--s3);font-weight:700"}
+    if(r.mv==="good"){mark="🔺 ";col="color:var(--s1);font-weight:700"}
+    else if(r.mv==="bad"){mark="🔻 ";col="color:var(--s3);font-weight:700"}
     else if(r.mv==="forced"){mark="🔺 ";col="color:var(--s2);font-weight:700"}
     var daysCell;
     if(r.dA!=null&&r.dB!=null){
       var dd=r.dB-r.dA;
-      if(dd<0)daysCell='<span style="color:var(--s1);font-weight:700">🔻 '+r.dA+' → '+r.dB+'</span>';
-      else if(dd>0)daysCell='<span style="color:'+(r.mv==="forced"?"var(--s2)":"var(--s3)")+';font-weight:700">🔺 '+r.dA+' → '+r.dB+'</span>';
+      if(dd<0)daysCell='<span style="color:var(--s1);font-weight:700">🔺 '+r.dA+' → '+r.dB+'</span>';
+      else if(dd>0)daysCell='<span style="color:'+(r.mv==="forced"?"var(--s2)":"var(--s3)")+';font-weight:700">🔻 '+r.dA+' → '+r.dB+'</span>';
       else daysCell=r.dA+' → '+r.dB;
     } else daysCell=(r.dA!=null?r.dA:"-")+' → '+(r.dB!=null?r.dB:"-");
     var arrCell;
     if(r.tA!=null&&r.tB!=null){
       var da=r.tB-r.tA;
-      if(da<0)arrCell='<span style="color:var(--s1);font-weight:700">🔻 '+fmt(r.tA)+' → '+fmt(r.tB)+'</span>';
-      else if(da>0)arrCell='<span style="color:var(--s3);font-weight:700">🔺 '+fmt(r.tA)+' → '+fmt(r.tB)+'</span>';
+      if(da<0)arrCell='<span style="color:var(--s1);font-weight:700">🔺 '+fmt(r.tA)+' → '+fmt(r.tB)+'</span>';
+      else if(da>0)arrCell='<span style="color:var(--s3);font-weight:700">🔻 '+fmt(r.tA)+' → '+fmt(r.tB)+'</span>';
       else arrCell=fmt(r.tA)+' → '+fmt(r.tB);
     } else arrCell=(r.tA!=null?fmt(r.tA):"-")+' → '+(r.tB!=null?fmt(r.tB):"-");
     var lab=(r.mvL||"").replace(/^\s*[🔺🔻]\s*/,"");
