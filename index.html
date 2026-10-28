@@ -671,15 +671,13 @@ function destRows(g,h,c,pm,LEND,LMETA){
       sc=pickCol(c,[/^status$/,/repossess/,/^(fac(ility)?\s*)?(status|state)$/]),
       mo=pickCol(c,[/^(mkt|marketing)\s*officer/]),
       adc=pickCol(c,[/^(customer|cust|custom)\s*address/,/^address$/,/address/],/e-?mail|web|branch/),
-      omc=pickCol(c,[/omni.*(cust|customer).*(no|num|number|id|code)/,/omni/]),
-      dc=pickCol(c,[/^due(\s*(day|date|on))?$/,/^(next\s*)?due.*(day|date)$/,/due/],/last|paid|arrear|over|amount|amt|rental|balance|insur|count|no\s*of/);
-  ADBG.du=ADBG.du||dc||"";
+      omc=pickCol(c,[/omni.*(cust|customer).*(no|num|number|id|code)/,/omni/]);
   ADBG.ad=ADBG.ad||adc||"";ADBG.om=ADBG.om||omc||"";
   LMETA.gc=LMETA.gc||gc;LMETA.ac=LMETA.ac||ac;LMETA.sc=LMETA.sc||sc;
   g.slice(h+1).forEach(function(r){
     var f=nm(r[c["Fac No"]]);if(!f)return;
     var pv=+r[c["Portfolio"]]||0,fo=nm(r[c["Follow Up Officer"]]),bn=nm(r[c["Branch"]]),ds0=nm(r[c["Description"]]);
-    pm[f]={o:fo,d:ds0,b:bn,p:pv,a:+r[c["Advance"]]||0,ad:adc?nm(r[c[adc]]):"",om:omc?nm(r[c[omc]]):"",du:dc?parseDue(r[c[dc]]):0};
+    pm[f]={o:fo,d:ds0,b:bn,p:pv,a:+r[c["Advance"]]||0,ad:adc?nm(r[c[adc]]):"",om:omc?nm(r[c[omc]]):""};
     var gv=gc?toIso(r[c[gc]]):"";
     if(!gc){var fm=/^[A-Za-z]{2}(\d{2})(\d{2})/.exec(f);if(fm&&+fm[2]>=1&&+fm[2]<=12)gv="20"+fm[1]+"-"+fm[2]+"-01"}
     var av=ac?(+r[c[ac]]||0):pv,tx=sc?nm(r[c[sc]]):"";
@@ -886,8 +884,7 @@ function runUpload(meOnly){
 
     setTimeout(function(){
       rows.forEach(function(r){
-        var p=pm[r.fac]||{p:0,a:0,d:"",o:"",ad:"",om:"",du:0};
-        if(p.du>0)r.due=p.du;
+        var p=pm[r.fac]||{p:0,a:0,d:"",o:"",ad:"",om:""};
         r.mkt=onm(p.o||r.mkt0);
         r.port=p.p;
         r.adv=p.a;
@@ -942,7 +939,7 @@ function runUpload(meOnly){
         var isEnd=!!at&&new Date(at.getTime()+864e5).getUTCDate()==1;
         cput(o2).then(function(s){return(isEnd?saveMonthEnd(sk,o2,sm):Promise.resolve("skip")).then(function(s3){return[s,s3]})}).then(function(res){return lendP.then(function(lr){res.push(lr);return res})}).then(function(res){
           var s=res[0],s3=res[1],lr=res[2];
-          var msg="<b>"+rows.length+"</b> facilities loaded from <b>"+all.length+"</b> files.";msg+=ADBG.om||ADBG.ad?'<br><span style="color:var(--s1)">Destinity: Omni Cust No ← <b>'+esc(ADBG.om||"not found")+"</b>, Address ← <b>"+esc(ADBG.ad||"not found")+"</b></span>":'<br><span class="mu">Destinity: Omni Cust No / Address columns not found.</span>';msg+=ADBG.du?'<br><span style="color:var(--s1)">Due Day read from Destinity column <b>'+esc(ADBG.du)+'</b>.</span>':'<br><span style="color:var(--s3)">Due column NOT found in Destinity file - old Due from RentalArrears used.</span>';var gn=rows.filter(function(r){return +r.gr>0}).length;msg+=gn?'<br><span style="color:var(--s1)">Gross Rental read from column <b>'+GRDBG.col+'</b> ('+esc(GRDBG.hdr||"no header")+") – "+gn+" facilities have a value.</span>":'<br><span style="color:var(--s3)">Gross Rental NOT found – column <b>'+GRDBG.col+"</b> (\""+esc(GRDBG.hdr||"no header")+"\") is empty.</span>";
+          var msg="<b>"+rows.length+"</b> facilities loaded from <b>"+all.length+"</b> files.";msg+=ADBG.om||ADBG.ad?'<br><span style="color:var(--s1)">Destinity: Omni Cust No ← <b>'+esc(ADBG.om||"not found")+"</b>, Address ← <b>"+esc(ADBG.ad||"not found")+"</b></span>":'<br><span class="mu">Destinity: Omni Cust No / Address columns not found.</span>';var dn0=rows.filter(function(r){return +r.due>0}).length;msg+=dn0?'<br><span style="color:var(--s1)">Due Day read from Branch Wise RentalArrears - '+dn0+' facilities have a value.</span>':'<br><span style="color:var(--s3)">Due column NOT found in Branch Wise RentalArrears file.</span>';var gn=rows.filter(function(r){return +r.gr>0}).length;msg+=gn?'<br><span style="color:var(--s1)">Gross Rental read from column <b>'+GRDBG.col+'</b> ('+esc(GRDBG.hdr||"no header")+") – "+gn+" facilities have a value.</span>":'<br><span style="color:var(--s3)">Gross Rental NOT found – column <b>'+GRDBG.col+"</b> (\""+esc(GRDBG.hdr||"no header")+"\") is empty.</span>";
           if(s=="off")msg+='<br><span class="mu">Online storage not set up (saved on this device only).</span>';
           else if(s=="ok")msg+='<br><span style="color:var(--s1)">Saved ONLINE – everyone will see this data.</span>';
           else msg+='<br><span style="color:var(--s3)">Online save '+s+' – check storage setup.</span>';
