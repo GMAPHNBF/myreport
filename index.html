@@ -151,6 +151,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
  .sres .grid{grid-template-columns:1fr}.rc .g{font-size:14.5px}
  #ot,#ot th,#ot td{font-size:12.5px}
 }
+.omb{margin-left:8px;background:#25d366;color:#fff;border:0;border-radius:99px;padding:6px 14px;font-weight:600;font-size:13.5px}
 </style>
 </head>
 <body>
@@ -277,6 +278,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
  </div>
 </div>
 
+<div class="modal" id="omm"><div class="mb"><h3>&#128241; Online message</h3><textarea id="omt" readonly style="width:100%;height:300px;font:14px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:10px;resize:vertical"></textarea><div class="err" id="omr" style="color:var(--s1);margin-top:6px"></div><div class="row"><button class="p" id="omc">&#128203; Copy</button><button id="omw" style="background:#25d366;color:#fff;border-color:#25d366">WhatsApp</button><button id="oms">Share</button><button id="omx">Close</button></div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 /* ============================================================
@@ -315,10 +317,33 @@ function sres(){
     var dd=done[r.fac];
     return'<div class="rc'+(dd?" dn":"")+'" data-s="'+r.stage+'"><div class="h"><div><div class="fn">'+hl(r.fac,re)+'</div><div class="nm">'+hl(r.name,re)+'</div></div><div style="text-align:right"><span class="tag s'+r.stage+'">Stage '+r.stage+'</span><div style="margin-top:5px">'+(r.r1?'<span class="tag fl">1st Rental</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span>':"")+'</div></div></div>'+
     '<div class="g"><div><span>Arrears Days</span>'+r.days+' ('+BK[r.b][0]+')</div><div><span>Total Arrears</span><b>'+fmt(r.tot)+'</b></div><div><span>Rental Arrears</span><b>'+fmt(r.rent)+'</b></div><div><span>'+mrentLbl(r)+'</span><b>'+mrentTxt(r)+'</b></div><div><span>No Of O/S (rentals)</span>'+fmt(r.nos)+'</div><div><span>Rental Due Day</span>'+(+r.due>0?'Day '+r.due:'-')+'</div><div><span>Grant Date</span>'+esc(r.grant?String(r.grant).slice(0,10):'-')+'</div><div><span>Portfolio</span>'+fmt(r.port)+'</div><div><span>Advance</span>'+fmt(r.adv)+'</div><div><span>Mkt Officer</span>'+hl(r.mkt,re)+'</div><div><span>Branch</span>'+hl(r.branch,re)+'</div><div><span>Reg No</span>'+hl(r.reg||"-",re)+'</div><div><span>Omni Cust No</span>'+hl(r.omni||"-",re)+'</div><div><span>Last Paid</span>'+esc(r.lpd||"-")+'</div><div><span>Last Paid Amt</span>'+fmt(r.lpa)+'</div><div style="grid-column:1/-1"><span>Address</span>'+hl(r.addr||"-",re)+'</div><div style="grid-column:1/-1"><span>Tel</span><div class="duw">'+duCall(r.tel)+'</div></div></div>'+
-    '<label><input type="checkbox" data-sd="'+esc(r.fac)+'"'+(dd?" checked":"")+'> Done</label></div>'
+    '<label><input type="checkbox" data-sd="'+esc(r.fac)+'"'+(dd?" checked":"")+'> Done</label> <button class="omb" data-om="'+esc(r.fac)+'">&#128241; Online message</button></div>'
   }).join("")+'</div>'+(a.length>MAXR?'<div class="mu" style="margin:8px 2px 0">Showing the first '+MAXR+' of '+a.length+'. Type more to narrow down, or see the full list below.</div>':"");
 }
 $("sres").addEventListener("change",function(e){var t=e.target;if(t.hasAttribute&&t.hasAttribute("data-sd")){setDone(t.getAttribute("data-sd"),t.checked);draw()}});
+
+/* ===== ONLINE MESSAGE (payment instructions per Fac No) ===== */
+function omsg(fac){
+  return "CDMA \uD83C\uDFE7\u0DC4\u0DDD Online\uD83D\uDCF2 *HNBF* වාරිකය ගෙවිමේ දී \n"+
+  "\uD83D\uDED1පහත කරුණු අනුගමනය කරන්න\uD83D\uDED1\n\n"+
+  "*FAC NO* : *"+fac+"*\n\n"+
+  "*BANK DETAILS*\uD83C\uDFE6\n\n1\uFE0F\u20E3H N B\n     ACOUNT NO-147010079340\n\n\n"+
+  "\uD83D\uDC4B(_හැකි සෑම විටම HNB \uD83C\uDFE6ගිණුමට මුදල් \uD83D\uDCB0බැර කිරීම අපහට වඩාත් පහසුවෙ_.)\n\n"+
+  "\uD83D\uDED1*\uD83D\uDCB0මුදල් ගෙවීමේදී (REMARK)සඳහා ඉහත \u261D\uFE0Fඅංකය(VF) යෙදීම අනිවාර්ය වේ\u2705.*\n\n"+
+  "මුදල් ගෙවීමෙන් පසු _screenshot_\uD83D\uDCF8\nඑවීම මගින් ගෙවීම තහවුරු කර ගැනීමට පහසුවෙ."
+}
+var OMC="";
+$("sres").addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-om]");if(!b)return;
+  OMC=omsg(b.getAttribute("data-om"));$("omt").value=OMC;$("omr").textContent="";$("omm").classList.add("on")});
+$("omx").onclick=function(){$("omm").classList.remove("on")};
+$("omm").onclick=function(e){if(e.target===$("omm"))$("omm").classList.remove("on")};
+$("omc").onclick=function(){
+  function ok(){$("omr").textContent="\u2714 Copied!"}
+  function fb(){var t=$("omt");t.removeAttribute("readonly");t.select();t.setSelectionRange(0,99999);try{document.execCommand("copy");ok()}catch(x){$("omr").textContent="Long-press the text and copy"}t.setAttribute("readonly","")}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(OMC).then(ok,fb)}else fb();
+};
+$("omw").onclick=function(){window.open("https://wa.me/?text="+encodeURIComponent(OMC),"_blank")};
+$("oms").onclick=function(){if(navigator.share){navigator.share({text:OMC}).catch(function(){})}else{$("omr").textContent="Share not supported - use Copy or WhatsApp"}};
 var OFM={};
 function onm(x){var s=String(x==null?"":x).replace(/\s+/g," ").trim();if(!s)return"";var k=s.toLowerCase().replace(/[^a-z0-9]/g,"");if(!k)return s;return OFM[k]||(OFM[k]=s)}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
