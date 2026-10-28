@@ -152,6 +152,14 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
  #ot,#ot th,#ot td{font-size:12.5px}
 }
 .omb{margin-left:8px;background:#25d366;color:#fff;border:0;border-radius:99px;padding:6px 14px;font-weight:600;font-size:13.5px}
+.bmk{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.bmk .kc{background:var(--card);border:1px solid var(--bd);border-left:5px solid var(--pr);border-radius:12px;padding:10px 12px;cursor:pointer}
+.bmk .kc span{display:block;font-size:12px;color:var(--mu)}.bmk .kc b{font-size:21px}.bmk .kc small{display:block}
+.bmk .kc.on,.bmx td.cl.on{outline:3px solid #7a5af8}
+.bmx{border-collapse:collapse;font-size:13px}.bmx th,.bmx td{border:1px solid var(--bd);padding:7px 10px;text-align:center;white-space:nowrap}
+.bmx td.cl{cursor:pointer;font-weight:600}.bmx td.cl:hover{filter:brightness(.92)}
+.bmx td.sm{background:rgba(46,158,107,.18)}.bmx td.wo{background:rgba(214,69,61,.18)}.bmx td.im{background:rgba(46,158,107,.32)}.bmx td.z{color:var(--mu);font-weight:400;background:transparent;cursor:default}
+.bmg tr.gr{cursor:pointer}.bmg tr.gr:hover td{background:var(--bg)}
 </style>
 </head>
 <body>
@@ -159,7 +167,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
   <a class="duhome" href="https://gmaphnbf.github.io/HNBFGMAP/" style="margin-right:auto">&#127968; HOME</a>
   <button id="dub" style="background:#0e9f6e;color:#fff;border-color:#0e9f6e;position:relative">&#128197; Due Today<span id="dubg" style="display:none;position:absolute;top:-8px;right:-8px;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:10px;background:#e02424;color:#fff;font-size:11px;font-weight:700;line-height:20px;text-align:center;border:2px solid var(--bg,#fff)"></span></button>
   <button id="cmpb" style="background:#7a5af8;color:#fff;border-color:#7a5af8">&#8644; Compare</button>
-  <button id="bkb" style="background:#e8590c;color:#fff;border-color:#e8590c">&#128202; Bucket Move</button>
+  <button id="bmb" style="background:#e8590c;color:#fff;border-color:#e8590c">&#128200; Bucket Movement</button>
   <button class="p" id="upb">&#8679; Upload</button>
   <small id="meta" style="display:none"></small>
 </header>
@@ -204,7 +212,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 
 <button class="fab" id="fab">&#9776; Menu</button>
 <div class="sheet" id="sheet"><div class="sh"><div class="t"><b>Menu</b><button id="sx">&#10005; Close</button></div>
-<h5>Navigate</h5><div class="mg"><a href="https://gmaphnbf.github.io/HNBFGMAP/" rel="noopener">&#8962; Home</a><button data-m="up">&#8679; Upload data</button><button data-m="cmpb">&#8644; Compare dates</button><button data-m="bkb">&#128202; Bucket Move</button><button data-m="look">&#128269; Fac No search</button><button data-m="flt">&#9776; Filters</button><button data-m="ch">&#9684; Stage chart</button><button data-m="npl">&#9201; NPL ratio</button><button data-m="off">&#128101; Officer summary</button><button data-m="cus">&#9776; Customers</button></div>
+<h5>Navigate</h5><div class="mg"><a href="https://gmaphnbf.github.io/HNBFGMAP/" rel="noopener">&#8962; Home</a><button data-m="up">&#8679; Upload data</button><button data-m="cmpb">&#8644; Compare dates</button><button data-m="bmb">&#128200; Bucket Movement</button><button data-m="look">&#128269; Fac No search</button><button data-m="flt">&#9776; Filters</button><button data-m="ch">&#9684; Stage chart</button><button data-m="npl">&#9201; NPL ratio</button><button data-m="off">&#128101; Officer summary</button><button data-m="cus">&#9776; Customers</button></div>
 <h5>Quick lists</h5><div class="mg"><button id="m_pn" data-m="pnb">PNPL list</button><button id="m_r1" data-m="r1b">1st Rental</button><button id="m_np" data-m="npb">Null Payment</button><button data-m="odb">&#9889; 1 Day Payment</button><button data-m="rs">&#8635; Clear filters</button></div>
 <h5>Download Excel</h5><div class="mg"><button data-m="e1">Filtered list</button><button data-m="e2">Officer summary</button><button data-m="e3">Bucket summary</button></div></div></div>
 
@@ -259,6 +267,23 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
  <div class="cmpm" id="cbody"></div>
 </div>
 
+<div class="cmpv" id="bm">
+ <div class="cmph">
+  <button id="bmBack" class="p">&#8592; Dashboard</button>
+  <b style="font-size:16px;align-self:center">&#128200; Bucket Movement</b>
+  <label>Month-end report (A)<select id="bmA"></select></label>
+  <label>Latest uploaded report (B)<select id="bmB"></select></label>
+  <label>Branch<select id="bmBr"><option value="">All</option></select></label>
+  <label>Mkt Officer<select id="bmOf"><option value="">All</option></select></label>
+  <label>Description<select id="bmDe"><option value="">All</option></select></label>
+  <label>Grant Date<select id="bmGd"><option value="">All</option><option value="3">Last 3 Months</option><option value="6">Last 6 Months</option><option value="12">Last 12 Months</option><option value="A">After 12 Months</option></select></label>
+  <label>Grant Month<select id="bmMo"><option value="">All</option></select></label>
+  <button id="bmGo" class="p">&#8635; Reload</button>
+  <button id="bmXl">&#11015; Excel</button>
+ </div>
+ <div class="cmpm" id="bmbody"></div>
+</div>
+
 <div class="cmpv" id="due">
  <div class="cmph">
   <button id="duBack" class="p">&#8592; Dashboard</button>
@@ -277,22 +302,6 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
   </div>
   <div id="duBody"></div>
  </div>
-</div>
-
-<div class="cmpv" id="buck">
- <div class="cmph">
-  <button id="bkBack" class="p">&#8592; Dashboard</button>
-  <b style="font-size:16px;align-self:center">&#128202; Bucket Movement</b>
-  <label>A: Month-end report<select id="bkA"></select></label>
-  <label>B: Latest uploaded<select id="bkB"></select></label>
-  <label>Mkt Officer<select id="bkOf"><option value="">All</option></select></label>
-  <label>Description<select id="bkDe"><option value="">All</option></select></label>
-  <label>Grant Date<select id="bkGd"><option value="">All</option><option value="3">Last 3 Months</option><option value="6">Last 6 Months</option><option value="12">Last 12 Months</option><option value="A">After 12 Months</option></select></label>
-  <label>Movement<select id="bkMv"><option value="">All</option><option value="good">Good (improved)</option><option value="bad">Bad (worsened)</option><option value="same">No change</option><option value="forced">Forced aging (calendar)</option><option value="new">New in B</option><option value="closed">Not in B</option></select></label>
-  <button id="bkGo" class="p">&#8635; Analyse</button>
-  <button id="bkXl">&#11015; Excel</button>
- </div>
- <div class="cmpm" id="bkBody"></div>
 </div>
 
 <div class="modal" id="omm"><div class="mb"><h3>&#128241; Online message</h3><textarea id="omt" readonly style="width:100%;height:300px;font:14px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:10px;resize:vertical"></textarea><div class="err" id="omr" style="color:var(--s1);margin-top:6px"></div><div class="row"><button class="p" id="omc">&#128203; Copy</button><button id="omw" style="background:#25d366;color:#fff;border-color:#25d366">WhatsApp</button><button id="oms">Share</button><button id="omx">Close</button></div></div></div>
@@ -652,7 +661,7 @@ $("sheet").addEventListener("click",function(e){
   if(m=="up"){$("upb").click()}
   else if(m=="flt"){document.querySelector(".fp").classList.add("open");document.querySelector(".fp").scrollIntoView({behavior:"smooth"})}
   else if(MS[m]){var el=$(MS[m]);(el.closest(".card")||el).scrollIntoView({behavior:"smooth"});if(m=="look")$("fq").focus()}
-  else{$(m).click();close=(m=="odb"||m=="cmpb"||m=="bkb"||m=="e1"||m=="e2"||m=="e3"||m=="rs"||m=="pnb"||m=="r1b"||m=="npb")}
+  else{$(m).click();close=(m=="odb"||m=="bmb"||m=="cmpb"||m=="e1"||m=="e2"||m=="e3"||m=="rs"||m=="pnb"||m=="r1b"||m=="npb")}
   if(close)$("sheet").classList.remove("on")
 });
 
@@ -1035,19 +1044,121 @@ function dcol(d,g){return Math.abs(d)<0.005||!g?"var(--pr)":((d>0)==(g>0)?"var(-
 var KP=[["Customers","n",-1,fmt],["Total Arrears","tot",-1,fmt],["Rental Arrears","rent",-1,fmt],["Portfolio","port",-1,fmt],["Stage 1 customers","n1",1,fmt],["Stage 2 customers","n2",-1,fmt],["Stage 3 customers","n3",-1,fmt],["Stage 3 arrears","t3",-1,fmt],["NPL Ratio","npl",-1,f2],["NPL Portfolio (91+)","nplP",-1,fmt]];
 
 function cmpShow(){$("cmp").classList.add("on");document.body.style.overflow="hidden";cmpInit()}
-function cmpHide(){$("cmp").classList.remove("on");if(!$("due").classList.contains("on")&&!$("buck").classList.contains("on"))document.body.style.overflow=""}
+function cmpHide(){$("cmp").classList.remove("on");document.body.style.overflow=""}
 $("cmpb").onclick=function(){cmpPushed=true;location.hash="compare"};
 $("cmBack").onclick=function(){if(cmpPushed&&location.hash=="#compare")history.back();else location.hash=""};
-window.addEventListener("hashchange",function(){
-  if(location.hash=="#compare")cmpShow();else cmpHide();
-  if(location.hash=="#due")duShow();else duHide();
-  if(location.hash=="#bucket")bkShow();else bkHide();
+window.addEventListener("hashchange",function(){if(location.hash=="#compare")cmpShow();else cmpHide();if(location.hash=="#due")duShow();else duHide()});
+
+/* ===== BUCKET MOVEMENT PAGE (month-end vs latest upload) ===== */
+var BA=[],BB=[],BCUR=null,BMSEL={t:"w"},BMGRP=null,BMPG=0,BMGB="mkt",BMLIST=[];
+function bmShow(){$("bm").classList.add("on");document.body.style.overflow="hidden";bmInit()}
+function bmHide(){$("bm").classList.remove("on")}
+$("bmb").onclick=function(){location.hash="bm"};
+$("bmBack").onclick=function(){location.hash=""};
+window.addEventListener("hashchange",function(){if(location.hash=="#bm")bmShow();else{bmHide();if(!$("cmp").classList.contains("on")&&!$("due").classList.contains("on"))document.body.style.overflow=""}});
+function bmInit(){
+  if(!ccfg().url){$("bmbody").innerHTML='<div class="card">Online storage is not set up, so the saved month-end report cannot be loaded.</div>';return}
+  $("bmbody").innerHTML='<div class="card mu">Loading...</div>';
+  Promise.all([sget("snapmeta"),sget("arrears")]).then(function(r){
+    SM=r[0]||{};var cur=(r[1]&&r[1].rows&&r[1].rows.length)?r[1]:CURD;
+    if(!cur||!cur.rows||!cur.rows.length){$("bmbody").innerHTML='<div class="card">No current data loaded. Upload the Excel files first.</div>';return}
+    var rows=Array.isArray(cur.rows)?cur.rows:Object.keys(cur.rows).map(function(x){return cur.rows[x]});
+    BCUR={key:(cur.asAt||"").slice(0,10)||new Date().toISOString().slice(0,10),rows:cmpPrep(rows)};
+    var ks=Object.keys(SM).filter(function(k){return isME(k)&&k<BCUR.key}).sort().reverse();
+    $("bmB").innerHTML='<option>'+dlab(BCUR.key)+' (uploaded report)</option>';$("bmB").disabled=true;
+    if(!ks.length){$("bmA").innerHTML="";$("bmbody").innerHTML='<div class="card"><b>No previous month-end report saved yet.</b><br><span class="mu">Upload the report on the last day of the month (30/31, or 28/29 in Feb). That one is kept and later reports are compared against it.</span></div>';return}
+    $("bmA").innerHTML=ks.map(function(k){var m=SM[k]||{};return'<option value="'+k+'">Month-end '+dlab(k)+' ('+(m.n||"?")+' fac)</option>'}).join("");
+    bmRun()
+  })
+}
+function bmRun(){
+  var ka=$("bmA").value;if(!ka||!BCUR)return;
+  $("bmbody").innerHTML='<div class="card mu">Loading month-end report...</div>';
+  cmpSnap(ka).then(function(sa){
+    if(!sa){$("bmbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Month-end snapshot not found in the database.</b> Please upload the month-end report first.</div>';return}
+    BA=sa;BB=BCUR.rows;
+    var all=BA.concat(BB),keep=function(id,k){var v=$(id).value,x=Array.from(new Set(all.map(function(r){return r[k]}))).sort();$(id).innerHTML='<option value="">All</option>'+x.map(function(y){return'<option>'+esc(y)+'</option>'}).join("");if(x.indexOf(v)>=0)$(id).value=v};
+    keep("bmBr","branch");keep("bmOf","mkt");keep("bmDe","desc");
+    var mv=$("bmMo").value,ms=Array.from(new Set(all.map(function(r){return duGrant(r).slice(0,7)}).filter(Boolean))).sort().reverse();
+    $("bmMo").innerHTML='<option value="">All</option>'+ms.map(function(m){return'<option value="'+m+'">'+mlab(m)+'</option>'}).join("");if(ms.indexOf(mv)>=0)$("bmMo").value=mv;
+    BMGRP=null;BMPG=0;bmRender()
+  }).catch(function(e){$("bmbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Error:</b> '+esc(String(e&&e.message||e))+'</div>'})
+}
+function bmFilt(rows){
+  var br=$("bmBr").value,of=$("bmOf").value,de=$("bmDe").value,gd=$("bmGd").value,mo=$("bmMo").value,ref=new Date((BCUR.key||"")+"T00:00:00Z");
+  return rows.filter(function(r){
+    if(br&&r.branch!=br)return false;if(of&&r.mkt!=of)return false;if(de&&r.desc!=de)return false;
+    var g=duGrant(r);if(mo&&g.slice(0,7)!=mo)return false;
+    if(gd){if(!g)return false;var gm=(ref-new Date(g+"T00:00:00Z"))/864e5/30.44;if(gd=="A"){if(gm<=12)return false}else if(gm>+gd)return false}
+    return true})
+}
+var BMT={s:"Same bucket",w:"Worsened (moved to a higher bucket)",i:"Improved (moved to a lower bucket)",n:"New (not in month-end)",c:"Closed / not in latest",z:"0 Bucket \u2192 1 to 29",y:"1 to 29 \u2192 0 Bucket",j:"Moved more than 1 bucket"};
+function bmPick(o){
+  var S=BMSEL;
+  if(BMGRP&&o[BMGRP.k]!=BMGRP.v)return false;
+  if(S.a!=null)return o.aB==S.a&&o.bB==S.b;
+  switch(S.t){case"all":return true;case"z":return o.aB==0&&o.bB==1;case"y":return o.aB==1&&o.bB==0;case"j":return o.aB>=0&&o.bB>=0&&Math.abs(o.bB-o.aB)>1;default:return o.t==S.t}
+}
+function bmRender(){
+  var a=bmFilt(BA),b=bmFilt(BB),MA={},MB={};a.forEach(function(r){MA[r.fac]=r});b.forEach(function(r){MB[r.fac]=r});
+  var L=Object.keys(Object.assign({},MA,MB)).map(function(f){
+    var x=MA[f],y=MB[f],z=y||x,o={fac:f,name:z.name,mkt:z.mkt,branch:z.branch,desc:z.desc,grant:duGrant(z),gm:duGrant(z).slice(0,7)||"(none)",tel:z.tel,
+      aB:x?x.b:-1,bB:y?y.b:-1,dA:x?x.days:null,dB:y?y.days:null,tA:x?x.tot:0,tB:y?y.tot:0,pA:x?x.port:0,pB:y?y.port:0,rA:x?x.rent:0,rB:y?y.rent:0};
+    o.t=!x?"n":!y?"c":y.b==x.b?"s":y.b>x.b?"w":"i";return o});
+  BMLIST=L;
+  var N=BK.length,M=[],i,j;for(i=0;i<N;i++){M.push([]);for(j=0;j<N;j++)M[i].push(0)}
+  var C={s:0,w:0,i:0,n:0,c:0,z:0,y:0,j:0};
+  L.forEach(function(o){C[o.t]++;if(o.aB>=0&&o.bB>=0){M[o.aB][o.bB]++;if(Math.abs(o.bB-o.aB)>1)C.j++;if(o.aB==0&&o.bB==1)C.z++;if(o.aB==1&&o.bB==0)C.y++}});
+  var both=C.s+C.w+C.i,z0=a.filter(function(r){return r.b==0}).length,z0s=L.filter(function(o){return o.aB==0&&o.bB==0}).length;
+  var pc=function(x,t){return t?(x/t*100).toFixed(1)+"%":"-"};
+  var h='<div class="mu" style="margin-bottom:12px">A: <b>'+dlab($("bmA").value)+'</b> (month-end) &nbsp;&rarr;&nbsp; B: <b>'+dlab(BCUR.key)+'</b> &nbsp;&bull;&nbsp; Bucket = Arrears Days range. <span class="cb">Red = moved to a worse bucket</span> &bull; <span class="cg">Green = improved</span> &bull; click any card, matrix cell or group row to list the customers.</div>';
+  var cards=[["all","All customers",L.length,"var(--pr)",a.length+" at month-end \u2192 "+b.length+" now"],
+    ["s","Same bucket",C.s,"var(--mu)",pc(C.s,both)+" of matched"],["w","Worsened",C.w,"var(--s3)",pc(C.w,both)+" of matched"],["i","Improved",C.i,"var(--s1)",pc(C.i,both)+" of matched"],
+    ["z","0 Bucket \u2192 1-29",C.z,"var(--s3)","new arrears this month"],["y","1-29 \u2192 0 Bucket",C.y,"var(--s1)","good movement (cleared)"],
+    ["n","New (only in B)",C.n,"var(--pr)","not in month-end"],["c","Closed / dropped",C.c,"var(--pr)","not in latest"],["j","Jumped 2+ buckets",C.j,"#7a5af8","data check"]];
+  h+='<div class="bmk">'+cards.map(function(c){return'<div class="kc'+(BMSEL.a==null&&BMSEL.t==c[0]?" on":"")+'" data-bt="'+c[0]+'" style="border-left-color:'+c[3]+'"><span>'+c[1]+'</span><b>'+fmt(c[2])+'</b><small class="mu">'+c[4]+'</small></div>'}).join("")+'</div>';
+  h+='<div class="card"><h3>0 Bucket retention</h3><div class="sb" style="height:22px"><span style="width:'+(z0?z0s/z0*100:0)+'%;background:var(--s1)"></span><span style="width:'+(z0?(z0-z0s)/z0*100:0)+'%;background:var(--s3)"></span></div><div class="mu" style="margin-top:6px">'+fmt(z0)+' customers were in 0 Bucket at month-end &bull; <b class="cg">'+fmt(z0s)+' still 0 ('+pc(z0s,z0)+')</b> &bull; <b class="cb">'+fmt(z0-z0s)+' moved out ('+pc(z0-z0s,z0)+')</b></div></div>';
+  h+='<div class="card"><h3>Movement matrix (rows = month-end bucket, columns = bucket now)</h3><div class="tw" style="max-height:none"><table class="bmx"><tr><th>Month-end \\ Now'+BK.map(function(k){return'<th>'+k[0]}).join("")+'<th>New</th><th>Total A</th></tr>';
+  for(i=0;i<N;i++){var rt=0;h+='<tr><th style="text-align:left">'+BK[i][0]+'</th>';for(j=0;j<N;j++){var v=M[i][j];rt+=v;h+='<td class="cl '+(!v?"z":i==j?"sm":j>i?"wo":"im")+(BMSEL.a==i&&BMSEL.b==j?" on":"")+'"'+(v?' data-a="'+i+'" data-b="'+j+'"':'')+'>'+(v?fmt(v):"\u00b7")+'</td>'}
+    var cc=L.filter(function(o){return o.aB==i&&o.bB<0}).length;h+='<td class="cl '+(cc?"":"z")+(BMSEL.a==i&&BMSEL.b==-1?" on":"")+'"'+(cc?' data-a="'+i+'" data-b="-1"':'')+'>'+(cc?fmt(cc):"\u00b7")+'</td><td><b>'+fmt(rt+cc)+'</b></td></tr>'}
+  h+='<tr><th style="text-align:left">New</th>';for(j=0;j<N;j++){var nn=L.filter(function(o){return o.aB<0&&o.bB==j}).length;h+='<td class="cl '+(nn?"":"z")+'"'+(nn?' data-a="-1" data-b="'+j+'"':'')+'>'+(nn?fmt(nn):"\u00b7")+'</td>'}h+='<td></td><td></td></tr></table></div></div>';
+  var gl={mkt:"Mkt Officer",desc:"Description",branch:"Branch",grant:"Grant Month"};
+  h+='<div class="card"><div class="f" style="margin-bottom:8px"><h3 style="margin:0 10px 0 0;align-self:center">Summary by</h3><select id="bmGB">'+Object.keys(gl).map(function(k){return'<option value="'+k+'"'+(k==BMGB?" selected":"")+'>'+gl[k]+'</option>'}).join("")+'</select></div><div class="tw bmg" style="max-height:360px"><table><tr><th>'+gl[BMGB]+'<th class="n">At month-end<th class="n">Same<th class="n">Worsened<th class="n">Improved<th class="n">0 \u2192 1-29<th class="n">1-29 \u2192 0<th class="n">New<th class="n">Closed<th class="n">Worse %</tr>';
+  var G={};L.forEach(function(o){var k=BMGB=="grant"?(o.grant||"").slice(0,7)||"(none)":o[BMGB];(G[k]=G[k]||[]).push(o)});
+  var key=BMGB=="grant"?"gm":BMGB;
+  h+=Object.keys(G).map(function(k){var g=G[k],cn=function(t){return g.filter(function(o){return o.t==t}).length},w=cn("w"),bo=cn("s")+w+cn("i");return{k:k,n:g.filter(function(o){return o.aB>=0}).length,s:cn("s"),w:w,i:cn("i"),z:g.filter(function(o){return o.aB==0&&o.bB==1}).length,y:g.filter(function(o){return o.aB==1&&o.bB==0}).length,nw:cn("n"),c:cn("c"),p:bo?w/bo*100:0}}).sort(function(x,y){return y.w-x.w}).map(function(g){
+    return'<tr class="gr" data-gk="'+BMGB+'" data-gv="'+esc(g.k)+'"><td>'+(BMGB=="grant"&&g.k!="(none)"?mlab(g.k):esc(g.k))+'<td class="n">'+fmt(g.n)+'<td class="n">'+fmt(g.s)+'<td class="n cb">'+fmt(g.w)+'<td class="n cg">'+fmt(g.i)+'<td class="n">'+fmt(g.z)+'<td class="n">'+fmt(g.y)+'<td class="n">'+fmt(g.nw)+'<td class="n">'+fmt(g.c)+'<td class="n">'+g.p.toFixed(1)+'%</tr>'}).join("");
+  h+='</table></div></div>';
+  var P=L.filter(bmPick).sort(function(x,y){return(y.bB-x.bB)||(y.tB-x.tB)}),PS=100,pg=Math.max(0,Math.min(BMPG,Math.ceil(P.length/PS)-1));BMPG=pg;
+  var title=BMSEL.a!=null?(BMSEL.a>=0?BK[BMSEL.a][0]:"New")+" \u2192 "+(BMSEL.b>=0?BK[BMSEL.b][0]:"Closed / not in latest"):BMT[BMSEL.t]||"All";
+  h+='<div class="card"><h3>Customer list: '+esc(title)+' <span class="badge">'+fmt(P.length)+'</span>'+(BMGRP?' <span class="chip on" id="bmGx">'+esc(BMGRP.v)+' &#10005;</span>':"")+'</h3><div class="tw"><table><tr><th>Fac No<th>Name<th>Mkt Officer<th>Branch<th>Description<th>Grant Date<th>Month-end bucket<th>Bucket now<th>Movement<th class="n">Total Arrears A<th class="n">Total Arrears B<th class="n">Portfolio<th>Tel</tr>'+
+  P.slice(pg*PS,pg*PS+PS).map(function(o){var mv=o.t=="n"?'<span class="tag fl">New</span>':o.t=="c"?'<span class="tag fl">Closed</span>':o.t=="s"?'<span class="cn">Same</span>':o.t=="w"?'<span class="cb">&#9650; Worse</span>':'<span class="cg">&#9660; Better</span>';
+    return'<tr><td><b>'+esc(o.fac)+'</b><td>'+esc(o.name)+'<td>'+esc(o.mkt)+'<td>'+esc(o.branch)+'<td>'+esc(o.desc)+'<td>'+esc(o.grant||"-")+'<td>'+(o.aB>=0?BK[o.aB][0]+' ('+o.dA+'d)':"-")+'<td>'+(o.bB>=0?BK[o.bB][0]+' ('+o.dB+'d)':"-")+'<td>'+mv+'<td class="n">'+fmt(o.tA)+'<td class="n">'+fmt(o.tB)+'<td class="n">'+fmt(o.pB||o.pA)+'<td>'+duCall(o.tel)+'</tr>'}).join("")+
+  '</table></div><div class="pg"><button id="bmPv">&#9664;</button><span>'+(P.length?pg*PS+1:0)+'&ndash;'+Math.min(P.length,pg*PS+PS)+' of '+fmt(P.length)+'</span><button id="bmNx">&#9654;</button></div></div>';
+  $("bmbody").innerHTML=h;
+}
+$("bmbody").addEventListener("click",function(e){
+  var t=e.target,c=t.closest("[data-bt]"),x=t.closest("td[data-a]"),g=t.closest("tr[data-gk]");
+  if(c){BMSEL={t:c.getAttribute("data-bt")};BMPG=0;bmRender();return}
+  if(x){BMSEL={a:+x.getAttribute("data-a"),b:+x.getAttribute("data-b")};BMPG=0;bmRender();return}
+  if(g){BMGRP={k:g.getAttribute("data-gk")=="grant"?"grant":g.getAttribute("data-gk"),v:g.getAttribute("data-gv")};if(BMGRP.k=="grant"){BMGRP={k:"gm",v:BMGRP.v}}BMPG=0;bmRender();return}
+  if(t.id=="bmGx"){BMGRP=null;BMPG=0;bmRender();return}
+  if(t.id=="bmPv"){if(BMPG>0){BMPG--;bmRender()}return}
+  if(t.id=="bmNx"){BMPG++;bmRender();return}
 });
+$("bmbody").addEventListener("change",function(e){if(e.target.id=="bmGB"){BMGB=e.target.value;BMGRP=null;bmRender()}});
+$("bmA").onchange=bmRun;$("bmGo").onclick=function(){SNAP={};bmInit()};
+$("bmBr").onchange=$("bmOf").onchange=$("bmDe").onchange=$("bmGd").onchange=$("bmMo").onchange=function(){BMGRP=null;BMPG=0;bmRender()};
+$("bmXl").onclick=function(){
+  var P=BMLIST.filter(bmPick);if(!P.length)return;
+  dl(P.map(function(o){return{"Fac No":o.fac,Name:o.name,"Mkt Officer":o.mkt,Branch:o.branch,Description:o.desc,"Grant Date":o.grant,"Month-end Bucket":o.aB>=0?BK[o.aB][0]:"","Month-end Days":o.dA,"Bucket Now":o.bB>=0?BK[o.bB][0]:"","Days Now":o.dB,Movement:({s:"Same",w:"Worsened",i:"Improved",n:"New",c:"Closed"})[o.t],"Total Arrears (Month-end)":o.tA,"Total Arrears (Now)":o.tB,"Rental Arrears (Now)":o.rB,Portfolio:o.pB||o.pA,Tel:o.tel}}),"Bucket_Movement")
+};
+if(location.hash=="#bm")bmShow();
 /* ===== Due page: facilities whose Due day = selected date's day of month ===== */
 var DUROWS=[];
 function lIso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
 function duShow(){$("due").classList.add("on");document.body.style.overflow="hidden";duInit()}
-function duHide(){$("due").classList.remove("on");if(!$("cmp").classList.contains("on")&&!$("buck").classList.contains("on"))document.body.style.overflow=""}
+function duHide(){$("due").classList.remove("on");if(!$("cmp").classList.contains("on"))document.body.style.overflow=""}
 function duInit(){
   var cnt={},tdy=new Date().getDate(),dv=$("duDay").value;
   R.forEach(function(r){var x=+r.due;if(x>0)cnt[x]=(cnt[x]||0)+1});
@@ -1111,304 +1222,6 @@ $("duBack").onclick=function(){location.hash=""};
 ["duDay","duOf","duDe","duGd","duSt"].forEach(function(id){$(id).onchange=duRender});
 $("duXl").onclick=function(){dl(DUROWS.map(function(r){return{"Fac No":r.fac,Name:r.name,"Mkt Officer":r.mkt,Branch:r.branch,Description:r.desc,"Grant Date":duGrant(r),Stage:r.stage,"Arrears Days":r.days,"Rental Arrears":r.rent,"Total Arrears":r.tot,Due:r.due,"Last Paid Date":r.lpd||"","Last Paid Amount":r.lpa||0,Tel:r.tel}}),"Due_day"+o2day())};
 
-/* ============================================================
-   BUCKET MOVEMENT PAGE
-   Compare month-end (A) vs current upload (B) by age bucket
-   ============================================================ */
-var BKROWS=[],BKDATA=null,bkPushed=false;
-function bkShow(){$("buck").classList.add("on");document.body.style.overflow="hidden";bkInit()}
-function bkHide(){$("buck").classList.remove("on");if(!$("cmp").classList.contains("on")&&!$("due").classList.contains("on"))document.body.style.overflow=""}
-$("bkb").onclick=function(){bkPushed=true;location.hash="bucket"};
-$("bkBack").onclick=function(){if(bkPushed&&location.hash=="#bucket")history.back();else location.hash=""};
-
-function bkInit(){
-  if(!ccfg().url){$("bkBody").innerHTML='<div class="card">Online storage is not set up, so the saved month-end report cannot be loaded.</div>';return}
-  $("bkBody").innerHTML='<div class="card mu">Loading month-end &amp; current data...</div>';
-  Promise.all([sget("snapmeta"),sget("arrears")]).then(function(r){
-    SM=r[0]||{};
-    var cur=(r[1]&&r[1].rows&&r[1].rows.length)?r[1]:CURD;
-    if(!cur||!cur.rows||!cur.rows.length){$("bkBody").innerHTML='<div class="card">No current data loaded. Upload the Excel files first.</div>';return}
-    var rows=Array.isArray(cur.rows)?cur.rows:Object.keys(cur.rows).map(function(x){return cur.rows[x]});
-    CURR={key:(cur.asAt||"").slice(0,10)||new Date().toISOString().slice(0,10),rows:cmpPrep(rows)};
-    var ks=Object.keys(SM).filter(function(k){return isME(k)&&k<CURR.key}).sort().reverse();
-    $("bkB").innerHTML='<option>'+dlab(CURR.key)+' (uploaded report)</option>';$("bkB").disabled=true;
-    if(!ks.length){$("bkA").innerHTML="";$("bkBody").innerHTML='<div class="card"><b>No previous month-end report saved yet.</b><br><span class="mu">Upload the report on the last day of the month (30/31, or 28/29 in Feb). That snapshot is kept for Bucket Movement &amp; Compare.</span></div>';return}
-    $("bkA").innerHTML=ks.map(function(k){var m=SM[k]||{};return'<option value="'+k+'">Month-end '+dlab(k)+' ('+(m.n||"?")+' fac)</option>'}).join("");
-    bkRun();
-  }).catch(function(e){$("bkBody").innerHTML='<div class="card" style="color:var(--s3)">Error: '+esc(String(e&&e.message||e))+'</div>'})
-}
-
-function bkRun(){
-  var ka=$("bkA").value;if(!ka||!CURR)return;
-  $("bkBody").innerHTML='<div class="card mu">Loading month-end report...</div>';
-  cmpSnap(ka).then(function(sa){
-    if(!sa){$("bkBody").innerHTML='<div class="card" style="color:var(--s3)"><b>Month-end snapshot not found</b> for '+dlab(ka)+'. Please re-upload that month-end report.</div>';return}
-    var a=sa,b=CURR.rows,kaL=dlab(ka),kbL=dlab(CURR.key);
-    var dA=new Date(ka+"T00:00:00Z"),dB=new Date(CURR.key+"T00:00:00Z");
-    var gapDays=Math.max(1,Math.round((dB-dA)/864e5));
-
-    var MA={},MB={};
-    a.forEach(function(r){MA[r.fac]=r});
-    b.forEach(function(r){MB[r.fac]=r});
-
-    var all=[];
-    Object.keys(Object.assign({},MA,MB)).forEach(function(f){
-      var x=MA[f],y=MB[f];
-      var o={
-        fac:f,
-        name:(y||x).name||"",
-        mkt:onm((y||x).mkt)||"(none)",
-        branch:(y||x).branch||"(none)",
-        desc:(y||x).desc||"(none)",
-        grant:String((y||x).grant||"").slice(0,10),
-        dA:x?x.days:null,dB:y?y.days:null,
-        bA:x?x.b:null,bB:y?y.b:null,
-        tA:x?x.tot:null,tB:y?y.tot:null,
-        rA:x?x.rent:null,rB:y?y.rent:null,
-        pA:x?x.port:0,pB:y?y.port:0,
-        sA:x?x.stage:null,sB:y?y.stage:null
-      };
-      if(!x&&y){o.mv="new";o.mvL="New in B"}
-      else if(x&&!y){o.mv="closed";o.mvL="Not in B"}
-      else if(x&&y){
-        var di=y.b-x.b;
-        if(di===0){o.mv="same";o.mvL="No change"}
-        else if(di<0){o.mv="good";o.mvL="⬆️ Improved (lower bucket)"}
-        else {
-          var dayDiff=(y.days||0)-(x.days||0);
-          var forced=(di===1)&&(dayDiff>=gapDays-5)&&(dayDiff<=gapDays+10);
-          if(x.b===0&&y.b===1)forced=true;
-          o.mv=forced?"forced":"bad";
-          o.mvL=forced?"⬆️ Forced aging (calendar)":"⬇️ Worsened (higher bucket)";
-        }
-      }
-      o.bkAL=o.bA!=null?BK[o.bA][0]:"-";
-      o.bkBL=o.bB!=null?BK[o.bB][0]:"-";
-      all.push(o);
-    });
-
-    var keep=function(id,key){
-      var v=$(id).value;
-      var s=Array.from(new Set(all.map(function(r){return r[key]}))).sort();
-      $(id).innerHTML='<option value="">All</option>'+s.map(function(x){return'<option>'+esc(x)+'</option>'}).join("");
-      if(s.indexOf(v)>=0)$(id).value=v;
-    };
-    keep("bkOf","mkt");keep("bkDe","desc");
-
-    BKDATA={all:all,ka:ka,kb:CURR.key,la:kaL,lb:kbL,gap:gapDays,a:a,b:b};
-    bkClearExtra();
-    bkRender();
-  }).catch(function(e){$("bkBody").innerHTML='<div class="card" style="color:var(--s3)">Error: '+esc(String(e&&e.message||e))+'</div>'})
-}
-
-var BKX={bA:null,bB:null}; // matrix cell filter
-function bkFilt(){
-  if(!BKDATA)return[];
-  var of=$("bkOf").value,de=$("bkDe").value,gd=$("bkGd").value,mv=$("bkMv").value;
-  var cut="";
-  if(gd&&CURR){var x=new Date(CURR.key+"T00:00:00Z");x.setUTCMonth(x.getUTCMonth()-(gd==="A"?12:+gd));cut=x.toISOString().slice(0,10)}
-  return BKDATA.all.filter(function(r){
-    if(of&&r.mkt!==of)return false;
-    if(de&&r.desc!==de)return false;
-    if(mv&&r.mv!==mv)return false;
-    if(BKX.bA!=null&&r.bA!==BKX.bA)return false;
-    if(BKX.bB!=null&&r.bB!==BKX.bB)return false;
-    if(gd){
-      var g=r.grant;if(!g)return false;
-      if(gd==="A"?g>=cut:g<cut)return false;
-    }
-    return true;
-  });
-}
-function bkClearExtra(){BKX={bA:null,bB:null}}
-function bkActiveLabel(){
-  var bits=[];
-  if($("bkOf").value)bits.push("Officer: "+$("bkOf").value);
-  if($("bkDe").value)bits.push("Desc: "+$("bkDe").value);
-  if($("bkGd").value)bits.push("Grant: "+$("bkGd").options[$("bkGd").selectedIndex].text);
-  if($("bkMv").value)bits.push("Move: "+$("bkMv").options[$("bkMv").selectedIndex].text);
-  if(BKX.bA!=null&&BKX.bB!=null)bits.push("Matrix: "+BK[BKX.bA][0]+" → "+BK[BKX.bB][0]);
-  else if(BKX.bA!=null)bits.push("From: "+BK[BKX.bA][0]);
-  else if(BKX.bB!=null)bits.push("To: "+BK[BKX.bB][0]);
-  return bits;
-}
-
-function bkRender(){
-  if(!BKDATA)return;
-  var rows=bkFilt();BKROWS=rows;
-  var la=BKDATA.la,lb=BKDATA.lb,gap=BKDATA.gap;
-  var cnt={good:0,bad:0,same:0,forced:0,new:0,closed:0};
-  rows.forEach(function(r){if(cnt[r.mv]!=null)cnt[r.mv]++});
-
-  var mat=[];
-  for(var i=0;i<BK.length;i++){mat[i]=[];for(var j=0;j<BK.length;j++)mat[i][j]=0}
-  rows.forEach(function(r){if(r.bA!=null&&r.bB!=null)mat[r.bA][r.bB]++});
-
-  var h='';
-  h+='<div class="mu" style="margin-bottom:12px"><span class="lgd" style="background:#8aa0cf"></span>A: <b>'+la+'</b> (month-end) &nbsp; <span class="lgd" style="background:var(--pr)"></span>B: <b>'+lb+'</b> (current) &nbsp;•&nbsp; Gap ≈ <b>'+gap+'</b> days &nbsp;•&nbsp; <span style="color:var(--s1);font-weight:700">⬆️ Green = Good (up)</span> • <span style="color:var(--s3);font-weight:700">⬇️ Red = Bad (down)</span> • <span style="color:var(--s1);font-weight:700">⬆️ Forced aging</span></div>';
-
-  var mvOn=$("bkMv").value;
-  function kpi(col,key,title,sub,n){
-    var on=mvOn===key?' outline:2px solid var(--pr);box-shadow:0 0 0 3px rgba(36,87,214,.2);':'';
-    return'<div class="kpi bk-kpi" data-mv="'+key+'" style="border-left-color:'+col+';cursor:pointer;'+on+'" title="Click to show these customers"><span>'+title+'</span><b>'+fmt(n)+'</b><div class="sm">'+sub+'</div></div>';
-  }
-  h+='<div class="dk">'+
-    kpi('var(--s1)','good','<span style="color:var(--s1)">⬆️</span> Good (improved)','Bucket lower · click',cnt.good)+
-    kpi('var(--s3)','bad','<span style="color:var(--s3)">⬇️</span> Bad (worsened)','Bucket higher · click',cnt.bad)+
-    kpi('var(--s2)','forced','<span style="color:var(--s1)">⬆️</span> Forced aging','+1 bucket (calendar ~'+gap+' days) · click',cnt.forced)+
-    kpi('var(--pr)','same','No change','Same bucket in A &amp; B · click',cnt.same)+
-    kpi('#7a5af8','new','New in B','Not in month-end · click',cnt.new)+
-    kpi('#6b7585','closed','Not in B','Closed / left · click',cnt.closed)+
-  '</div>';
-  h+='<div class="mu" style="margin:-4px 0 10px;font-size:12.5px">👆 Click any KPI / matrix cell / officer / description → customer list filters below. <button type="button" id="bkClr" style="padding:4px 10px;font-size:12px;margin-left:6px">&#10005; Clear list filters</button></div>';
-
-  h+='<div class="card" style="border-left:4px solid var(--s2)"><h3>How movement is classified</h3>'+
-    '<div class="mu" style="font-size:13.5px;line-height:1.55">'+
-    '<b>Same bucket</b> – e.g. month-end was <b>0 Bucket</b> and today still <b>0 Bucket</b> → no change.<br>'+
-    '<b>Forced aging</b> – e.g. month-end <b>0 Bucket</b> → today <b>1 to 29</b> (or any single +1 step) because ~'+gap+' days passed; this is natural calendar aging, not a collection failure.<br>'+
-    '<b>Good</b> – bucket index fell (e.g. month-end <b>1 to 29</b> → today <b>0 Bucket</b>). Customer paid / recovered.<br>'+
-    '<b>Bad</b> – jumped more than one bucket, or +1 that is clearly worse than pure aging.<br>'+
-    'Filters (Officer / Description / Grant Date / Movement type) apply to every section and to the customer list below.'+
-    '</div></div>';
-
-  h+='<div class="card"><h3>Bucket movement matrix <small>A (rows) → B (columns) · click a cell</small></h3><div class="tw" style="max-height:none;overflow:auto"><table class="mxt"><tr><th>A ↓ / B →</th>';
-  BK.forEach(function(bk){h+='<th style="font-size:11px">'+bk[0]+'</th>'});
-  h+='</tr>';
-  mat.forEach(function(row,i){
-    h+='<tr><th style="font-size:11px;text-align:left;cursor:pointer" class="bk-from" data-ba="'+i+'" title="Click: all from '+BK[i][0]+'">'+BK[i][0]+'</th>';
-    row.forEach(function(v,j){
-      var cl="";
-      if(i===j&&v)cl="mxg";
-      else if(j>i&&v)cl="mxb";
-      else if(j<i&&v)cl="mxg";
-      var sel=(BKX.bA===i&&BKX.bB===j)?'outline:2px solid var(--pr);font-weight:700;':'';
-      h+='<td class="'+cl+' bk-cell" data-ba="'+i+'" data-bb="'+j+'" style="cursor:pointer;'+sel+'" title="'+BK[i][0]+' → '+BK[j][0]+' · click for list">'+(v||"")+'</td>';
-    });
-    h+='</tr>';
-  });
-  h+='</table></div><small class="mu">Green = same/improved · Red = worsened · Click cell or row label to filter the customer list.</small></div>';
-
-  var om={};
-  rows.forEach(function(r){
-    var m=r.mkt||"(none)";
-    var o=om[m]=om[m]||{n:0,good:0,bad:0,same:0,forced:0,neu:0,clo:0,tA:0,tB:0};
-    o.n++;o[r.mv==="new"?"neu":r.mv==="closed"?"clo":r.mv]++;
-    o.tA+=+r.tA||0;o.tB+=+r.tB||0;
-  });
-  var ol=Object.keys(om).sort(function(a,c){return (om[c].bad+om[c].forced)-(om[a].bad+om[a].forced)});
-  h+='<div class="card"><h3>Mkt Officer wise <small>(click row to filter)</small></h3><div class="tw" style="max-height:360px"><table><tr><th>#</th><th>Mkt Officer</th><th class=n>Total</th><th class=n><span style="color:var(--s1)">⬆️</span> Good</th><th class=n><span style="color:var(--s3)">⬇️</span> Bad</th><th class=n><span style="color:var(--s1)">⬆️</span> Forced</th><th class=n>Same</th><th class=n>New</th><th class=n>Closed</th><th class=n>Arrears A → B</th></tr>';
-  h+=ol.length?ol.map(function(k,i){
-    var o=om[k];
-    var ac="";
-    if(o.tB<o.tA)ac='<span style="color:var(--s1);font-weight:700">⬆️ '+fmt(o.tA)+' → '+fmt(o.tB)+'</span>';
-    else if(o.tB>o.tA)ac='<span style="color:var(--s3);font-weight:700">⬇️ '+fmt(o.tA)+' → '+fmt(o.tB)+'</span>';
-    else ac=fmt(o.tA)+' → '+fmt(o.tB);
-    return'<tr class="bko" data-o="'+esc(k)+'" style="cursor:pointer"><td>'+(i+1)+'</td><td><b>'+esc(k)+'</b></td><td class=n>'+fmt(o.n)+'</td><td class=n><span style="color:var(--s1);font-weight:700">⬆️ '+fmt(o.good)+'</span></td><td class=n><span style="color:var(--s3);font-weight:700">⬇️ '+fmt(o.bad)+'</span></td><td class=n><span style="color:var(--s1)">⬆️ '+fmt(o.forced)+'</span></td><td class=n>'+fmt(o.same)+'</td><td class=n>'+fmt(o.neu)+'</td><td class=n>'+fmt(o.clo)+'</td><td class=n>'+ac+'</td></tr>';
-  }).join(""):'<tr><td colspan="10" class="mu" style="text-align:center">No data</td></tr>';
-  h+='</table></div></div>';
-
-  var dm={};
-  rows.forEach(function(r){
-    var m=r.desc||"(none)";
-    var o=dm[m]=dm[m]||{n:0,good:0,bad:0,same:0,forced:0,neu:0,clo:0};
-    o.n++;o[r.mv==="new"?"neu":r.mv==="closed"?"clo":r.mv]++;
-  });
-  var dl=Object.keys(dm).sort(function(a,c){return dm[c].n-dm[a].n});
-  h+='<div class="card"><h3>Description wise</h3><div class="tw" style="max-height:280px"><table><tr><th>Description</th><th class=n>Total</th><th class=n><span style="color:var(--s1)">⬆️</span> Good</th><th class=n><span style="color:var(--s3)">⬇️</span> Bad</th><th class=n><span style="color:var(--s1)">⬆️</span> Forced</th><th class=n>Same</th><th class=n>New</th><th class=n>Closed</th></tr>';
-  h+=dl.map(function(k){var o=dm[k];return'<tr class="bkd" data-d="'+esc(k)+'" style="cursor:pointer"><td><b>'+esc(k)+'</b></td><td class=n>'+fmt(o.n)+'</td><td class=n><span style="color:var(--s1);font-weight:700">⬆️ '+fmt(o.good)+'</span></td><td class=n><span style="color:var(--s3);font-weight:700">⬇️ '+fmt(o.bad)+'</span></td><td class=n><span style="color:var(--s1)">⬆️ '+fmt(o.forced)+'</span></td><td class=n>'+fmt(o.same)+'</td><td class=n>'+fmt(o.neu)+'</td><td class=n>'+fmt(o.clo)+'</td></tr>'}).join("")||'<tr><td colspan="8" class="mu">No data</td></tr>';
-  h+='</table></div></div>';
-
-  var lim=rows.slice().sort(function(a,c){
-    var order={bad:0,forced:1,good:2,same:3,new:4,closed:5};
-    return (order[a.mv]||9)-(order[c.mv]||9)||(c.dB||0)-(a.dB||0);
-  }).slice(0,400);
-  var act=bkActiveLabel();
-  h+='<div class="card" id="bkList"><h3>Customer list <small>('+fmt(rows.length)+(rows.length>400?', first 400 shown – use Excel for all':'')+')</small></h3>';
-  if(act.length)h+='<div style="margin:0 0 10px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--bd);font-size:13px"><b>Filtered:</b> '+act.map(function(x){return'<span class="tag fl" style="margin:2px">'+esc(x)+'</span>'}).join(" ")+' <button type="button" id="bkClr2" style="padding:3px 8px;font-size:12px;margin-left:6px">Clear</button></div>';
-  else h+='<div class="mu" style="margin-bottom:8px">Click a KPI, matrix cell, officer or description above to filter this list.</div>';
-  h+='<div class="tw" style="max-height:520px"><table><tr><th>Fac No</th><th>Name</th><th>Mkt Officer</th><th>Description</th><th>Grant</th><th>Bucket A</th><th>Bucket B</th><th>Days A→B</th><th class=n>Arrears A→B</th><th>Movement</th></tr>';
-  h+=lim.length?lim.map(function(r){
-    var mark="", col="", tag=r.mv==="good"?"s1":r.mv==="bad"?"s3":r.mv==="forced"?"s2":"fl";
-    if(r.mv==="good"){mark="⬆️ ";col="color:var(--s1);font-weight:700"}
-    else if(r.mv==="bad"){mark="⬇️ ";col="color:var(--s3);font-weight:700"}
-    else if(r.mv==="forced"){mark="⬆️ ";col="color:var(--s1);font-weight:700"}
-    var daysCell;
-    if(r.dA!=null&&r.dB!=null){
-      var dd=r.dB-r.dA;
-      if(dd<0)daysCell='<span style="color:var(--s1);font-weight:700">⬆️ '+r.dA+' → '+r.dB+'</span>';
-      else if(dd>0)daysCell='<span style="color:'+(r.mv==="forced"?"var(--s1)":"var(--s3)")+';font-weight:700">'+(r.mv==="forced"?"⬆️ ":"⬇️ ")+r.dA+' → '+r.dB+'</span>';
-      else daysCell=r.dA+' → '+r.dB;
-    } else daysCell=(r.dA!=null?r.dA:"-")+' → '+(r.dB!=null?r.dB:"-");
-    var arrCell;
-    if(r.tA!=null&&r.tB!=null){
-      var da=r.tB-r.tA;
-      if(da<0)arrCell='<span style="color:var(--s1);font-weight:700">⬆️ '+fmt(r.tA)+' → '+fmt(r.tB)+'</span>';
-      else if(da>0)arrCell='<span style="color:var(--s3);font-weight:700">⬇️ '+fmt(r.tA)+' → '+fmt(r.tB)+'</span>';
-      else arrCell=fmt(r.tA)+' → '+fmt(r.tB);
-    } else arrCell=(r.tA!=null?fmt(r.tA):"-")+' → '+(r.tB!=null?fmt(r.tB):"-");
-    var lab=(r.mvL||"").replace(/^\s*[⬆️⬇️]\s*/,"");
-    return'<tr><td>'+esc(r.fac)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.mkt)+'</td><td>'+esc(r.desc)+'</td><td>'+esc(r.grant||"-")+'</td><td>'+esc(r.bkAL)+'</td><td>'+esc(r.bkBL)+'</td><td class=n>'+daysCell+'</td><td class=n>'+arrCell+'</td><td><span class="tag '+tag+'" style="'+col+'">'+mark+esc(lab)+'</span></td></tr>';
-  }).join(""):'<tr><td colspan="10" class="mu" style="text-align:center">No facilities match the filters</td></tr>';
-  h+='</table></div></div>';
-
-  $("bkBody").innerHTML=h;
-  function goList(){var el=$("bkList");if(el)try{el.scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}}
-  function re(){bkRender();goList()}
-  Array.prototype.forEach.call($("bkBody").querySelectorAll(".bk-kpi"),function(el){
-    el.onclick=function(){
-      var k=el.getAttribute("data-mv");
-      $("bkMv").value=($("bkMv").value===k)?"":k;
-      bkClearExtra();re();
-    }
-  });
-  Array.prototype.forEach.call($("bkBody").querySelectorAll(".bk-cell"),function(el){
-    el.onclick=function(){
-      var ba=+el.getAttribute("data-ba"),bb=+el.getAttribute("data-bb");
-      if(BKX.bA===ba&&BKX.bB===bb){bkClearExtra()}
-      else{BKX.bA=ba;BKX.bB=bb}
-      re();
-    }
-  });
-  Array.prototype.forEach.call($("bkBody").querySelectorAll(".bk-from"),function(el){
-    el.onclick=function(){
-      var ba=+el.getAttribute("data-ba");
-      if(BKX.bA===ba&&BKX.bB==null){bkClearExtra()}
-      else{BKX.bA=ba;BKX.bB=null}
-      re();
-    }
-  });
-  Array.prototype.forEach.call($("bkBody").querySelectorAll(".bko"),function(tr){
-    tr.onclick=function(){
-      var v=tr.getAttribute("data-o");
-      $("bkOf").value=($("bkOf").value===v)?"":v;re();
-    }
-  });
-  Array.prototype.forEach.call($("bkBody").querySelectorAll(".bkd"),function(tr){
-    tr.onclick=function(){
-      var v=tr.getAttribute("data-d");
-      $("bkDe").value=($("bkDe").value===v)?"":v;re();
-    }
-  });
-  var clr=function(){
-    $("bkOf").value="";$("bkDe").value="";$("bkGd").value="";$("bkMv").value="";
-    bkClearExtra();bkRender();
-  };
-  if($("bkClr"))$("bkClr").onclick=clr;
-  if($("bkClr2"))$("bkClr2").onclick=clr;
-}
-
-$("bkA").onchange=bkRun;
-$("bkGo").onclick=function(){SNAP={};bkInit()};
-["bkOf","bkDe","bkGd","bkMv"].forEach(function(id){$(id).onchange=function(){bkRender()}});
-$("bkXl").onclick=function(){
-  if(!BKROWS.length){alert("Nothing to export.");return}
-  dl(BKROWS.map(function(r){return{
-    "Fac No":r.fac,Name:r.name,"Mkt Officer":r.mkt,Description:r.desc,"Grant Date":r.grant,
-    "Bucket A":r.bkAL,"Bucket B":r.bkBL,"Days A":r.dA,"Days B":r.dB,
-    "Arrears A":r.tA,"Arrears B":r.tB,"Rental A":r.rA,"Rental B":r.rB,
-    Movement:r.mvL,Type:r.mv
-  }}),"Bucket_Movement_"+($("bkA").value||"")+"_vs_current");
-};
 
 var CURR=null;
 function cmpInit(){
@@ -1441,7 +1254,7 @@ function cmpRun(){
   $("cbody").innerHTML='<div class="card mu">Loading month-end report...</div>';
   cmpSnap(ka).then(function(sa){
     if(!sa){
-      $("cbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Error!</b><br>Month-end snapshot for this date was not found in the database. Please confirm the Month-end report was uploaded successfully first.</div>';
+      $("cbody").innerHTML='<div class="card" style="color:var(--s3)"><b>දෝෂයකි!</b><br>මෙම දිනයට අදාළ මාසික දත්ත (Month-end snapshot) Database එකේ සොයාගත නොහැක. කරුණාකර මුලින්ම "Month-end report" එක සාර්ථකව උඩුගත කර ඇත්දැයි තහවුරු කරගන්න.</div>';
       return;
     }
     CA=sa;CB=CURR.rows;
@@ -1709,7 +1522,7 @@ try{
     }).catch(function(){})
 }catch(e){}
 
-if(location.hash=="#compare")cmpShow();if(location.hash=="#due")duShow();if(location.hash=="#bucket")bkShow();
+if(location.hash=="#compare")cmpShow();if(location.hash=="#due")duShow();
 $("cs").onclick=function(){
   var c=ccfg();
   var u=prompt("Firebase Realtime Database URL (e.g. https://your-project-default-rtdb.firebaseio.com)\nLeave empty to turn online storage off:",c.url||"");
