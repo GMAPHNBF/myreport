@@ -484,10 +484,18 @@ function cput(o){var c=ccfg();if(!c.url)return Promise.resolve("off");return fet
 /* ============================================================
    LOAD DATA INTO APP
    ============================================================ */
+/* ===== THIS MONTH'S GRANTS: excluded from Stage / Portfolio % / NPL / Bucket Movement / Compare (kept only in Monthly Lending) ===== */
+var EXC=0;
+function curYM(){var d=asAt||new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)}
+function isNewGrant(r){
+  var g=r&&r.grant?String(r.grant).slice(0,10):"";
+  if(!g){var m=/^[A-Za-z]{2}(\d{2})(\d{2})/.exec((r&&r.fac)||"");g=m&&+m[2]>=1&&+m[2]<=12?"20"+m[1]+"-"+m[2]:""}
+  return !!g&&g.slice(0,7)===curYM()
+}
 function load(d){
   CURD=d;META=d.meta||{};asAt=d.asAt?new Date(d.asAt):new Date();
   var cut=new Date(asAt.getFullYear(),asAt.getMonth()-11,1);
-  R=d.rows.map(function(r){
+  EXC=0;R=d.rows.filter(function(r){if(r&&isNewGrant(r)){EXC++;return false}return !!r}).map(function(r){
     var o=Object.assign({},r);
     o.mkt=onm(r.mkt);
     o.days=Math.round(+r.days||0);
@@ -567,7 +575,7 @@ function sum(a,k){return a.reduce(function(s,r){return s+(+r[k]||0)},0)}
 
 function draw(){
   try{sres()}catch(e){}
-  $("meta").textContent="As at "+asAt.toDateString()+" • "+R.length+" facilities • "+dim(asAt)+" days month";
+  $("meta").textContent="As at "+asAt.toDateString()+" • "+R.length+" facilities • "+dim(asAt)+" days month"+(EXC?" \u2022 "+EXC+" this-month grants excluded (see Monthly Lending)":"");
   $("pnote").textContent="PNPL = Arrears Days "+$("p1").value+" – "+$("p2").value+" (91 + "+dim(asAt)+" days in month). Stage 1 = 0–29, Stage 2 = 30–89, Stage 3 = 90+";
   var a=filt(false),b=filt(true);
   var k=[
@@ -1111,7 +1119,7 @@ function saveMonthEnd(sk,o,sm){
 }
 function dlab(k){var d=new Date(k+"T00:00:00Z");return isNaN(d)?k:d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric",timeZone:"UTC"})}
 function f2(x){return Number(x||0).toFixed(2)+"%"}
-function cmpPrep(rows){return rows.filter(Boolean).map(function(r){var d=Math.round(+r.days||0);return Object.assign({},r,{days:d,stage:stage(d),b:bidx(d),mkt:onm(r.mkt)||"(none)",branch:r.branch||"(none)",desc:r.desc||"(none)",tot:+r.tot||0,rent:+r.rent||0,port:+r.port||0,adv:+r.adv||0})})}
+function cmpPrep(rows){return rows.filter(function(r){return r&&!isNewGrant(r)}).map(function(r){var d=Math.round(+r.days||0);return Object.assign({},r,{days:d,stage:stage(d),b:bidx(d),mkt:onm(r.mkt)||"(none)",branch:r.branch||"(none)",desc:r.desc||"(none)",tot:+r.tot||0,rent:+r.rent||0,port:+r.port||0,adv:+r.adv||0})})}
 function agg(a){
   var t={n:a.length,tot:sum(a,"tot"),rent:sum(a,"rent"),port:sum(a,"port")};
   [1,2,3].forEach(function(s){var x=a.filter(function(r){return r.stage==s});t["n"+s]=x.length;t["t"+s]=sum(x,"tot");t["p"+s]=sum(x,"port")});
