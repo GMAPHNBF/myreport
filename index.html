@@ -161,6 +161,14 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 .bmx td.sm{background:rgba(46,158,107,.18)}.bmx td.wo{background:rgba(214,69,61,.18)}.bmx td.im{background:rgba(46,158,107,.32)}.bmx td.z{color:var(--mu);font-weight:400;background:transparent;cursor:default}
 .psm [data-m]{cursor:pointer}.psm td[data-m]:hover{filter:brightness(.93)}.psm th{font-weight:700}.psm td.n{text-align:right}.psm a.go{color:#1a56db;font-weight:700;font-size:15px;text-decoration:underline;cursor:pointer}.psm tr.gt td{font-weight:700;background:var(--bg)}
 .bmg tr.gr{cursor:pointer}.bmg tr.gr:hover td{background:var(--bg)}
+
+.ms{position:relative}.ms>button.mb0{width:100%;text-align:left;display:flex;justify-content:space-between;gap:6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:inherit}
+.ms>button.mb0 span{overflow:hidden;text-overflow:ellipsis}.ms>button.mb0.on{border-color:var(--pr);color:var(--pr);font-weight:600}
+.mpn{position:fixed;z-index:9999;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.25);display:none;flex-direction:column;max-height:340px;min-width:210px}
+.mpn.on{display:flex}.mpn input{margin:8px;width:calc(100% - 16px)}.mpn .ml0{overflow:auto;flex:1}
+.mpn .mi{display:flex;gap:8px;align-items:center;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--tx)}.mpn .mi:hover{background:var(--bg)}
+.mpn .mi i{width:15px;height:15px;border:1.5px solid var(--mu);border-radius:4px;flex:none;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;line-height:1}
+.mpn .mi.on i{background:var(--pr);border-color:var(--pr);color:#fff}.mpn .mh{padding:6px 12px 8px;font-size:11px;color:var(--mu);border-top:1px solid var(--bd)}
 </style>
 </head>
 <body>
@@ -314,6 +322,62 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
    ============================================================ */
 var DATA=null,META={};
 var $=function(i){return document.getElementById(i)};
+var MSEP="\u0001";
+function MS(v,x){return !v||v.split(MSEP).indexOf(x)>=0}
+function msShow(v){return v?v.split(MSEP).join(", "):""}
+(function(){
+  var open=null;
+  function closeAll(){if(open){open.pn.classList.remove("on");open=null}}
+  document.addEventListener("mousedown",function(e){if(open&&!open.pn.contains(e.target)&&!open.bt.contains(e.target))closeAll()});
+  window.addEventListener("resize",closeAll);
+  window.addEventListener("scroll",function(e){if(open&&!open.pn.contains(e.target))closeAll()},true);
+  window.msel=function(id){
+    var sel=$(id);if(!sel||sel._ms)return;sel._ms=1;
+    var set={},items=[],wrap=document.createElement("div"),bt=document.createElement("button"),pn=document.createElement("div");
+    wrap.className="ms";bt.type="button";bt.className="mb0";pn.className="mpn";
+    var inp=document.createElement("input"),lst=document.createElement("div"),hint=document.createElement("div");
+    inp.placeholder="Search...";lst.className="ml0";hint.className="mh";hint.textContent="Click = pick one \u2022 Ctrl+click or tick = pick many";
+    pn.appendChild(inp);pn.appendChild(lst);pn.appendChild(hint);document.body.appendChild(pn);
+    wrap.appendChild(bt);sel.style.display="none";sel.parentNode.insertBefore(wrap,sel.nextSibling);
+    function val(){return items.filter(function(x){return set[x.v]}).map(function(x){return x.v}).join(MSEP)}
+    Object.defineProperty(sel,"value",{configurable:true,get:val,set:function(v){set={};if(v)String(v).split(MSEP).forEach(function(x){set[x]=1});paint()}});
+    function fire(){sel.dispatchEvent(new Event("input"));sel.dispatchEvent(new Event("change"))}
+    function label(){var n=items.filter(function(x){return set[x.v]});return n.length==0?"All":n.length==1?n[0].t:n.length+" selected"}
+    function paint(){
+      var n=items.filter(function(x){return set[x.v]}).length;
+      bt.className="mb0"+(n?" on":"");bt.innerHTML="<span></span><span>\u25BE</span>";bt.firstChild.textContent=label();bt.title=n>1?items.filter(function(x){return set[x.v]}).map(function(x){return x.t}).join(", "):"";
+      var q=inp.value.toLowerCase();
+      lst.innerHTML="";
+      var all=document.createElement("div");all.className="mi"+(n?"":" on");all.innerHTML="<i>"+(n?"":"\u2713")+"</i><span>All</span>";all.onclick=function(e){set={};paint();fire();if(!(e.ctrlKey||e.metaKey))closeAll()};lst.appendChild(all);
+      items.forEach(function(x){
+        if(q&&x.t.toLowerCase().indexOf(q)<0)return;
+        var d=document.createElement("div");d.className="mi"+(set[x.v]?" on":"");d.innerHTML="<i>"+(set[x.v]?"\u2713":"")+"</i><span></span>";d.lastChild.textContent=x.t;
+        d.onclick=function(e){
+          var multi=e.ctrlKey||e.metaKey||e.shiftKey||(e.target.tagName=="I");
+          if(multi){if(set[x.v])delete set[x.v];else set[x.v]=1;paint();fire()}
+          else{set={};set[x.v]=1;paint();fire();closeAll()}
+        };lst.appendChild(d)
+      })
+    }
+    function rebuild(){
+      items=Array.prototype.filter.call(sel.options,function(o){return o.value!==""}).map(function(o){return{v:o.value,t:o.textContent}});
+      var keep={};items.forEach(function(x){if(set[x.v])keep[x.v]=1});set=keep;paint()
+    }
+    bt.onclick=function(e){
+      e.preventDefault();e.stopPropagation();
+      if(open&&open.pn===pn){closeAll();return}
+      closeAll();inp.value="";paint();
+      var r=bt.getBoundingClientRect();pn.style.left=Math.max(4,Math.min(r.left,window.innerWidth-pn.offsetWidth-4))+"px";pn.style.minWidth=Math.max(210,r.width)+"px";pn.classList.add("on");
+      var top=r.bottom+4;if(top+pn.offsetHeight>window.innerHeight-6)top=Math.max(6,r.top-pn.offsetHeight-4);pn.style.top=top+"px";
+      var l=Math.min(r.left,window.innerWidth-pn.offsetWidth-6);pn.style.left=Math.max(6,l)+"px";
+      open={pn:pn,bt:bt};if(!("ontouchstart" in window))inp.focus()
+    };
+    inp.oninput=function(){paint()};
+    new MutationObserver(rebuild).observe(sel,{childList:true});
+    rebuild()
+  }
+})();
+
 var BK=[["0 Bucket",0,0],["1 to 29",1,29],["30 to 59",30,59],["60 to 89",60,89],["90 to 119",90,119],["120 to 149",120,149],["150 to 179",150,179],["180 to 359",180,359],["360 & Above",360,1e9]];
 var R=[],asAt=null,bkSel={},page=0,sortK="days",sortD=-1,done={};
 try{done=JSON.parse(localStorage.getItem("arr_done")||"{}")}catch(e){}
@@ -483,9 +547,9 @@ function filt(skipB){
   return R.filter(function(r){
     if(mk&&(r.mkt||"(none)").toLowerCase().indexOf(mk.toLowerCase().trim())<0)return false;
     if(st&&r.stage!=st)return false;
-    if(br&&r.branch!==br)return false;
-    if(mks&&(r.mkt||"(none)")!==mks)return false;
-    if(ds&&(r.desc||"(none)")!==ds)return false;
+    if(!MS(br,r.branch))return false;
+    if(!MS(mks,r.mkt||"(none)"))return false;
+    if(!MS(ds,r.desc||"(none)"))return false;
     if(vt==="L"&&!r.last12)return false;
     if(vt==="A"&&r.last12)return false;
     if(fg==="R1"&&!r.r1)return false;
@@ -1104,8 +1168,8 @@ function bmRun(){
 function bmFilt(rows){
   var br=$("bmBr").value,of=$("bmOf").value,de=$("bmDe").value,gd=$("bmGd").value,mo=$("bmMo").value,ref=new Date((BCUR.key||"")+"T00:00:00Z");
   return rows.filter(function(r){
-    if(br&&r.branch!=br)return false;if(of&&r.mkt!=of)return false;if(de&&r.desc!=de)return false;
-    var g=duGrant(r);if(mo&&g.slice(0,7)!=mo)return false;
+    if(!MS(br,r.branch))return false;if(!MS(of,r.mkt))return false;if(!MS(de,r.desc))return false;
+    var g=duGrant(r);if(!MS(mo,g.slice(0,7)))return false;
     if(gd){if(!g)return false;var gm=(ref-new Date(g+"T00:00:00Z"))/864e5/30.44;if(gd=="A"){if(gm<=12)return false}else if(gm>+gd)return false}
     return true})
 }
@@ -1144,15 +1208,15 @@ function bmRender(){
   ph+='<tr class="gt"><td style="text-align:left">Grand Total</td>'+ks.map(function(k){return'<td class="n" data-m="'+k+'">'+nz(GT[k][0])+'</td><td class="n" data-m="'+k+'">'+mn(GT[k][1])+'</td>'}).join("")+'<td class="n" data-m="all">'+nz(gn)+'</td><td class="n" data-m="all">'+mn(gp)+'</td><td></td></tr></table></div><div class="mu" style="margin-top:6px">ADD = moved to a higher bucket (worse) &bull; Remove = moved to a lower bucket / cleared (better) &bull; Not Move = same bucket &bull; Portfolio = month-end portfolio'+(C.n?' &bull; '+fmt(C.n)+' new customers (not in month-end) are not in this table':'')+'. Click any number or <b>Go</b> to list the customers.</div></div>';
   window.BMSUM={T:T,GT:GT};h+=ph;
   var gl={mkt:"Mkt Officer",desc:"Description",branch:"Branch",grant:"Grant Month"};
-  h+='<div class="card"><div class="f" style="margin-bottom:8px"><h3 style="margin:0 10px 0 0;align-self:center">Summary by</h3><select id="bmGB">'+Object.keys(gl).map(function(k){return'<option value="'+k+'"'+(k==BMGB?" selected":"")+'>'+gl[k]+'</option>'}).join("")+'</select></div><div class="tw bmg" style="max-height:360px"><table><tr><th>'+gl[BMGB]+'<th class="n">At month-end<th class="n">Same<th class="n">Worsened<th class="n">Improved<th class="n">0 \u2192 1-29<th class="n">1-29 \u2192 0<th class="n">Paid this month<th class="n">Not paid<th class="n">New<th class="n">Closed<th class="n">Worse %</tr>';
-  var G={};L.forEach(function(o){var k=BMGB=="grant"?(o.grant||"").slice(0,7)||"(none)":o[BMGB];(G[k]=G[k]||[]).push(o)});
+  h+='<div class="card"><div class="f" style="margin-bottom:8px"><h3 style="margin:0 10px 0 0;align-self:center">Summary by</h3><select id="bmGB">'+Object.keys(gl).map(function(k){return'<option value="'+k+'"'+(k==BMGB?" selected":"")+'>'+gl[k]+'</option>'}).join("")+'</select><button id="bmGbx" style="margin-left:8px">&#11015; Excel</button></div><div class="tw bmg" style="max-height:360px"><table><tr><th>'+gl[BMGB]+'<th class="n">At month-end<th class="n">Same<th class="n">Worsened<th class="n">Improved<th class="n">0 \u2192 1-29<th class="n">1-29 \u2192 0<th class="n">Paid this month<th class="n">Not paid<th class="n">New<th class="n">Closed<th class="n">Worse %</tr>';
+  window.BMGR=[];var G={};L.forEach(function(o){var k=BMGB=="grant"?(o.grant||"").slice(0,7)||"(none)":o[BMGB];(G[k]=G[k]||[]).push(o)});
   var key=BMGB=="grant"?"gm":BMGB;
-  h+=Object.keys(G).map(function(k){var g=G[k],cn=function(t){return g.filter(function(o){return o.t==t}).length},w=cn("w"),bo=cn("s")+w+cn("i");return{k:k,n:g.filter(function(o){return o.aB>=0}).length,s:cn("s"),w:w,i:cn("i"),z:g.filter(function(o){return o.aB==0&&o.bB==1}).length,y:g.filter(function(o){return o.aB==1&&o.bB==0}).length,pd:g.filter(function(o){return o.bB>=0&&o.paid}).length,np:g.filter(function(o){return o.bB>=0&&!o.paid}).length,nw:cn("n"),c:cn("c"),p:bo?w/bo*100:0}}).sort(function(x,y){return y.w-x.w}).map(function(g){
+  h+=Object.keys(G).map(function(k){var g=G[k],cn=function(t){return g.filter(function(o){return o.t==t}).length},w=cn("w"),bo=cn("s")+w+cn("i");return{k:k,n:g.filter(function(o){return o.aB>=0}).length,s:cn("s"),w:w,i:cn("i"),z:g.filter(function(o){return o.aB==0&&o.bB==1}).length,y:g.filter(function(o){return o.aB==1&&o.bB==0}).length,pd:g.filter(function(o){return o.bB>=0&&o.paid}).length,np:g.filter(function(o){return o.bB>=0&&!o.paid}).length,nw:cn("n"),c:cn("c"),p:bo?w/bo*100:0}}).sort(function(x,y){return y.w-x.w}).map(function(g){window.BMGR.push(g);
     return'<tr class="gr" data-gk="'+BMGB+'" data-gv="'+esc(g.k)+'"><td>'+(BMGB=="grant"&&g.k!="(none)"?mlab(g.k):esc(g.k))+'<td class="n">'+fmt(g.n)+'<td class="n">'+fmt(g.s)+'<td class="n cb">'+fmt(g.w)+'<td class="n cg">'+fmt(g.i)+'<td class="n">'+fmt(g.z)+'<td class="n">'+fmt(g.y)+'<td class="n cg">'+fmt(g.pd)+'<td class="n cb">'+fmt(g.np)+'<td class="n">'+fmt(g.nw)+'<td class="n">'+fmt(g.c)+'<td class="n">'+g.p.toFixed(1)+'%</tr>'}).join("");
   h+='</table></div></div>';
   var P=L.filter(bmPick).sort(function(x,y){return(y.bB-x.bB)||(y.tB-x.tB)}),PS=100,pg=Math.max(0,Math.min(BMPG,Math.ceil(P.length/PS)-1));BMPG=pg;
   var title=BMSEL.r!=null?BK[BMSEL.r][0]+" (month-end) \u2013 "+({s:"Not Move",w:"ADD (moved to a higher bucket)",i:"Remove (moved to a lower bucket)",c:"Closed / not in latest",all:"All"})[BMSEL.t]:BMSEL.a!=null?(BMSEL.a>=0?BK[BMSEL.a][0]:"New")+" \u2192 "+(BMSEL.b>=0?BK[BMSEL.b][0]:"Closed / not in latest"):BMT[BMSEL.t]||"All";
-  h+='<div class="card"><h3>Customer list: '+esc(title)+' <span class="badge">'+fmt(P.length)+'</span>'+(BMGRP?' <span class="chip on" id="bmGx">'+esc(BMGRP.v)+' &#10005;</span>':"")+'</h3><div class="tw"><table><tr><th>Fac No<th>Name<th>Mkt Officer<th>Branch<th>Description<th>Grant Date<th>Month-end bucket<th>Bucket now<th>Movement<th>Last Paid Date<th class="n">Last Paid Amt<th>Paid this month<th class="n">Total Arrears A<th class="n">Total Arrears B<th class="n">Arrears Change<th class="n">Portfolio<th>Tel</tr>'+
+  h+='<div class="card"><div class="f" style="margin-bottom:8px"><h3 style="margin:0 10px 0 0;align-self:center">Customer list: '+esc(title)+' <span class="badge">'+fmt(P.length)+'</span>'+(BMGRP?' <span class="chip on" id="bmGx">'+esc(BMGRP.v)+' &#10005;</span>':"")+'</h3><button id="bmLx" class="p">&#11015; Excel (all '+fmt(P.length)+')</button></div><div class="tw"><table><tr><th>Fac No<th>Name<th>Mkt Officer<th>Branch<th>Description<th>Grant Date<th>Month-end bucket<th>Bucket now<th>Movement<th>Last Paid Date<th class="n">Last Paid Amt<th>Paid this month<th class="n">Total Arrears A<th class="n">Total Arrears B<th class="n">Arrears Change<th class="n">Portfolio<th>Tel</tr>'+
   P.slice(pg*PS,pg*PS+PS).map(function(o){var mv=o.t=="n"?'<span class="tag fl">New</span>':o.t=="c"?'<span class="tag fl">Closed</span>':o.t=="s"?'<span class="cn">Same</span>':o.t=="w"?'<span class="cb">&#9650; Worse ('+o.st+' bucket'+(o.st>1?"s":"")+', +'+o.dd+'d)</span>':'<span class="cg">&#9660; Better ('+(-o.st)+' bucket'+(o.st<-1?"s":"")+', '+o.dd+'d)</span>';
     return'<tr><td><b>'+esc(o.fac)+'</b><td>'+esc(o.name)+'<td>'+esc(o.mkt)+'<td>'+esc(o.branch)+'<td>'+esc(o.desc)+'<td>'+esc(o.grant||"-")+'<td>'+(o.aB>=0?BK[o.aB][0]+' ('+o.dA+'d)':"-")+'<td>'+(o.bB>=0?BK[o.bB][0]+' ('+o.dB+'d)':"-")+'<td>'+mv+'<td>'+esc(o.lpd||"-")+'<td class="n">'+fmt(o.lpa)+'<td>'+(o.bB<0?"-":o.paid?'<span class="cg">Paid</span>':'<span class="cb">Not paid</span>')+'<td class="n">'+fmt(o.tA)+'<td class="n">'+fmt(o.tB)+'<td class="n '+(o.tB>o.tA?"cb":o.tB<o.tA?"cg":"")+'">'+(o.aB>=0&&o.bB>=0?(o.tB-o.tA>0?"+":"")+fmt(o.tB-o.tA):"-")+'<td class="n">'+fmt(o.pB||o.pA)+'<td>'+duCall(o.tel)+'</tr>'}).join("")+
   '</table></div><div class="pg"><button id="bmPv">&#9664;</button><span>'+(P.length?pg*PS+1:0)+'&ndash;'+Math.min(P.length,pg*PS+PS)+' of '+fmt(P.length)+'</span><button id="bmNx">&#9654;</button></div></div>';
@@ -1168,6 +1232,8 @@ $("bmbody").addEventListener("click",function(e){
   var t=e.target,pm=t.closest("[data-m]");
   if(pm){var rr=pm.getAttribute("data-r");BMSEL=rr===null?{t:pm.getAttribute("data-m")}:{r:+rr,t:pm.getAttribute("data-m")};BMPG=0;bmRender();var lc=$("bmbody").querySelectorAll(".card");lc[lc.length-1].scrollIntoView({behavior:"smooth"});return}
   if(t.id=="bmSx"){bmSumXl();return}
+  if(t.id=="bmLx"){$("bmXl").onclick();return}
+  if(t.id=="bmGbx"){var gl0={mkt:"Mkt Officer",desc:"Description",branch:"Branch",grant:"Grant Month"};dl((window.BMGR||[]).map(function(g){var r={};r[gl0[BMGB]]=g.k;r["At month-end"]=g.n;r["Same"]=g.s;r["Worsened"]=g.w;r["Improved"]=g.i;r["0 to 1-29"]=g.z;r["1-29 to 0"]=g.y;r["Paid this month"]=g.pd;r["Not paid"]=g.np;r["New"]=g.nw;r["Closed"]=g.c;r["Worse %"]=+g.p.toFixed(1);return r}),"Bucket_Movement_Summary_by_"+BMGB);return}
   var c=t.closest("[data-bt]"),x=t.closest("td[data-a]"),g=t.closest("tr[data-gk]");
   if(c){BMSEL={t:c.getAttribute("data-bt")};BMPG=0;bmRender();return}
   if(x){BMSEL={a:+x.getAttribute("data-a"),b:+x.getAttribute("data-b")};BMPG=0;bmRender();return}
@@ -1225,7 +1291,7 @@ function duList(){
   var hasDue=R.some(function(r){return+r.due>0});
   var all=R.filter(function(r){var x=+r.due;return x>0&&(x===day||(isTd&&day===last&&x>last))});
   var rows=all.filter(function(r){
-    if(of&&(r.mkt||"(none)")!==of)return false;if(de&&(r.desc||"(none)")!==de)return false;if(st&&String(r.stage)!==st)return false;
+    if(!MS(of,r.mkt||"(none)"))return false;if(!MS(de,r.desc||"(none)"))return false;if(st&&String(r.stage)!==st)return false;
     if(gd){var g=duGrant(r);if(!g)return false;if(gd=="A"?g>=cut:g<cut)return false}
     return true});
   return{rows:rows,all:all,day:day,hasDue:hasDue,date:d}
@@ -1301,10 +1367,10 @@ function cmpFilt(rows,skMo,skGd){
   var b=$("cmBr").value,o=$("cmOf").value,d=$("cmDe").value,g=skGd?"":$("cmGd").value,mo=skMo?"":$("cmMo").value,cut="";
   if(g&&CURR){var x=new Date(CURR.key+"T00:00:00Z");x.setUTCMonth(x.getUTCMonth()-(g=="A"?12:+g));cut=x.toISOString().slice(0,10)}
   return rows.filter(function(r){
-    if(b&&r.branch!==b)return false;if(o&&r.mkt!==o)return false;if(d&&r.desc!==d)return false;
+    if(!MS(b,r.branch))return false;if(!MS(o,r.mkt))return false;if(!MS(d,r.desc))return false;
     var gd=String(r.grant||"").slice(0,10);
     if(g){if(!gd)return false;if(g=="A"?gd>=cut:gd<cut)return false}
-    if(mo&&gd.slice(0,7)!==mo)return false;
+    if(!MS(mo,gd.slice(0,7)))return false;
     return true})
 }
 function lsrc(){return LEND||[]}
@@ -1455,7 +1521,7 @@ function cmpRender(){
   // ==========================================
   var LF=$("cmLF").value,LT=$("cmLT").value,moV=$("cmMo").value,gdV=$("cmGd").value,c12d=new Date(kb+"T00:00:00Z");c12d.setUTCMonth(c12d.getUTCMonth()-12);var c12=c12d.toISOString().slice(0,10),lp,ll;
   if(LF||LT){lp=function(g){return(!LF||g>=LF)&&(!LT||g<=LT)};ll=(LF?dlab(LF):"start")+" → "+(LT?dlab(LT):"today")}
-  else if(moV){lp=function(g){return g.slice(0,7)==moV};ll=mlab(moV)}
+  else if(moV){lp=function(g){return MS(moV,g.slice(0,7))};ll=moV.split(MSEP).map(mlab).join(", ")}
   else if(gdV=="A"){lp=function(g){return g<c12};ll="granted after 12 months"}
   else{var mm=gdV?+gdV:3,cd=new Date(kb+"T00:00:00Z");cd.setUTCMonth(cd.getUTCMonth()-mm);var cs=cd.toISOString().slice(0,10);lp=function(g){return g>=cs&&g<=kb};ll="last "+mm+" months"}
     var LS0=lsrc(),LR=lfilt(LS0).filter(function(r){var g=String(r.grant||"").slice(0,10);return g&&lp(g)}),LM={};
@@ -1486,7 +1552,7 @@ function cmpRender(){
   var cAv=cTn?cTp/cTn:0,pts=[],nM=cm.length||1,aN=cTn/nM,aP=cTp/nM,ayl=190-Math.min(aP/cMx,1)*140;
   var svg='<svg viewBox="0 0 720 262" style="width:100%;max-width:900px;display:block"><line x1="10" y1="190" x2="710" y2="190" style="stroke:var(--bd)"/>';
   cm.forEach(function(k,i){
-    var x=CMD[k],bh=x.p/cMx*140,bx=14+i*st,hl=moV==k&&!(LF||LT),mid=bx+bw/2,av=avOf(x);
+    var x=CMD[k],bh=x.p/cMx*140,bx=14+i*st,hl=MS(moV,k)&&!!moV&&!(LF||LT),mid=bx+bw/2,av=avOf(x);
     svg+='<g><title>'+mlab(k)+': '+x.n+' facilities, Facility Amount '+fmt(x.p)+', Avg '+fmt(av)+'</title><rect x="'+bx+'" y="'+(190-bh)+'" width="'+bw+'" height="'+Math.max(bh,x.n?2:0)+'" rx="3" style="fill:'+(hl?'var(--s2)':'var(--pr)')+';opacity:.85"/>'+
       '<text x="'+mid+'" y="'+(190-bh-16)+'" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--tx)">'+(x.n?x.n:"")+'</text>'+
       '<text x="'+mid+'" y="'+(190-bh-5)+'" text-anchor="middle" font-size="9" style="fill:var(--mu)">'+(x.n?shortM(x.p):"")+'</text>'+
@@ -1499,7 +1565,7 @@ function cmpRender(){
   pts.forEach(function(q){svg+='<circle cx="'+q[0]+'" cy="'+q[1]+'" r="3.5" style="fill:var(--s3)"><title>'+mlab(q[2])+' – Avg / facility '+fmt(q[3])+'</title></circle>'});
   if(cTn)svg+='<line x1="10" y1="'+ayl+'" x2="710" y2="'+ayl+'" stroke-dasharray="5 4" stroke-width="1.5" style="stroke:var(--s2)"/><text x="708" y="'+(ayl-4)+'" text-anchor="end" font-size="10" font-weight="700" style="fill:var(--s2)">Avg / month: '+aN.toFixed(1)+' fac • '+shortM(aP)+'</text>';
   svg+='<text x="10" y="254" font-size="10" style="fill:var(--mu)">Bar = Facility Amount (count on top) &nbsp;•&nbsp; </text><circle cx="262" cy="251" r="3.5" style="fill:var(--s3)"/><text x="270" y="254" font-size="10" style="fill:var(--s3)">Red line / number = Avg per facility &nbsp;•&nbsp; dashed line = monthly average</text></svg>';
-  var who=$("cmOf").value||"All officers";
+  var who=msShow($("cmOf").value)||"All officers";
   var tb='<div class="tw" style="max-height:none;margin-top:10px"><table><tr><th>Month</th><th class=n>Facilities</th><th class=n>Facility Amount</th><th class=n>Avg / Facility</th></tr>'+
     cm.map(function(k){var x=CMD[k];return'<tr><td>'+mlab(k)+'</td><td class=n>'+fmt(x.n)+'</td><td class=n>'+fmt(x.p)+'</td><td class=n>'+(x.n?fmt(x.p/x.n):"-")+'</td></tr>'}).join("")+
     '<tr><td><b>Total / Avg</b></td><td class=n><b>'+fmt(cTn)+'</b></td><td class=n><b>'+fmt(cTp)+'</b></td><td class=n><b>'+(cTn?fmt(cAv):"-")+'</b></td></tr><tr><td><b>Monthly Avg ('+nM+' months)</b></td><td class=n><b>'+aN.toFixed(1)+'</b></td><td class=n><b>'+fmt(aP)+'</b></td><td class=n>-</td></tr></table></div>';
@@ -1563,6 +1629,7 @@ $("cs").onclick=function(){
   if(!u.trim()){alert("Online storage turned off.");return}
   cget().then(function(j){alert(j&&j.rows?"Connected. Online data found: "+j.rows.length+" facilities.":"Connected (or no data online yet). Upload the Excel files to save online.")})
 };
+["br","mks","ds","cmBr","cmOf","cmDe","cmMo","bmBr","bmOf","bmDe","bmMo","duOf","duDe"].forEach(function(i){try{msel(i)}catch(e){console.error(e)}});
 </script>
 </body>
 </html>
