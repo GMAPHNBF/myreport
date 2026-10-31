@@ -236,7 +236,8 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 <div class="fb"><h4>Branch, Officer &amp; Product</h4><div class="fr"><label>Branch<select id="br"><option value="">All Branches</option></select></label>
 <label>Mkt Officer<select id="mks"><option value="">All</option></select></label>
 <label>Search Officer<input id="mk" list="ml" placeholder="Type name..." autocomplete="off"></label><datalist id="ml"></datalist>
-<label>Description<select id="ds"><option value="">All</option></select></label></div></div>
+<label>Description<select id="ds"><option value="">All</option></select></label>
+<label>Status<select id="sts"><option value="">All</option></select></label></div></div>
 <div class="fb"><h4>Aging &amp; Stage</h4><div class="fr">
 <label>Stage<select id="st"><option value="">All</option><option value="1">Stage 1</option><option value="2">Stage 2</option><option value="3">Stage 3</option></select></label>
 <label>Grant Date<select id="vt"><option value="">All</option><option value="L">Last 12 Months</option><option value="A">After 12 Months</option></select></label>
@@ -514,7 +515,7 @@ function load(d){
   $("ds").innerHTML='<option value="">All</option>'+Array.from(new Set(R.map(function(r){return r.desc||"(none)"}))).sort().map(function(m){return"<option>"+m+"</option>"}).join("");
   $("mks").innerHTML='<option value="">All</option>'+ms.map(function(m){return"<option>"+m+"</option>"}).join("");
   var up=function(id,k){$(id).innerHTML='<option value="">All</option>'+Array.from(new Set(R.map(function(r){return r[k]||"(none)"}))).sort().map(function(m){return"<option>"+m+"</option>"}).join("")};
-  up("br","branch");
+  up("br","branch");up("sts","st");
   $("ml").innerHTML=ms.map(function(m){return"<option value=\""+m+"\">"}).join("");
   bkSel={};draw();info();
   if(typeof duBadge=="function")duBadge()
@@ -547,7 +548,7 @@ function odCls(r){var p1=+$("p1").value||91,p2=+$("p2").value||(91+dim(asAt||new
   if(nw)return d1?"X":"N";return d1&&pj>=p1&&pj<=p2?"E":""}
 function odc(r){return $("fg").value==="OD"&&odCls(r)==="E"}
 function filt(skipB){
-  var br=$("br").value,mks=$("mks").value,ds=$("ds").value,mk=$("mk").value.trim(),st=$("st").value,vt=$("vt").value,fg=$("fg").value,dn=$("dn").value,q=$("q").value.toLowerCase().trim();
+  var br=$("br").value,mks=$("mks").value,ds=$("ds").value,mk=$("mk").value.trim(),st=$("st").value,vt=$("vt").value,fg=$("fg").value,dn=$("dn").value,sts=$("sts").value,q=$("q").value.toLowerCase().trim();
   var any=Object.keys(bkSel).length;
   var qt=q?q.split(/\s+/).filter(Boolean):[];
   return R.filter(function(r){
@@ -556,6 +557,7 @@ function filt(skipB){
     if(!mSel(br,r.branch))return false;
     if(!mSel(mks,r.mkt||"(none)"))return false;
     if(!mSel(ds,r.desc||"(none)"))return false;
+    if(!mSel(sts,r.st||"(none)"))return false;
     if(vt==="L"&&!r.last12)return false;
     if(vt==="A"&&r.last12)return false;
     if(fg==="R1"&&!r.r1)return false;
@@ -655,7 +657,7 @@ function draw(){
 
   $("r1b").textContent=$("fg").value==="R1"?"✔ 1st Rental":"1st Rental";
   $("npb").textContent=$("fg").value==="NP"?"✔ Null Payment":"Null Payment";
-  var fc=["mk","mks","br","ds","st","vt","fg","dn","q"].filter(function(i){return $(i).value}).length+Object.keys(bkSel).length;
+  var fc=["mk","mks","br","ds","sts","st","vt","fg","dn","q"].filter(function(i){return $(i).value}).length+Object.keys(bkSel).length;
   $("fcnt").textContent=fc+" active";
   $("pnb").className=$("r1b").className=$("npb").className="qb";
   ({PN:"pnb",R1:"r1b",NP:"npb"}[$("fg").value]&&($({PN:"pnb",R1:"r1b",NP:"npb"}[$("fg").value]).className="qb on"));
@@ -667,7 +669,7 @@ function draw(){
 }
 var OS=[],BS=[],CUR=[];
 function bar(l,w,v,c,i){return'<div class="bar"'+(i!=null?' data-i="'+i+'"':"")+'><div class="l">'+l+'</div><div class="t"><i style="width:'+Math.max(w*100,.5)+'%;background:'+c+'"></i></div><div class="v">'+v+'</div></div>'}
-var COLS=[["fac","Fac No"],["branch","Branch"],["name","Name"],["reg","Reg No"],["omni","Omni Cust No"],["mkt","Mkt Officer"],["desc","Description"],["days","Arrears Days"],["due","Due Day"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["gr","Gross Rental"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["lpa","Last Paid Amt"],["tel","Tel"],["addr","Address"]];
+var COLS=[["fac","Fac No"],["branch","Branch"],["name","Name"],["reg","Reg No"],["omni","Omni Cust No"],["mkt","Mkt Officer"],["desc","Description"],["st","Status"],["days","Arrears Days"],["due","Due Day"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["gr","Gross Rental"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["lpa","Last Paid Amt"],["tel","Tel"],["addr","Address"]];
 var GRDBG={col:"?",hdr:""},ADBG={ad:"",om:""};
 function colL(i){var t="";i=+i;while(i>=0){t=String.fromCharCode(65+i%26)+t;i=Math.floor(i/26)-1}return t}
 function mrent(r){return +r.gr>0?+r.gr:0}
@@ -717,16 +719,16 @@ function setDone(f,v){if(v)done[f]=1;else delete done[f];try{localStorage.setIte
    EXCEL EXPORT
    ============================================================ */
 function dl(rows,name){var ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Report");XLSX.writeFile(wb,name+".xlsx")}
-$("e1").onclick=function(){dl(CUR.map(function(r){return{"Fac No":r.fac,Branch:r.branch,Name:r.name,"Reg No":r.reg,Town:r.town,"Mkt Officer":r.mkt,Description:r.desc,"Follow Up":r.fu,"Arrears Days":r.days,Stage:r.stage,Bucket:BK[r.b][0],"No Of O/S":r.nos,"Gross Rental":mrent(r),"Rental Arrears":r.rent,"Total Arrears":r.tot,Portfolio:r.port,Advance:r.adv,"Fac Age":r.last12?"Last 12 Months":"After 12 Months","1st Rental":r.r1?"Yes":"","Null Payment":r.np?"Yes":"","Last Paid Amt":r.lpa,"PNPL":pn(r)?"Yes":"",Done:done[r.fac]?"Yes":"","Grant Date":r.grant,"Last Paid":r.lpd,Tel:r.tel,"Omni Cust No":r.omni,Address:r.addr}}),({PN:"PNPL_List",R1:"1st_Rental_List",NP:"Null_Payment_List"}[$("fg").value]||"Arrears_Filtered"))};
+$("e1").onclick=function(){dl(CUR.map(function(r){return{"Fac No":r.fac,Branch:r.branch,Name:r.name,"Reg No":r.reg,Town:r.town,"Mkt Officer":r.mkt,Description:r.desc,Status:r.st||"","Follow Up":r.fu,"Arrears Days":r.days,Stage:r.stage,Bucket:BK[r.b][0],"No Of O/S":r.nos,"Gross Rental":mrent(r),"Rental Arrears":r.rent,"Total Arrears":r.tot,Portfolio:r.port,Advance:r.adv,"Fac Age":r.last12?"Last 12 Months":"After 12 Months","1st Rental":r.r1?"Yes":"","Null Payment":r.np?"Yes":"","Last Paid Amt":r.lpa,"PNPL":pn(r)?"Yes":"",Done:done[r.fac]?"Yes":"","Grant Date":r.grant,"Last Paid":r.lpd,Tel:r.tel,"Omni Cust No":r.omni,Address:r.addr}}),({PN:"PNPL_List",R1:"1st_Rental_List",NP:"Null_Payment_List"}[$("fg").value]||"Arrears_Filtered"))};
 $("e2").onclick=function(){dl(OS.map(function(o){return{"Mkt Officer":o.Officer,Customers:o.n,"Rental Arrears":o.r,"Total Arrears":o.t,Portfolio:o.p,"Stage 1":o.s1,"Stage 2":o.s2,"Stage 3":o.s3,PNPL:o.pn,Done:o.d}}),"MktOfficer_Summary")};
 $("e3").onclick=function(){dl(BS.map(function(x,i){return{Bucket:BK[i][0],Customers:x.length,"Rental Arrears":sum(x,"rent"),"Total Arrears":sum(x,"tot"),Portfolio:sum(x,"port")}}),"Bucket_Summary")};
 
 /* ============================================================
    FILTER EVENTS
    ============================================================ */
-["mk","mks","br","ds","st","vt","fg","dn","p1","p2","q"].forEach(function(i){$(i).oninput=function(){page=0;draw()}});
+["mk","mks","br","ds","sts","st","vt","fg","dn","p1","p2","q"].forEach(function(i){$(i).oninput=function(){page=0;draw()}});
 $("qx").onclick=function(){$("q").value="";page=0;draw();$("q").focus()};
-$("rs").onclick=function(){["mk","mks","br","ds","st","vt","fg","dn","q"].forEach(function(i){$(i).value=""});$("p1").value=91;$("p2").value=91+dim(asAt);bkSel={};page=0;draw()};
+$("rs").onclick=function(){["mk","mks","br","ds","sts","st","vt","fg","dn","q"].forEach(function(i){$(i).value=""});$("p1").value=91;$("p2").value=91+dim(asAt);bkSel={};page=0;draw()};
 function tg(e){var c=e.target.closest("[data-i]");if(c){var i=c.dataset.i;if(bkSel[i])delete bkSel[i];else bkSel[i]=1;page=0;draw()}}
 $("bk").onclick=tg;$("c2").onclick=tg;
 $("tb").onclick=function(e){var t=e.target;if(t.dataset.f){setDone(t.dataset.f,t.checked);draw();return}if(t.tagName=="TH"&&t.dataset.k){if(sortK==t.dataset.k)sortD*=-1;else{sortK=t.dataset.k;sortD=-1}draw()}};
@@ -812,13 +814,22 @@ function destRows(g,h,c,pm,LEND,LMETA){
       omc=pickCol(c,[/omni.*(cust|customer).*(no|num|number|id|code)/,/omni/]);
   ADBG.ad=ADBG.ad||adc||"";ADBG.om=ADBG.om||omc||"";
   LMETA.gc=LMETA.gc||gc;LMETA.ac=LMETA.ac||ac;LMETA.sc=LMETA.sc||sc;
+  /* Status = column AK (index 36). If AK header is not "status" but a column named Status exists, that one is used */
+  var akH=nm((g[h]||[])[36]),sci=/status/i.test(akH)?36:(sc!=null?c[sc]:(akH?36:-1));
+  LMETA.sc=sci>=0?(nm((g[h]||[])[sci])||colL(sci)):LMETA.sc;
+  var nc=pickCol(c,[/^(customer|cust)\s*name$/,/^name$/,/name/],/officer|branch|follow|mkt|marketing|guarantor|omni/),
+      tlc=pickCol(c,[/^tel/,/phone|mobile|contact/]),
+      dyc=pickCol(c,[/^arrears?\s*days$/,/arrears?.*days|days.*arrears?/]),
+      tac=pickCol(c,[/^total\s*arrears?$/]),rac=pickCol(c,[/^rental\s*arrears?$/]);
   g.slice(h+1).forEach(function(r){
     var f=nm(r[c["Fac No"]]);if(!f)return;
     var pv=+r[c["Portfolio"]]||0,fo=nm(r[c["Follow Up Officer"]]),bn=nm(r[c["Branch"]]),ds0=nm(r[c["Description"]]);
-    pm[f]={o:fo,d:ds0,b:bn,p:pv,a:+r[c["Advance"]]||0,ad:adc?nm(r[c[adc]]):"",om:omc?nm(r[c[omc]]):""};
+    var stx=sci>=0?nm(r[sci]):"";
+    pm[f]={o:fo,d:ds0,b:bn,p:pv,a:+r[c["Advance"]]||0,ad:adc?nm(r[c[adc]]):"",om:omc?nm(r[c[omc]]):"",st:stx,
+      nm:nc?nm(r[c[nc]]):"",tl:tlc?nm(r[c[tlc]]):"",dy:dyc?(+r[c[dyc]]||0):0,ta:tac?(+r[c[tac]]||0):0,ra:rac?(+r[c[rac]]||0):0,gv:gc?toIso(r[c[gc]]):""};
     var gv=gc?toIso(r[c[gc]]):"";
     if(!gc){var fm=/^[A-Za-z]{2}(\d{2})(\d{2})/.exec(f);if(fm&&+fm[2]>=1&&+fm[2]<=12)gv="20"+fm[1]+"-"+fm[2]+"-01"}
-    var av=ac?(+r[c[ac]]||0):pv,tx=sc?nm(r[c[sc]]):"";
+    var av=ac?(+r[c[ac]]||0):pv,tx=stx;
     LEND[f]={f:f,m:onm(fo||(mo?nm(r[c[mo]]):"")),b:bn,d:ds0,g:gv,a:av,p:pv,t:tx,s:(tx?stCat(tx)!="R":pv<=0)?1:0}
   })
 }
@@ -1018,7 +1029,11 @@ function runUpload(meOnly){
       return;
     }
 
-    upSetProgress(78,"Merging "+rows.length+" facilities...");
+    var nRepo=0;
+    Object.keys(pm).forEach(function(f){var p=pm[f];
+      if(p.st&&stCat(p.st)=="P"&&!seen[f]){seen[f]=1;nRepo++;
+        rows.push({fac:f,name:p.nm||"",reg:"",town:"",nos:0,rent:p.ra||0,tot:p.ta||0,days:p.dy||0,grant:p.gv||"",lpd:"",lpa:0,gr:0,due:0,tel:p.tl||"",mkt0:p.o,fu:p.o,br:p.b})}});
+    upSetProgress(78,"Merging "+rows.length+" facilities"+(nRepo?" (incl. "+nRepo+" repossessed from Destinity)":"")+"...");
 
     setTimeout(function(){
       rows.forEach(function(r){
@@ -1027,6 +1042,7 @@ function runUpload(meOnly){
         r.port=p.p;
         r.adv=p.a;
         r.desc=p.d;
+        r.st=p.st||"";
         r.addr=p.ad||"";
         r.omni=p.om||"";
         r.branch=r.br||p.b||"(none)";
@@ -1664,7 +1680,7 @@ $("cs").onclick=function(){
   if(!u.trim()){alert("Online storage turned off.");return}
   cget().then(function(j){alert(j&&j.rows?"Connected. Online data found: "+j.rows.length+" facilities.":"Connected (or no data online yet). Upload the Excel files to save online.")})
 };
-["br","mks","ds","cmBr","cmOf","cmDe","cmMo","bmBr","bmOf","bmDe","bmMo","duOf","duDe"].forEach(function(i){try{msel(i)}catch(e){console.error(e)}});
+["br","mks","ds","sts","cmBr","cmOf","cmDe","cmMo","bmBr","bmOf","bmDe","bmMo","duOf","duDe"].forEach(function(i){try{msel(i)}catch(e){console.error(e)}});
 </script>
 </body>
 </html>
