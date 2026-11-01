@@ -19,7 +19,7 @@ button,select,input{font:inherit;color:var(--tx);background:var(--card);border:1
 button{cursor:pointer}button.p{background:var(--pr);color:#fff;border-color:var(--pr)}button:hover{filter:brightness(.95)}
 .f{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.f label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chip{padding:5px 11px;border-radius:99px;border:1px solid var(--bd);cursor:pointer;font-size:12.5px;user-select:none}
-.chip.on{background:var(--pr);color:#fff;border-color:var(--pr)}
+.chip.dis{opacity:.3;pointer-events:none;cursor:not-allowed}.chip.on{background:var(--pr);color:#fff;border-color:var(--pr)}
 .fp{border-top:4px solid var(--pr)}.fh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:15px}.badge{background:var(--pr);color:#fff;border-radius:99px;padding:2px 10px;font-size:12px;margin-left:8px}.fg3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}.fb{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px 12px}.fb h4{margin:0 0 8px;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mu)}.fr{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.fr label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px;flex:1;min-width:110px}.fr select,.fr input{width:100%}.qb{background:var(--card);border:1.5px solid #7a5af8;color:#7a5af8;border-radius:99px;padding:7px 16px;font-weight:600}.qb.on{background:#7a5af8;color:#fff}.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}.dc{display:flex;align-items:center;gap:14px}.dc{justify-content:center;gap:34px;flex-wrap:wrap}.dc svg{width:300px;height:300px;max-width:100%;flex:none}.dc b{font-size:18px}.dc div div{font-size:15px;margin:10px 0}.dc i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}.sb{display:flex;height:18px;border-radius:5px;overflow:hidden;background:var(--bg)}.sb span{display:block;height:100%}.sbr{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12.5px}.sbr .l{width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sbr .sb{flex:1}.sbr .v{width:120px;text-align:right;font-size:11.5px;color:var(--mu)}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:900px){.g2{grid-template-columns:1fr}}
 .bar{display:flex;align-items:center;gap:8px;margin:6px 0;cursor:pointer}.bar .l{width:92px;font-size:12.5px}.bar .t{flex:1;background:var(--bg);border-radius:6px;height:20px;overflow:hidden}
 .bar .t i{display:block;height:100%;border-radius:6px}.bar .v{width:150px;text-align:right;font-size:12px}
@@ -308,7 +308,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
     <label>Mkt Officer<select id="duOf"><option value="">All</option></select></label>
     <label>Description<select id="duDe"><option value="">All</option></select></label>
     <label>Grant Date<select id="duGd"><option value="">All</option><option value="3">Last 3 Months</option><option value="6">Last 6 Months</option><option value="12">Last 12 Months</option><option value="A">After 12 Months</option></select></label>
-    <label>Stage<select id="duSt"><option value="">All</option><option value="1">Stage 1 (0-29 days)</option><option value="2">Stage 2 (30-89 days)</option><option value="3">Stage 3 (90+ days)</option></select></label>
+    <label>Stage<select id="duSt"><option value="">All</option><option value="1">Stage 1 (0-30 days)</option><option value="2">Stage 2 (31-90 days)</option><option value="3">Stage 3 (91+ days)</option></select></label>
    </div>
   </div>
   <div id="duBody"></div>
@@ -379,12 +379,13 @@ function msShow(v){return v?v.split(MSEP).join(", "):""}
   }
 })();
 
-var BK=[["0 Bucket",0,0],["1 to 29",1,29],["30 to 59",30,59],["60 to 89",60,89],["90 to 119",90,119],["120 to 149",120,149],["150 to 179",150,179],["180 to 359",180,359],["360 & Above",360,1e9]];
+var BK=[["0 Bucket",0,0],["1 to 30",1,30],["31 to 60",31,60],["61 to 90",61,90],["91 to 120",91,120],["121 to 150",121,150],["151 to 180",151,180],["181 & Above",181,1e9]];
 var R=[],asAt=null,bkSel={},page=0,sortK="days",sortD=-1,done={};
 try{done=JSON.parse(localStorage.getItem("arr_done")||"{}")}catch(e){}
 var fmt=function(x){return Number(x||0).toLocaleString("en-LK",{maximumFractionDigits:0})};
-var stage=function(d){return d>=90?3:d>=30?2:1};
-var bidx=function(d){for(var i=0;i<BK.length;i++)if(d>=BK[i][1]&&d<=BK[i][2])return i;return 8};
+var stage=function(d){return d>=91?3:d>=31?2:1};
+var bkOk=function(i){var s=document.getElementById("st").value;return !s||stage(BK[i][1])==+s};
+var bidx=function(d){for(var i=0;i<BK.length;i++)if(d>=BK[i][1]&&d<=BK[i][2])return i;return BK.length-1};
 function dim(d){return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()}
 var HIST=[],USER=null;try{HIST=JSON.parse(localStorage.getItem("arr_hist")||"[]");USER=JSON.parse(sessionStorage.getItem("arr_user")||"null")}catch(e){}
 /* ===== SEARCH RESULTS PANEL (under the search bar) ===== */
@@ -578,7 +579,8 @@ function sum(a,k){return a.reduce(function(s,r){return s+(+r[k]||0)},0)}
 function draw(){
   try{sres()}catch(e){}
   $("meta").textContent="As at "+asAt.toDateString()+" • "+R.length+" facilities • "+dim(asAt)+" days month"+(EXC?" \u2022 "+EXC+" this-month grants excluded (see Monthly Lending)":"");
-  $("pnote").textContent="PNPL = Arrears Days "+$("p1").value+" – "+$("p2").value+" (91 + "+dim(asAt)+" days in month). Stage 1 = 0–29, Stage 2 = 30–89, Stage 3 = 90+";
+  $("pnote").textContent="PNPL = Arrears Days "+$("p1").value+" – "+$("p2").value+" (91 + "+dim(asAt)+" days in month). Stage 1 = 0–30, Stage 2 = 31–90, Stage 3 = 91+ (NDIA)";
+  Object.keys(bkSel).forEach(function(i){if(!bkOk(i))delete bkSel[i]});
   var a=filt(false),b=filt(true);
   var k=[
     ["Customers",fmt(a.length),"#2457d6"],
@@ -597,7 +599,7 @@ function draw(){
   k.push(["Null Payment (this month)",a.filter(function(r){return r.np}).length+" • "+fmt(sum(a.filter(function(r){return r.np}),"tot")),"#7a5af8"]);
   k.push(["Done",a.filter(function(r){return done[r.fac]}).length+" / "+a.length,"#2457d6"]);
   $("kpis").innerHTML=k.map(function(x){return'<div class="kpi" style="border-left-color:'+x[2]+'"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>'}).join("");
-  $("bk").innerHTML=BK.map(function(x,i){return'<span class="chip'+(bkSel[i]?" on":"")+'" data-i="'+i+'">'+x[0]+'</span>'}).join("");
+  $("bk").innerHTML=BK.map(function(x,i){return'<span class="chip'+(bkSel[i]?" on":"")+(bkOk(i)?"":" dis")+'" data-i="'+i+'">'+x[0]+'</span>'}).join("");
   var mx=Math.max.apply(null,[1].concat([1,2,3].map(function(s){return sum(a.filter(function(r){return r.stage==s}),"port")})));
   $("c1").innerHTML=[1,2,3].map(function(s){
     var x=a.filter(function(r){return r.stage==s}),t=sum(x,"port");
@@ -670,7 +672,7 @@ function draw(){
 var OS=[],BS=[],CUR=[];
 function bar(l,w,v,c,i){return'<div class="bar"'+(i!=null?' data-i="'+i+'"':"")+'><div class="l">'+l+'</div><div class="t"><i style="width:'+Math.max(w*100,.5)+'%;background:'+c+'"></i></div><div class="v">'+v+'</div></div>'}
 var COLS=[["fac","Fac No"],["branch","Branch"],["name","Name"],["reg","Reg No"],["omni","Omni Cust No"],["mkt","Mkt Officer"],["desc","Description"],["st","Status"],["days","Arrears Days"],["due","Due Day"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["gr","Gross Rental"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["lpa","Last Paid Amt"],["tel","Tel"],["addr","Address"]];
-var GRDBG={col:"?",hdr:""},ADBG={ad:"",om:""};
+var NDBG={col:"?",n:0},GRDBG={col:"?",hdr:""},ADBG={ad:"",om:""};
 function colL(i){var t="";i=+i;while(i>=0){t=String.fromCharCode(65+i%26)+t;i=Math.floor(i/26)-1}return t}
 function mrent(r){return +r.gr>0?+r.gr:0}
 function mrentTxt(r){var m=mrent(r);return m>0?fmt(m):"-"}
@@ -729,7 +731,7 @@ $("e3").onclick=function(){dl(BS.map(function(x,i){return{Bucket:BK[i][0],Custom
 ["mk","mks","br","ds","sts","st","vt","fg","dn","p1","p2","q"].forEach(function(i){$(i).oninput=function(){page=0;draw()}});
 $("qx").onclick=function(){$("q").value="";page=0;draw();$("q").focus()};
 $("rs").onclick=function(){["mk","mks","br","ds","sts","st","vt","fg","dn","q"].forEach(function(i){$(i).value=""});$("p1").value=91;$("p2").value=91+dim(asAt);bkSel={};page=0;draw()};
-function tg(e){var c=e.target.closest("[data-i]");if(c){var i=c.dataset.i;if(bkSel[i])delete bkSel[i];else bkSel[i]=1;page=0;draw()}}
+function tg(e){var c=e.target.closest("[data-i]");if(c){var i=c.dataset.i;if(!bkOk(i))return;if(bkSel[i])delete bkSel[i];else bkSel[i]=1;page=0;draw()}}
 $("bk").onclick=tg;$("c2").onclick=tg;
 $("tb").onclick=function(e){var t=e.target;if(t.dataset.f){setDone(t.dataset.f,t.checked);draw();return}if(t.tagName=="TH"&&t.dataset.k){if(sortK==t.dataset.k)sortD*=-1;else{sortK=t.dataset.k;sortD=-1}draw()}};
 $("pv").onclick=function(){if(page>0){page--;table(filt(false))}};
@@ -817,16 +819,17 @@ function destRows(g,h,c,pm,LEND,LMETA){
   /* Status = column AK (index 36). If AK header is not "status" but a column named Status exists, that one is used */
   var akH=nm((g[h]||[])[36]),sci=/status/i.test(akH)?36:(sc!=null?c[sc]:(akH?36:-1));
   LMETA.sc=sci>=0?(nm((g[h]||[])[sci])||colL(sci)):LMETA.sc;
+  NDBG.col=colL(ndi)+" ("+(nm((g[h]||[])[ndi])||"no header")+")";
   var nc=pickCol(c,[/^(customer|cust)\s*name$/,/^name$/,/name/],/officer|branch|follow|mkt|marketing|guarantor|omni/),
       tlc=pickCol(c,[/^tel/,/phone|mobile|contact/]),
       dyc=pickCol(c,[/^arrears?\s*days$/,/arrears?.*days|days.*arrears?/]),
-      tac=pickCol(c,[/^total\s*arrears?$/]),rac=pickCol(c,[/^rental\s*arrears?$/]);
+      ndc=pickCol(c,[/^ndia$/,/ndia/]),ndi=ndc!=null?c[ndc]:58,tac=pickCol(c,[/^total\s*arrears?$/]),rac=pickCol(c,[/^rental\s*arrears?$/]);
   g.slice(h+1).forEach(function(r){
     var f=nm(r[c["Fac No"]]);if(!f)return;
     var pv=+r[c["Portfolio"]]||0,fo=nm(r[c["Follow Up Officer"]]),bn=nm(r[c["Branch"]]),ds0=nm(r[c["Description"]]);
     var stx=sci>=0?nm(r[sci]):"";
     pm[f]={o:fo,d:ds0,b:bn,p:pv,a:+r[c["Advance"]]||0,ad:adc?nm(r[c[adc]]):"",om:omc?nm(r[c[omc]]):"",st:stx,
-      nm:nc?nm(r[c[nc]]):"",tl:tlc?nm(r[c[tlc]]):"",dy:dyc?(+r[c[dyc]]||0):0,ta:tac?(+r[c[tac]]||0):0,ra:rac?(+r[c[rac]]||0):0,gv:gc?toIso(r[c[gc]]):""};
+      nm:nc?nm(r[c[nc]]):"",tl:tlc?nm(r[c[tlc]]):"",dy:dyc?(+r[c[dyc]]||0):0,nd:(function(){var v=r[ndi];if(v==null||v==="")return null;v=+String(v).replace(/,/g,"");if(isNaN(v))return null;NDBG.n++;return Math.round(v)})(),ta:tac?(+r[c[tac]]||0):0,ra:rac?(+r[c[rac]]||0):0,gv:gc?toIso(r[c[gc]]):""};
     var gv=gc?toIso(r[c[gc]]):"";
     if(!gc){var fm=/^[A-Za-z]{2}(\d{2})(\d{2})/.exec(f);if(fm&&+fm[2]>=1&&+fm[2]<=12)gv="20"+fm[1]+"-"+fm[2]+"-01"}
     var av=ac?(+r[c[ac]]||0):pv,tx=stx;
@@ -948,7 +951,7 @@ function runUpload(meOnly){
 
   /* -------- PROCESS PARSED WORKBOOKS -------- */
   function doProcess(){
-    var pm={},rows=[],seen={},mt={},at=null,brs={},nA=0,nB=0,LEND={},LMETA={};
+    var pm={},rows=[],seen={},mt={},at=null,brs={},nA=0,nB=0,NDBG0=(NDBG.n=0),LEND={},LMETA={};
     var processed=0;
 
     upFileList.forEach(function(item){
@@ -1032,7 +1035,7 @@ function runUpload(meOnly){
     var nRepo=0;
     Object.keys(pm).forEach(function(f){var p=pm[f];
       if(p.st&&stCat(p.st)=="P"&&!seen[f]){seen[f]=1;nRepo++;
-        rows.push({fac:f,name:p.nm||"",reg:"",town:"",nos:0,rent:p.ra||0,tot:p.ta||0,days:p.dy||0,grant:p.gv||"",lpd:"",lpa:0,gr:0,due:0,tel:p.tl||"",mkt0:p.o,fu:p.o,br:p.b})}});
+        rows.push({fac:f,name:p.nm||"",reg:"",town:"",nos:0,rent:p.ra||0,tot:p.ta||0,days:(p.nd!=null?p.nd:p.dy)||0,grant:p.gv||"",lpd:"",lpa:0,gr:0,due:0,tel:p.tl||"",mkt0:p.o,fu:p.o,br:p.b})}});
     upSetProgress(78,"Merging "+rows.length+" facilities"+(nRepo?" (incl. "+nRepo+" repossessed from Destinity)":"")+"...");
 
     setTimeout(function(){
@@ -1040,6 +1043,7 @@ function runUpload(meOnly){
         var p=pm[r.fac]||{p:0,a:0,d:"",o:"",ad:"",om:""};
         r.mkt=onm(p.o||r.mkt0);
         r.port=p.p;
+        if(p.nd!=null)r.days=p.nd; /* Arrears Days = NDIA (Destinity col BG) */
         r.adv=p.a;
         r.desc=p.d;
         r.st=p.st||"";
@@ -1093,7 +1097,7 @@ function runUpload(meOnly){
         var isEnd=!!at&&new Date(at.getTime()+864e5).getUTCDate()==1;
         cput(o2).then(function(s){return(isEnd?saveMonthEnd(sk,o2,sm):Promise.resolve("skip")).then(function(s3){return[s,s3]})}).then(function(res){return lendP.then(function(lr){res.push(lr);return res})}).then(function(res){
           var s=res[0],s3=res[1],lr=res[2];
-          var msg="<b>"+rows.length+"</b> facilities loaded from <b>"+all.length+"</b> files.";msg+=ADBG.om||ADBG.ad?'<br><span style="color:var(--s1)">Destinity: Omni Cust No ← <b>'+esc(ADBG.om||"not found")+"</b>, Address ← <b>"+esc(ADBG.ad||"not found")+"</b></span>":'<br><span class="mu">Destinity: Omni Cust No / Address columns not found.</span>';var dn0=rows.filter(function(r){return +r.due>0}).length;msg+=dn0?'<br><span style="color:var(--s1)">Due Day read from Branch Wise RentalArrears - '+dn0+' facilities have a value.</span>':'<br><span style="color:var(--s3)">Due column NOT found in Branch Wise RentalArrears file.</span>';var gn=rows.filter(function(r){return +r.gr>0}).length;msg+=gn?'<br><span style="color:var(--s1)">Gross Rental read from column <b>'+GRDBG.col+'</b> ('+esc(GRDBG.hdr||"no header")+") – "+gn+" facilities have a value.</span>":'<br><span style="color:var(--s3)">Gross Rental NOT found – column <b>'+GRDBG.col+"</b> (\""+esc(GRDBG.hdr||"no header")+"\") is empty.</span>";
+          var msg="<b>"+rows.length+"</b> facilities loaded from <b>"+all.length+"</b> files.";msg+=ADBG.om||ADBG.ad?'<br><span style="color:var(--s1)">Destinity: Omni Cust No ← <b>'+esc(ADBG.om||"not found")+"</b>, Address ← <b>"+esc(ADBG.ad||"not found")+"</b></span>":'<br><span class="mu">Destinity: Omni Cust No / Address columns not found.</span>';msg+=NDBG.n?'<br><span style="color:var(--s1)">Arrears Days / Stage / Bucket ← <b>NDIA</b> (Destinity column <b>'+esc(NDBG.col)+'</b>) – '+NDBG.n+' facilities.</span>':'<br><span style="color:var(--s3)">NDIA NOT found in Destinity column '+esc(NDBG.col)+' – old Arrears Days used.</span>';var dn0=rows.filter(function(r){return +r.due>0}).length;msg+=dn0?'<br><span style="color:var(--s1)">Due Day read from Branch Wise RentalArrears - '+dn0+' facilities have a value.</span>':'<br><span style="color:var(--s3)">Due column NOT found in Branch Wise RentalArrears file.</span>';var gn=rows.filter(function(r){return +r.gr>0}).length;msg+=gn?'<br><span style="color:var(--s1)">Gross Rental read from column <b>'+GRDBG.col+'</b> ('+esc(GRDBG.hdr||"no header")+") – "+gn+" facilities have a value.</span>":'<br><span style="color:var(--s3)">Gross Rental NOT found – column <b>'+GRDBG.col+"</b> (\""+esc(GRDBG.hdr||"no header")+"\") is empty.</span>";
           if(s=="off")msg+='<br><span class="mu">Online storage not set up (saved on this device only).</span>';
           else if(s=="ok")msg+='<br><span style="color:var(--s1)">Saved ONLINE – everyone will see this data.</span>';
           else msg+='<br><span style="color:var(--s3)">Online save '+s+' – check storage setup.</span>';
@@ -1153,7 +1157,7 @@ $("cmBack").onclick=function(){if(cmpPushed&&location.hash=="#compare")history.b
 window.addEventListener("hashchange",function(){if(location.hash=="#compare")cmpShow();else cmpHide();if(location.hash=="#due")duShow();else duHide()});
 
 /* ===== BUCKET MOVEMENT PAGE (month-end vs latest upload) ===== */
-var BMK=[["0 Bucket",0,0],["1 to 29",1,29],["30 to 59",30,59],["60 to 89",60,89],["90 to 179",90,179],["180 & Above",180,1e9]];
+var BMK=[["0 Bucket",0,0],["1 to 30",1,30],["31 to 60",31,60],["61 to 90",61,90],["91 to 120",91,120],["121 to 150",121,150],["151 to 180",151,180],["181 & Above",181,1e9]];
 function bmIdx(d){for(var i=0;i<BMK.length;i++)if(d>=BMK[i][1]&&d<=BMK[i][2])return i;return BMK.length-1}
 /* Bucket Movement keeps ALL facilities (incl. this month's grants) so counts match the Excel pivot; new grants show as "New" */
 function bmPrep(rows){return rows.filter(function(r){return !!r}).map(function(r){var d=Math.round(+r.days||0);return Object.assign({},r,{days:d,stage:stage(d),b:bmIdx(d),mkt:onm(r.mkt)||"(none)",branch:r.branch||"(none)",desc:r.desc||"(none)",tot:+r.tot||0,rent:+r.rent||0,port:+r.port||0,adv:+r.adv||0})})}
@@ -1208,7 +1212,7 @@ function bmFilt(rows){
     if(gd){if(!g)return false;var gm=(ref-new Date(g+"T00:00:00Z"))/864e5/30.44;if(gd=="A"){if(gm<=12)return false}else if(gm>+gd)return false}
     return true})
 }
-var BMT={s:"Same bucket",w:"Worsened (moved to a higher bucket)",i:"Improved (moved to a lower bucket)",n:"New (not in month-end)",c:"Closed / not in latest",z:"0 Bucket \u2192 1 to 29",y:"1 to 29 \u2192 0 Bucket",j:"Improved 2+ buckets",q:"Cleared to 0 Bucket (from 30+)",p:"Paid this month",u:"Not paid this month",k:"Worsened 2+ buckets"};
+var BMT={s:"Same bucket",w:"Worsened (moved to a higher bucket)",i:"Improved (moved to a lower bucket)",n:"New (not in month-end)",c:"Closed / not in latest",z:"0 Bucket \u2192 1 to 30",y:"1 to 30 \u2192 0 Bucket",j:"Improved 2+ buckets",q:"Cleared to 0 Bucket (from 31+)",p:"Paid this month",u:"Not paid this month",k:"Worsened 2+ buckets"};
 function bmPick(o){
   var S=BMSEL;
   if(BMGRP&&o[BMGRP.k]!=BMGRP.v)return false;
