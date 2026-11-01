@@ -442,6 +442,7 @@ function omsg(fac){
 var OMC="";
 $("sres").addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-om]");if(!b)return;
   OMC=omsg(b.getAttribute("data-om"));$("omt").value=OMC;$("omr").textContent="";$("omm").classList.add("on")});
+["cl","tb"].forEach(function(id){$(id).addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-om]");if(!b)return;OMC=omsg(b.getAttribute("data-om"));$("omt").value=OMC;$("omr").textContent="";$("omm").classList.add("on")})});
 $("omx").onclick=function(){$("omm").classList.remove("on")};
 $("omm").onclick=function(e){if(e.target===$("omm"))$("omm").classList.remove("on")};
 $("omc").onclick=function(){
@@ -671,7 +672,7 @@ function draw(){
 }
 var OS=[],BS=[],CUR=[];
 function bar(l,w,v,c,i){return'<div class="bar"'+(i!=null?' data-i="'+i+'"':"")+'><div class="l">'+l+'</div><div class="t"><i style="width:'+Math.max(w*100,.5)+'%;background:'+c+'"></i></div><div class="v">'+v+'</div></div>'}
-var COLS=[["fac","Fac No"],["branch","Branch"],["name","Name"],["reg","Reg No"],["omni","Omni Cust No"],["mkt","Mkt Officer"],["desc","Description"],["st","Status"],["days","Arrears Days"],["due","Due Day"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["gr","Gross Rental"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["lpa","Last Paid Amt"],["tel","Tel"],["addr","Address"]];
+var COLS=[["fac","Fac No"],["branch","Branch"],["name","Name"],["reg","Reg No"],["omni","Omni Cust No"],["mkt","Mkt Officer"],["desc","Description"],["st","Status"],["days","NDIA"],["due","Due Day"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["gr","Gross Rental"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["lpa","Last Paid Amt"],["tel","Tel"],["addr","Address"]];
 var NDBG={col:"?",n:0},GRDBG={col:"?",hdr:""},ADBG={ad:"",om:""};
 function colL(i){var t="";i=+i;while(i>=0){t=String.fromCharCode(65+i%26)+t;i=Math.floor(i/26)-1}return t}
 function mrent(r){return +r.gr>0?+r.gr:0}
@@ -681,7 +682,7 @@ function cards(a,ps){
   $("cl").innerHTML=a.slice(page*ps,page*ps+ps).map(function(r){
     var dd=done[r.fac];
     var it=function(l,v){return"<div><span>"+l+"</span>"+v+"</div>"};
-    return'<div class="cc'+(dd?" dn":"")+(odc(r)?" od":"")+'"><div class="h"><div><b>'+r.fac+'</b><div class="mu">'+r.name+'</div></div><div style="text-align:right"><span class="tag s'+r.stage+'">Stage '+r.stage+'</span><div style="margin-top:4px">'+(r.r1?'<span class="tag fl">1st</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span>':"")+(odc(r)?' <span class="tag od">Added</span>':"")+'</div></div></div><div class="g">'+it("Arrears Days",r.days+" ("+BK[r.b][0]+")")+it("Total Arrears",fmt(r.tot))+it("Rental Arrears",fmt(r.rent))+it(mrentLbl(r),mrentTxt(r))+it("Portfolio",fmt(r.port))+it("Mkt Officer",r.mkt||"-")+it("Branch",r.branch||"-")+it("Omni Cust No",r.omni||"-")+it("Grant Date",r.grant||"-")+it("Last Paid",r.lpd||"-")+it("Last Paid Amt",fmt(r.lpa))+'<div style="grid-column:1/-1"><span>Tel</span><div class="duw">'+duCall(r.tel)+'</div></div>'+it("No Of O/S",(+r.nos).toFixed(2))+'<div style="grid-column:1/-1"><span>Address</span>'+esc(r.addr||"-")+'</div></div><label><input type=checkbox data-f="'+r.fac+'"'+(dd?" checked":"")+'> Done</label></div>'
+    return'<div class="cc'+(dd?" dn":"")+(odc(r)?" od":"")+'"><div class="h"><div><b>'+r.fac+'</b><div class="mu">'+r.name+'</div></div><div style="text-align:right"><span class="tag s'+r.stage+'">Stage '+r.stage+'</span><div style="margin-top:4px">'+(r.r1?'<span class="tag fl">1st</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span>':"")+(odc(r)?' <span class="tag od">Added</span>':"")+'</div></div></div><div class="g">'+it("Arrears Days",r.days+" ("+BK[r.b][0]+")")+it("Total Arrears",fmt(r.tot))+it("Rental Arrears",fmt(r.rent))+it(mrentLbl(r),mrentTxt(r))+it("Portfolio",fmt(r.port))+it("Mkt Officer",r.mkt||"-")+it("Branch",r.branch||"-")+it("Omni Cust No",r.omni||"-")+it("Grant Date",r.grant||"-")+it("Last Paid",r.lpd||"-")+it("Last Paid Amt",fmt(r.lpa))+'<div style="grid-column:1/-1"><span>Tel</span><div class="duw">'+duCall(r.tel)+'</div></div>'+it("No Of O/S",(+r.nos).toFixed(2))+'<div style="grid-column:1/-1"><span>Address</span>'+esc(r.addr||"-")+'</div></div><label><input type=checkbox data-f="'+r.fac+'"'+(dd?" checked":"")+'> Done</label> <button class="omb" data-om="'+esc(r.fac)+'">&#128241; Online message</button></div>'
   }).join("")
 }
 function table(a){
@@ -701,7 +702,7 @@ function table(a){
         if(c[0]=="addr"||c[0]=="omni")return"<td>"+esc(v==null?"":v);
         return"<td>"+(v==null?"":v)
       }).join("")+
-      "<td>"+(r.r1?'<span class="tag fl">1st</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span> ':"")+(odc(r)?'<span class="tag od">Added</span>':"")}).join("");
+      "<td>"+(r.r1?'<span class="tag fl">1st</span> ':"")+(r.np?'<span class="tag fl">NoPay</span> ':"")+(pn(r)?'<span class="tag fl">PNPL</span> ':"")+(odc(r)?'<span class="tag od">Added</span> ':"")+'<button class="omb" data-om="'+esc(r.fac)+'">&#128241; Online message</button>'}).join("");
 }
 
 /* ============================================================
@@ -721,7 +722,7 @@ function setDone(f,v){if(v)done[f]=1;else delete done[f];try{localStorage.setIte
    EXCEL EXPORT
    ============================================================ */
 function dl(rows,name){var ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Report");XLSX.writeFile(wb,name+".xlsx")}
-$("e1").onclick=function(){dl(CUR.map(function(r){return{"Fac No":r.fac,Branch:r.branch,Name:r.name,"Reg No":r.reg,Town:r.town,"Mkt Officer":r.mkt,Description:r.desc,Status:r.st||"","Follow Up":r.fu,"Arrears Days":r.days,Stage:r.stage,Bucket:BK[r.b][0],"No Of O/S":r.nos,"Gross Rental":mrent(r),"Rental Arrears":r.rent,"Total Arrears":r.tot,Portfolio:r.port,Advance:r.adv,"Fac Age":r.last12?"Last 12 Months":"After 12 Months","1st Rental":r.r1?"Yes":"","Null Payment":r.np?"Yes":"","Last Paid Amt":r.lpa,"PNPL":pn(r)?"Yes":"",Done:done[r.fac]?"Yes":"","Grant Date":r.grant,"Last Paid":r.lpd,Tel:r.tel,"Omni Cust No":r.omni,Address:r.addr}}),({PN:"PNPL_List",R1:"1st_Rental_List",NP:"Null_Payment_List"}[$("fg").value]||"Arrears_Filtered"))};
+$("e1").onclick=function(){dl(CUR.map(function(r){return{"Fac No":r.fac,Branch:r.branch,Name:r.name,"Reg No":r.reg,Town:r.town,"Mkt Officer":r.mkt,Description:r.desc,Status:r.st||"","Follow Up":r.fu,"NDIA":r.days,"Arrears Days":r.days,Stage:r.stage,Bucket:BK[r.b][0],"No Of O/S":r.nos,"Gross Rental":mrent(r),"Rental Arrears":r.rent,"Total Arrears":r.tot,Portfolio:r.port,Advance:r.adv,"Fac Age":r.last12?"Last 12 Months":"After 12 Months","1st Rental":r.r1?"Yes":"","Null Payment":r.np?"Yes":"","Last Paid Amt":r.lpa,"PNPL":pn(r)?"Yes":"",Done:done[r.fac]?"Yes":"","Grant Date":r.grant,"Last Paid":r.lpd,Tel:r.tel,"Omni Cust No":r.omni,Address:r.addr}}),({PN:"PNPL_List",R1:"1st_Rental_List",NP:"Null_Payment_List"}[$("fg").value]||"Arrears_Filtered"))};
 $("e2").onclick=function(){dl(OS.map(function(o){return{"Mkt Officer":o.Officer,Customers:o.n,"Rental Arrears":o.r,"Total Arrears":o.t,Portfolio:o.p,"Stage 1":o.s1,"Stage 2":o.s2,"Stage 3":o.s3,PNPL:o.pn,Done:o.d}}),"MktOfficer_Summary")};
 $("e3").onclick=function(){dl(BS.map(function(x,i){return{Bucket:BK[i][0],Customers:x.length,"Rental Arrears":sum(x,"rent"),"Total Arrears":sum(x,"tot"),Portfolio:sum(x,"port")}}),"Bucket_Summary")};
 
@@ -1302,7 +1303,7 @@ $("bmA").onchange=bmRun;$("bmGo").onclick=function(){SNAP={};BMSNAP={};bmInit()}
 $("bmPd").onchange=$("bmBr").onchange=$("bmOf").onchange=$("bmDe").onchange=$("bmGd").onchange=$("bmMo").onchange=function(){BMGRP=null;BMPG=0;bmRender()};
 $("bmXl").onclick=function(){
   var P=BMLIST.filter(bmPick);if(!P.length)return;
-  dl(P.map(function(o){return{"Fac No":o.fac,Name:o.name,"Mkt Officer":o.mkt,Branch:o.branch,Description:o.desc,"Grant Date":o.grant,"Month-end Bucket":o.aB>=0?BMK[o.aB][0]:"","Month-end Days":o.dA,"Bucket Now":o.bB>=0?BMK[o.bB][0]:"","Days Now":o.dB,Movement:({s:"Same",w:"Worsened",i:"Improved",n:"New",c:"Closed"})[o.t],"Buckets Moved":o.st,"Days Change":o.dd,"Last Paid Date":o.lpd,"Last Paid Amount":o.lpa,"Paid This Month":o.bB<0?"":o.paid?"Yes":"No","Arrears Change":(o.aB>=0&&o.bB>=0)?o.tB-o.tA:"","Total Arrears (Month-end)":o.tA,"Total Arrears (Now)":o.tB,"Rental Arrears (Now)":o.rB,Portfolio:o.pB||o.pA,Tel:o.tel}}),"Bucket_Movement")
+  dl(P.map(function(o){return{"Fac No":o.fac,Name:o.name,"Mkt Officer":o.mkt,Branch:o.branch,Description:o.desc,"Grant Date":o.grant,"Month-end Bucket":o.aB>=0?BMK[o.aB][0]:"","Month-end NDIA":o.dA,"Bucket Now":o.bB>=0?BMK[o.bB][0]:"","NDIA Now":o.dB,Movement:({s:"Same",w:"Worsened",i:"Improved",n:"New",c:"Closed"})[o.t],"Buckets Moved":o.st,"Days Change":o.dd,"Last Paid Date":o.lpd,"Last Paid Amount":o.lpa,"Paid This Month":o.bB<0?"":o.paid?"Yes":"No","Arrears Change":(o.aB>=0&&o.bB>=0)?o.tB-o.tA:"","Total Arrears (Month-end)":o.tA,"Total Arrears (Now)":o.tB,"Rental Arrears (Now)":o.rB,Portfolio:o.pB||o.pA,Tel:o.tel}}),"Bucket_Movement")
 };
 if(location.hash=="#bm")bmShow();
 /* ===== Due page: facilities whose Due day = selected date's day of month ===== */
@@ -1371,7 +1372,7 @@ function duRender(){
 $("dub").onclick=function(){location.hash="due"};
 $("duBack").onclick=function(){location.hash=""};
 ["duDay","duOf","duDe","duGd","duSt"].forEach(function(id){$(id).onchange=duRender});
-$("duXl").onclick=function(){dl(DUROWS.map(function(r){return{"Fac No":r.fac,Name:r.name,"Mkt Officer":r.mkt,Branch:r.branch,Description:r.desc,"Grant Date":duGrant(r),Stage:r.stage,"Arrears Days":r.days,"Rental Arrears":r.rent,"Total Arrears":r.tot,Due:r.due,"Last Paid Date":r.lpd||"","Last Paid Amount":r.lpa||0,Tel:r.tel}}),"Due_day"+o2day())};
+$("duXl").onclick=function(){dl(DUROWS.map(function(r){return{"Fac No":r.fac,Name:r.name,"Mkt Officer":r.mkt,Branch:r.branch,Description:r.desc,"Grant Date":duGrant(r),Stage:r.stage,"NDIA":r.days,"Arrears Days":r.days,"Rental Arrears":r.rent,"Total Arrears":r.tot,Due:r.due,"Last Paid Date":r.lpd||"","Last Paid Amount":r.lpa||0,Tel:r.tel}}),"Due_day"+o2day())};
 
 
 var CURR=null;
