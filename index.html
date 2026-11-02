@@ -461,7 +461,7 @@ function nbtn(f){return'<button class="ntb" data-nt="'+esc(f)+'">'+nlabel(f)+'</
 function nbtns(f){var b=document.querySelectorAll("[data-nt]");for(var i=0;i<b.length;i++){var q=b[i].getAttribute("data-nt");if(f==null||q==f)b[i].innerHTML=nlabel(q)}}
 function nfmt(ts){var d=new Date(ts),p=function(x){return(x<10?"0":"")+x};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())}
 function nrender(){
-  var a=nlist(NTF),h=a.length?a.map(function(x){return'<div class="nti"><div class="nth"><b>'+esc(x.name)+'</b><span>'+nfmt(x.ts)+'</span><button data-nd="'+esc(x.k)+'" title="Delete">&#10005;</button></div>'+esc(x.txt).replace(/\n/g,"<br>")+'</div>'}).join(""):'<div class="mu" style="padding:6px 0">No notes yet.</div>';
+  var a=nlist(NTF),h=a.length?a.map(function(x){return'<div class="nti"><div class="nth"><b>'+esc(x.name)+'</b><span>'+nfmt(x.ts)+'</span></div>'+esc(x.txt).replace(/\n/g,"<br>")+'</div>'}).join(""):'<div class="mu" style="padding:6px 0">No notes yet.</div>';
   var l=$("ntl");l.innerHTML=h;l.scrollTop=l.scrollHeight
 }
 function nmerge(k,j){var m={},o=NOTES[k]||{};Object.keys(o).forEach(function(x){if(x.charAt(0)=="l")m[x]=o[x]});if(j)Object.keys(j).forEach(function(x){m[x]=j[x]});NOTES[k]=m}
@@ -493,13 +493,6 @@ $("nts").onclick=function(){
   if(u&&typeof fetch=="function")fetch(u,{method:"POST",body:JSON.stringify(en)}).then(function(r){return r.ok?r.json():Promise.reject()}).then(function(j){add(j.name)}).catch(function(){add("l"+en.ts,"Online save failed – saved on this device only.")});
   else add("l"+en.ts,"Online storage is off – saved on this device only.")
 };
-$("ntl").addEventListener("click",function(e){
-  var d=e.target.closest&&e.target.closest("[data-nd]");if(!d)return;
-  if(!confirm("Delete this note?"))return;
-  var id=d.getAttribute("data-nd"),k=nkey(NTF),f=NTF;
-  if(NOTES[k])delete NOTES[k][id];nsave();nrender();nbtns(f);
-  if(id.charAt(0)!="l"){var u=nurl("notes/"+k+"/"+id);if(u&&typeof fetch=="function")fetch(u,{method:"DELETE"}).catch(function(){})}
-});
 $("omx").onclick=function(){$("omm").classList.remove("on")};
 $("omm").onclick=function(e){if(e.target===$("omm"))$("omm").classList.remove("on")};
 $("omc").onclick=function(){
