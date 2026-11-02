@@ -563,6 +563,7 @@ function isNewGrant(r){
   if(!g){var m=/^[A-Za-z]{2}(\d{2})(\d{2})/.exec((r&&r.fac)||"");g=m&&+m[2]>=1&&+m[2]<=12?"20"+m[1]+"-"+m[2]:""}
   return !!g&&g.slice(0,7)===curYM()
 }
+function dueArrived(o){var x=+o.due;if(!(x>0))return true;var t=new Date(),day=t.getDate(),last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();return x<=day||(day===last&&x>last)}
 function load(d){
   CURD=d;META=d.meta||{};asAt=d.asAt?new Date(d.asAt):new Date();
   var cut=new Date(asAt.getFullYear(),asAt.getMonth()-12,1); /* Last 12 months = the 12 full months before this month (e.g. 2025-11-01 to 2026-10-31) */
@@ -577,7 +578,7 @@ function load(d){
     var m=/^[A-Za-z]{2}(\d{2})(\d{2})/.exec(o.fac||""),gd=o.grant?new Date(o.grant):(m?new Date(2000+ +m[1],+m[2]-1,1):null);
     o.last12=gd?gd>=cut:false;
     var pm0=new Date(asAt.getFullYear(),asAt.getMonth()-1,1),ms0=new Date(asAt.getFullYear(),asAt.getMonth(),1),g0=o.grant?new Date(o.grant):null,lp=o.lpd?new Date(o.lpd):null;
-    o.r1=!!g0&&g0>=pm0&&g0<ms0&&(+o.rent>0);
+    o.r1=!!g0&&g0>=pm0&&g0<ms0&&(+o.rent>0)&&dueArrived(o); /* 1st rental counts only once its due day has arrived */
     o.np=!(lp&&lp>=ms0&&(o.lpa==null||+o.lpa>0));
     o.adv=+o.adv||0;
     return o;
