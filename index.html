@@ -564,7 +564,7 @@ function load(d){
     o.adv=+o.adv||0;
     return o;
   });
-  $("p1").value=91;$("p2").value=91+dim(asAt);
+  $("p1").value=91;$("p2").value=91+dim(new Date());
   var ms=Array.from(new Set(R.map(function(r){return r.mkt||"(none)"}))).sort();
   $("ds").innerHTML='<option value="">All</option>'+Array.from(new Set(R.map(function(r){return r.desc||"(none)"}))).sort().map(function(m){return"<option>"+m+"</option>"}).join("");
   $("mks").innerHTML='<option value="">All</option>'+ms.map(function(m){return"<option>"+m+"</option>"}).join("");
@@ -598,7 +598,7 @@ function info(){
    ============================================================ */
 function pn(r){return r.pd>=+$("p1").value&&r.pd<=+$("p2").value}
 function odGap(){var a=asAt||new Date(),t=new Date(a.getFullYear(),a.getMonth(),a.getDate()),n=new Date(a.getFullYear(),a.getMonth()+1,1);return Math.round((n-t)/864e5)}
-function odCls(r){var p1=+$("p1").value||91,p2=+$("p2").value||(91+dim(asAt||new Date())),d=+r.pd||0,nw=d>=p1&&d<=p2,d1=+r.due===1,pj=d+odGap();
+function odCls(r){var p1=+$("p1").value||91,p2=+$("p2").value||(91+dim(new Date())),d=+r.pd||0,nw=d>=p1&&d<=p2,d1=+r.due===1,pj=d+odGap();
   if(nw)return d1?"X":"N";return d1&&pj>=p1&&pj<=p2?"E":""}
 function odc(r){return $("fg").value==="OD"&&odCls(r)==="E"}
 function filt(skipB){
@@ -632,8 +632,8 @@ function sum(a,k){return a.reduce(function(s,r){return s+(+r[k]||0)},0)}
 
 function draw(){
   try{sres()}catch(e){}
-  $("meta").textContent="As at "+asAt.toDateString()+" • "+R.length+" facilities • "+dim(asAt)+" days month"+(EXC?" \u2022 "+EXC+" this-month grants excluded (see Monthly Lending)":"");
-  $("pnote").textContent="PNPL = Arrears Days (Branch Wise Rental Arrears) "+$("p1").value+" – "+$("p2").value+" (91 + "+dim(asAt)+" days in month). Stage 1 = 0–30, Stage 2 = 31–90, Stage 3 = 91+ (NDIA)";
+  $("meta").textContent="As at "+asAt.toDateString()+" • "+R.length+" facilities • "+dim(new Date())+" days month"+(EXC?" \u2022 "+EXC+" this-month grants excluded (see Monthly Lending)":"");
+  $("pnote").textContent="PNPL = Arrears Days (Branch Wise Rental Arrears) "+$("p1").value+" – "+$("p2").value+" (91 + "+dim(new Date())+" days in month). Stage 1 = 0–30, Stage 2 = 31–90, Stage 3 = 91+ (NDIA)";
   Object.keys(bkSel).forEach(function(i){if(!bkOk(i))delete bkSel[i]});
   var a=filt(false),b=filt(true);
   var k=[
@@ -725,7 +725,7 @@ function draw(){
 }
 var OS=[],BS=[],CUR=[];
 function bar(l,w,v,c,i){return'<div class="bar"'+(i!=null?' data-i="'+i+'"':"")+'><div class="l">'+l+'</div><div class="t"><i style="width:'+Math.max(w*100,.5)+'%;background:'+c+'"></i></div><div class="v">'+v+'</div></div>'}
-var COLS=[["fac","Fac No"],["branch","Branch"],["name","Name"],["reg","Reg No"],["omni","Omni Cust No"],["mkt","Mkt Officer"],["desc","Description"],["st","Status"],["days","NDIA"],["due","Due Day"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["gr","Gross Rental"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["lpa","Last Paid Amt"],["tel","Tel"],["addr","Address"]];
+var COLS=[["fac","Fac No"],["branch","Branch"],["name","Name"],["reg","Reg No"],["omni","Omni Cust No"],["mkt","Mkt Officer"],["desc","Description"],["st","Status"],["days","NDIA"],["pd","Arrears Days"],["due","Due Day"],["stage","Stage"],["b","Bucket"],["nos","No Of O/S"],["gr","Gross Rental"],["rent","Rental Arrears"],["tot","Total Arrears"],["port","Portfolio"],["adv","Advance"],["grant","Grant Date"],["lpd","Last Paid"],["lpa","Last Paid Amt"],["tel","Tel"],["addr","Address"]];
 var NDBG={col:"?",n:0},GRDBG={col:"?",hdr:""},ADBG={ad:"",om:""};
 function colL(i){var t="";i=+i;while(i>=0){t=String.fromCharCode(65+i%26)+t;i=Math.floor(i/26)-1}return t}
 function mrent(r){return +r.gr>0?+r.gr:0}
@@ -742,7 +742,7 @@ function table(a){
   a=a.slice().sort(function(x,y){var p=x[sortK],q=y[sortK];return(p>q?1:p<q?-1:0)*sortD});CUR=a;
   var ps=100,pc=Math.max(1,Math.ceil(a.length/ps));if(page>=pc)page=pc-1;
   cards(a,ps);$("th").textContent="Customers ("+a.length+")";$("pi").textContent="Page "+(page+1)+" / "+pc;
-  var num={due:1,days:1,nos:1,rent:1,gr:1,tot:1,port:1,adv:1,lpa:1};
+  var num={due:1,days:1,pd:1,nos:1,rent:1,gr:1,tot:1,port:1,adv:1,lpa:1};
   $("tb").innerHTML="<tr><th>Done"+COLS.map(function(c){return'<th data-k="'+c[0]+'"'+(num[c[0]]?' class=n':'')+'>'+c[1]+(sortK==c[0]?(sortD>0?" ▲":" ▼"):"")}).join("")+"<th>Flags</tr>"+
     a.slice(page*ps,page*ps+ps).map(function(r){
       var dd=done[r.fac];
@@ -784,7 +784,7 @@ $("e3").onclick=function(){dl(BS.map(function(x,i){return{Bucket:BK[i][0],Custom
    ============================================================ */
 ["mk","mks","br","ds","sts","ib","st","vt","fg","dn","p1","p2","q"].forEach(function(i){$(i).oninput=function(){page=0;draw()}});
 $("qx").onclick=function(){$("q").value="";page=0;draw();$("q").focus()};
-$("rs").onclick=function(){["mk","mks","br","ds","sts","ib","st","vt","fg","dn","q"].forEach(function(i){$(i).value=""});$("p1").value=91;$("p2").value=91+dim(asAt);bkSel={};page=0;draw()};
+$("rs").onclick=function(){["mk","mks","br","ds","sts","ib","st","vt","fg","dn","q"].forEach(function(i){$(i).value=""});$("p1").value=91;$("p2").value=91+dim(new Date());bkSel={};page=0;draw()};
 function tg(e){var c=e.target.closest("[data-i]");if(c){var i=c.dataset.i;if(!bkOk(i))return;if(bkSel[i])delete bkSel[i];else bkSel[i]=1;page=0;draw()}}
 $("bk").onclick=tg;$("c2").onclick=tg;
 $("tb").onclick=function(e){var t=e.target;if(t.dataset.f){setDone(t.dataset.f,t.checked);draw();return}if(t.tagName=="TH"&&t.dataset.k){if(sortK==t.dataset.k)sortD*=-1;else{sortK=t.dataset.k;sortD=-1}draw()}};
