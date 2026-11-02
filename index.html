@@ -171,6 +171,20 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 .mpn .mi{display:flex;gap:8px;align-items:center;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--tx)}.mpn .mi:hover{background:var(--bg)}
 .mpn .mi i{width:15px;height:15px;border:1.5px solid var(--mu);border-radius:4px;flex:none;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;line-height:1}
 .mpn .mi.on i{background:var(--pr);border-color:var(--pr);color:#fff}.mpn .mh{padding:6px 12px 8px;font-size:11px;color:var(--mu);border-top:1px solid var(--bd)}
+
+/* ---- clearer filters + Month end due state ---- */
+:root{--bd2:#8f9bb3}@media(prefers-color-scheme:dark){:root{--bd2:#5d6f93}}
+.fb{background:var(--card);border:1.5px solid var(--bd2);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.fb h4{color:var(--pr);font-weight:700;font-size:13.5px}
+.fr label{color:var(--tx);font-weight:600;font-size:13.5px}
+.fb select,.fb input,.fb button.mb0{border:1.5px solid var(--bd2);background:var(--card);color:var(--tx);font-weight:500}
+.fb select:focus,.fb input:focus,.fb button.mb0:focus{outline:2px solid var(--pr);outline-offset:1px}
+.fb button.mb0.on{border-color:var(--pr);background:rgba(36,87,214,.10);color:var(--pr);font-weight:700}
+.chip{border:1.5px solid var(--bd2);color:var(--tx);font-weight:500}
+.chip.on{color:#fff;font-weight:700}
+.medb{border:2px solid var(--bd2);font-weight:700}
+.medb.on{background:#d6453d;border-color:#d6453d;color:#fff;box-shadow:0 0 0 3px rgba(214,69,61,.25)}
+#medi{background:var(--bd2);color:#fff}#medi.on{background:#d6453d}
 </style>
 </head>
 <body>
@@ -233,7 +247,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 <div class="card" id="info" style="border-left:4px solid var(--s2)"></div>
 <div class="card look" id="look"><h3>Fac No Search</h3><div class="f"><input id="fq" placeholder="Fac No (e.g. VF250201107747)" size="30"><button id="fgo" class="p">Check</button></div><div id="lres" class="mu" style="margin-top:8px">Type a Fac No and click Check to see its Stage, Arrears and Done status.</div></div>
 <div class="kpis" id="kpis"></div>
-<div class="card fp"><div class="fh"><div><b>&#9776; Filters</b> <span class="badge" id="fcnt">0 active</span></div><div class="f" style="gap:6px"><button id="ftg" class="ftg">Show / hide</button><button id="rs">&#8635; Clear all</button><button id="med" class="medb" title="Month end due: use Arrears Days (Branch Wise Rental Arrears) instead of NDIA for Stage / Bucket">&#128197; Month end due</button></div></div>
+<div class="card fp"><div class="fh"><div><b>&#9776; Filters</b> <span class="badge" id="fcnt">0 active</span><span class="badge" id="medi"></span></div><div class="f" style="gap:6px"><button id="ftg" class="ftg">Show / hide</button><button id="rs">&#8635; Clear all</button><button id="med" class="medb" title="Month end due: use Arrears Days (Branch Wise Rental Arrears) instead of NDIA for Stage / Bucket">&#128197; Month end due</button></div></div>
 <div class="fg3">
 <div class="fb"><h4>Branch, Officer &amp; Product</h4><div class="fr"><label>Branch<select id="br"><option value="">All Branches</option></select></label>
 <label>Mkt Officer<select id="mks"><option value="">All</option></select></label>
@@ -501,7 +515,8 @@ $("nts").onclick=function(){
 };
 
 /* ===== Month end due toggle: Arrears Days (Branch Wise Rental Arrears) instead of NDIA ===== */
-function medSync(){["med","medB"].forEach(function(i){var b=$(i);if(b){b.classList.toggle("on",MED);b.innerHTML="&#128197; Month end due"+(MED?" : ON":"")}})}
+function medCnt(i){var n=null;try{if(i=="med")n=(typeof CUR!=="undefined"&&CUR)?CUR.length:R.length;else if(typeof BB!=="undefined"&&BB&&BB.length)n=bmFilt(BB).length}catch(e){}return n}
+function medSync(){["med","medB"].forEach(function(i){var b=$(i);if(b){var n=medCnt(i);b.classList.toggle("on",MED);b.innerHTML=(MED?"&#10004; ":"&#128197; ")+"Month end due : "+(MED?"ON":"OFF")+(n!=null?" &middot; <b>"+fmt(n)+"</b>":"")}});var m=$("medi");if(m){m.classList.toggle("on",MED);m.textContent=MED?"Days: Arrears Days":"Days: NDIA"}}
 function medApply(){
   R.forEach(function(o){o.days=MED?o.pd:o.nd;o.stage=stage(o.days);o.b=bidx(o.days)});
   BMSNAP={};SNAP={};BCUR=null;CURR=null;
@@ -650,6 +665,7 @@ function filt(skipB){
 function sum(a,k){return a.reduce(function(s,r){return s+(+r[k]||0)},0)}
 
 function draw(){
+  setTimeout(medSync,0);
   try{sres()}catch(e){}
   $("meta").textContent="As at "+asAt.toDateString()+" • "+R.length+" facilities • "+dim(new Date())+" days month"+(EXC?" \u2022 "+EXC+" this-month grants excluded (see Monthly Lending)":"");
   $("pnote").textContent="PNPL = Arrears Days (Branch Wise Rental Arrears) "+$("p1").value+" – "+$("p2").value+" (91 + "+dim(new Date())+" days in month). Stage 1 = 0–30, Stage 2 = 31–90, Stage 3 = 91+ (NDIA)";
@@ -1294,6 +1310,7 @@ function bmPick(o){
   switch(S.t){case"all":return true;case"z":return o.aB==0&&o.bB==1;case"y":return o.aB==1&&o.bB==0;case"j":return o.aB>=0&&o.bB>=0&&o.aB-o.bB>1;case"k":return o.aB>=0&&o.bB>=0&&o.bB-o.aB>1;case"q":return o.aB>=2&&o.bB==0;case"p":return o.bB>=0&&o.paid;case"u":return o.bB>=0&&!o.paid;default:return o.t==S.t}
 }
 function bmRender(){
+  setTimeout(medSync,0);
   var a=bmFilt(BA),b=bmFilt(BB),MA={},MB={};a.forEach(function(r){MA[r.fac]=r});b.forEach(function(r){MB[r.fac]=r});
   var L=Object.keys(Object.assign({},MA,MB)).map(function(f){
     var x=MA[f],y=MB[f],z=y||x,o={fac:f,name:z.name,mkt:z.mkt,branch:z.branch,desc:z.desc,grant:duGrant(z),gm:duGrant(z).slice(0,7)||"(none)",tel:z.tel,
