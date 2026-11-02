@@ -565,7 +565,7 @@ function isNewGrant(r){
 }
 function load(d){
   CURD=d;META=d.meta||{};asAt=d.asAt?new Date(d.asAt):new Date();
-  var cut=new Date(asAt.getFullYear(),asAt.getMonth()-11,1);
+  var cut=new Date(asAt.getFullYear(),asAt.getMonth()-12,1); /* Last 12 months = the 12 full months before this month (e.g. 2025-11-01 to 2026-10-31) */
   EXC=0;R=d.rows.filter(function(r){if(r&&isNewGrant(r)){EXC++;return false}return !!r}).map(function(r){
     var o=Object.assign({},r);
     o.mkt=onm(r.mkt);
@@ -1414,7 +1414,7 @@ function duGrant(r){var g=String(r.grant||"").slice(0,10);if(g)return g;var m=/^
 function duList(){
   var sel=$("duDay").value,d=new Date(),day=sel?+sel:d.getDate(),last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(),isTd=!sel;
   var of=$("duOf").value,de=$("duDe").value,gd=$("duGd").value,st=$("duSt").value,cut="";
-  if(gd){var x=new Date(d);x.setMonth(x.getMonth()-(gd=="A"?12:+gd));cut=lIso(x)}
+  if(gd){var x=new Date(d);if(gd=="A"||gd=="12")x.setDate(1);x.setMonth(x.getMonth()-(gd=="A"?12:+gd));cut=lIso(x)}
   var hasDue=R.some(function(r){return+r.due>0});
   var all=R.filter(function(r){var x=+r.due;return x>0&&(x===day||(isTd&&day===last&&x>last))});
   var rows=all.filter(function(r){
@@ -1492,7 +1492,7 @@ $("cmXl").onclick=function(){cmpXl()};
 function mlab(k){var d=new Date(k+"-01T00:00:00Z");return isNaN(d)?k:d.toLocaleDateString("en-GB",{month:"short",year:"numeric",timeZone:"UTC"})}
 function cmpFilt(rows,skMo,skGd){
   var b=$("cmBr").value,o=$("cmOf").value,d=$("cmDe").value,g=skGd?"":$("cmGd").value,mo=skMo?"":$("cmMo").value,cut="";
-  if(g&&CURR){var x=new Date(CURR.key+"T00:00:00Z");x.setUTCMonth(x.getUTCMonth()-(g=="A"?12:+g));cut=x.toISOString().slice(0,10)}
+  if(g&&CURR){var x=new Date(CURR.key+"T00:00:00Z");if(g=="A"||g=="12")x.setUTCDate(1);x.setUTCMonth(x.getUTCMonth()-(g=="A"?12:+g));cut=x.toISOString().slice(0,10)}
   return rows.filter(function(r){
     if(!mSel(b,r.branch))return false;if(!mSel(o,r.mkt))return false;if(!mSel(d,r.desc))return false;
     var gd=String(r.grant||"").slice(0,10);
