@@ -518,7 +518,7 @@ $("nts").onclick=function(){
 function medCnt(i){var n=null;try{if(i=="med")n=(typeof CUR!=="undefined"&&CUR)?CUR.length:R.length;else if(typeof BB!=="undefined"&&BB&&BB.length)n=bmFilt(BB).length}catch(e){}return n}
 function medSync(){["med","medB"].forEach(function(i){var b=$(i);if(b){var n=medCnt(i);b.classList.toggle("on",MED);b.innerHTML=(MED?"&#10004; ":"&#128197; ")+"Month end due : "+(MED?"ON":"OFF")+(n!=null?" &middot; <b>"+fmt(n)+"</b>":"")}});var m=$("medi");if(m){m.classList.toggle("on",MED);m.textContent=MED?"Days: Arrears Days":"Days: NDIA"}}
 function medApply(){
-  R.forEach(function(o){o.days=MED?o.pd:o.nd;o.stage=stage(o.days);o.b=bidx(o.days);o.r1=r1calc(o)});
+  R.forEach(function(o){arrAdj(o);o.days=MED?o.pd:o.nd;o.stage=stage(o.days);o.b=bidx(o.days);o.r1=r1calc(o)});
   BMSNAP={};SNAP={};BCUR=null;CURR=null;
   page=0;draw();
   if($("bm").classList.contains("on"))bmInit();
@@ -581,11 +581,23 @@ function isNewGrant(r){
 /* 1st Rental: normally only facilities whose due day has arrived and have arrears; with "Month end due" ON every facility granted last month (all fall due by month end) */
 function r1calc(o){return !!o.r1b&&(MED||(+o.rent>0&&dueArrived(o)))}
 function dueArrived(o){var x=+o.due;if(!(x>0))return true;var t=new Date(),day=t.getDate(),last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();return x<=day||(day===last&&x>last)}
+/* The Branch Wise RentalArrears report is run "As at" month-end, so it already counts the rental(s) not yet due today.
+   Destinity NRIA = rentals in arrears today. Remove the not-yet-due rentals (nos - NRIA, rounded) from
+   Rental Arrears / Total Arrears / No Of O/S when "Month end due" is OFF. ON = report as it is. */
+function arrAdj(o){
+  var k=0;
+  if(!MED&&o.nr!=null&&+o.gr>0)k=Math.max(0,Math.round((+o.nos0||0)-(+o.nr||0)));
+  o.k=k;
+  o.rent=Math.max(0,Math.round(((+o.rent0||0)-k*(+o.gr))*100)/100);
+  o.tot=Math.max(0,Math.round(((+o.tot0||0)-k*(+o.gr))*100)/100);
+  o.nos=Math.max(0,Math.round(((+o.nos0||0)-k)*100)/100)
+}
 function load(d){
   CURD=d;META=d.meta||{};asAt=d.asAt?new Date(d.asAt):new Date();
   var cut=new Date(asAt.getFullYear(),asAt.getMonth()-12,1); /* Last 12 months = the 12 full months before this month (e.g. 2025-11-01 to 2026-10-31) */
   EXC=0;R=d.rows.filter(function(r){if(r&&isNewGrant(r)){EXC++;return false}return !!r}).map(function(r){
     var o=Object.assign({},r);
+    o.rent0=+r.rent||0;o.tot0=+r.tot||0;o.nos0=+r.nos||0;arrAdj(o);
     o.mkt=onm(r.mkt);
     o.nd=Math.round(+r.days||0);
     o.days=Math.round(dayOf(r));
@@ -911,17 +923,17 @@ function destRows(g,h,c,pm,LEND,LMETA){
   /* Status = column AK (index 36). If AK header is not "status" but a column named Status exists, that one is used */
   var akH=nm((g[h]||[])[36]),sci=/status/i.test(akH)?36:(sc!=null?c[sc]:(akH?36:-1));
   LMETA.sc=sci>=0?(nm((g[h]||[])[sci])||colL(sci)):LMETA.sc;
-  NDBG.col=colL(ndi)+" ("+(nm((g[h]||[])[ndi])||"no header")+")";
   var nc=pickCol(c,[/^(customer|cust)\s*name$/,/^name$/,/name/],/officer|branch|follow|mkt|marketing|guarantor|omni/),
       tlc=pickCol(c,[/^tel/,/phone|mobile|contact/]),
       dyc=pickCol(c,[/^arrears?\s*days$/,/arrears?.*days|days.*arrears?/]),
-      ndc=pickCol(c,[/^ndia$/,/ndia/]),ndi=ndc!=null?c[ndc]:58,ibc=pickCol(c,[/^introducer\s*by$/,/introducer/]),ibi=ibc!=null?c[ibc]:57,tac=pickCol(c,[/^total\s*arrears?$/]),rac=pickCol(c,[/^rental\s*arrears?$/]);
+      ndc=pickCol(c,[/^ndia$/,/ndia/]),ndi=ndc!=null?c[ndc]:58,ibc=pickCol(c,[/^introducer\s*by$/,/introducer/]),ibi=ibc!=null?c[ibc]:57,tac=pickCol(c,[/^total\s*arrears?$/]),rac=pickCol(c,[/^rental\s*arrears?$/]),nrc=pickCol(c,[/^nria$/]);
+  NDBG.col=colL(ndi)+" ("+(nm((g[h]||[])[ndi])||"no header")+")";
   g.slice(h+1).forEach(function(r){
     var f=nm(r[c["Fac No"]]);if(!f)return;
     var pv=+r[c["Portfolio"]]||0,fo=nm(r[c["Follow Up Officer"]]),bn=nm(r[c["Branch"]]),ds0=nm(r[c["Description"]]);
     var stx=sci>=0?nm(r[sci]):"";
     pm[f]={o:fo,d:ds0,b:bn,p:pv,a:+r[c["Advance"]]||0,ad:adc?nm(r[c[adc]]):"",om:omc?nm(r[c[omc]]):"",st:stx,
-      nm:nc?nm(r[c[nc]]):"",tl:tlc?nm(r[c[tlc]]):"",dy:dyc?(+r[c[dyc]]||0):0,ib:nm(r[ibi]).toUpperCase(),nd:(function(){var v=r[ndi];if(v==null||v==="")return null;v=+String(v).replace(/,/g,"");if(isNaN(v))return null;NDBG.n++;return Math.round(v)})(),ta:tac?(+r[c[tac]]||0):0,ra:rac?(+r[c[rac]]||0):0,gv:gc?toIso(r[c[gc]]):""};
+      nm:nc?nm(r[c[nc]]):"",tl:tlc?nm(r[c[tlc]]):"",dy:dyc?(+r[c[dyc]]||0):0,ib:nm(r[ibi]).toUpperCase(),nd:(function(){var v=r[ndi];if(v==null||v==="")return null;v=+String(v).replace(/,/g,"");if(isNaN(v))return null;NDBG.n++;return Math.round(v)})(),nr:nrc?(r[c[nrc]]===""||r[c[nrc]]==null?null:(+r[c[nrc]]||0)):null,ta:tac?(+r[c[tac]]||0):0,ra:rac?(+r[c[rac]]||0):0,gv:gc?toIso(r[c[gc]]):""};
     var gv=gc?toIso(r[c[gc]]):"";
     if(!gc){var fm=/^[A-Za-z]{2}(\d{2})(\d{2})/.exec(f);if(fm&&+fm[2]>=1&&+fm[2]<=12)gv="20"+fm[1]+"-"+fm[2]+"-01"}
     var av=ac?(+r[c[ac]]||0):pv,tx=stx;
@@ -1135,7 +1147,7 @@ function runUpload(meOnly){
         var p=pm[r.fac]||{p:0,a:0,d:"",o:"",ad:"",om:""};
         r.mkt=onm(p.o||r.mkt0);
         r.port=p.p;
-        r.ib=p.ib||"";r.ad=r.days;if(p.nd!=null)r.days=p.nd>0?p.nd+1:p.nd; /* NDIA (Destinity col BG) is as of previous day -> +1 */
+        r.nr=(p.nr!=null?p.nr:null);r.ib=p.ib||"";r.ad=r.days;if(p.nd!=null)r.days=p.nd>0?p.nd+1:p.nd; /* NDIA (Destinity col BG) is as of previous day -> +1 */
         r.adv=p.a;
         r.desc=p.d;
         r.st=p.st||"";
