@@ -595,7 +595,7 @@ function arrAdj(o){
   o.k=k;
   o.rent=Math.max(0,Math.round(((+o.rent0||0)-k*(+o.gr))*100)/100);
   o.tot=(o.tdt!=null)?Math.round((+o.tdt||0)*100)/100:Math.max(0,Math.round(((+o.tot0||0)-k*(+o.gr))*100)/100); /* Total Arrears = TODAY report column Y whenever that report is uploaded (ON or OFF) */
-  o.nos=(!MED&&o.tdn!=null)?Math.round((+o.tdn||0)*100)/100:Math.max(0,Math.round(((+o.nos0||0)-k)*100)/100)
+  o.nos=(o.tdn!=null)?Math.round((+o.tdn||0)*100)/100:Math.max(0,Math.round(((+o.nos0||0)-k)*100)/100)
 }
 function load(d){
   CURD=d;META=d.meta||{};asAt=d.asAt?new Date(d.asAt):new Date();
