@@ -1077,9 +1077,10 @@ function runUpload(meOnly){
 
       var c={};g[h].forEach(function(x,i){if(x!=null)c[nm(x)]=i});
 
+      var off=c["FACNo"]!=null?c["FACNo"]-4:0; /* FACNo is Excel column E; the grid may start at B, so shift fixed letters (R,U,Y,AB,AC) by this */
       if(item.today){ /* TODAY report: Fac Amount (R) + Total Arrears (Y) only */
         g.slice(0,h).forEach(function(r){r.forEach(function(x){var m=/As at\s*:\s*(\d\d)-(\d\d)-(\d{4})/i.exec(String(x==null?"":x));if(m)TDATE=m[1]+"-"+m[2]+"-"+m[3]})});
-        g.slice(h+1).forEach(function(r){var f=nm(r[c["FACNo"]]);if(!f||f.length<8)return;TD[f]={fa:n0(r[FA_I]),ta:n0(r[TA_I]),nos:n0(r[20]),lpa:n0(r[LPA_I]),lpd:dIso(r[LPD_I])};nT++});
+        g.slice(h+1).forEach(function(r){var f=nm(r[c["FACNo"]]);if(!f||f.length<8)return;TD[f]={fa:n0(r[FA_I+off]),ta:n0(r[TA_I+off]),nos:n0(r[20+off]),lpa:n0(r[LPA_I+off]),lpd:dIso(r[LPD_I+off])};nT++});
         processed++;return
       }
       // Destinity summary (has Portfolio + Fac No)
@@ -1112,7 +1113,7 @@ function runUpload(meOnly){
             }
           })
         });
-        LPDBG.a=nm(g[h][LPA_I])||"(no header)";LPDBG.d=nm(g[h][LPD_I])||"(no header)";var duc=dueCol(g,h,c),grc=-1,gz=function(x){return String(x==null?"":x).toLowerCase().replace(/[^a-z0-9]/g,"")};
+        LPDBG.a=nm(g[h][LPA_I+off])||"(no header)";LPDBG.d=nm(g[h][LPD_I+off])||"(no header)";var duc=dueCol(g,h,c),grc=-1,gz=function(x){return String(x==null?"":x).toLowerCase().replace(/[^a-z0-9]/g,"")};
         Object.keys(c).forEach(function(k){if(grc<0&&gz(k)=="grossrental")grc=c[k]});
         if(grc<0)for(var gi=Math.max(0,h-4);gi<=Math.min(g.length-1,h+4)&&grc<0;gi++)g[gi].forEach(function(x,i){if(grc<0&&gz(x)=="grossrental")grc=i});
         if(grc<0)Object.keys(c).forEach(function(k){var z=gz(k);if(grc<0&&z.indexOf("gross")>=0&&z.indexOf("rent")>=0)grc=c[k]});
@@ -1123,11 +1124,11 @@ function runUpload(meOnly){
           if(!f||f.length<8||seen[f])return;
           seen[f]=1;
           rows.push({
-            fac:f,fa:n0(r[FA_I]),name:nm(r[c["Name"]]),reg:nm(r[c["Reg No"]]),town:nm(r[c["Town"]]),
+            fac:f,fa:n0(r[FA_I+off]),name:nm(r[c["Name"]]),reg:nm(r[c["Reg No"]]),town:nm(r[c["Town"]]),
             nos:+r[c["No Of O/S"]]||0,rent:+r[c["Rental Arrears"]]||0,
             tot:+r[c["Total Arrears"]]||0,days:+r[c["Arrears Days"]]||0,
-            grant:dIso(r[c["Grant Date"]]),lpd:dIso(r[LPD_I]), /* Last Paid Date = Branch Wise RentalArrears col AC */
-            lpa:+String(r[LPA_I]==null?"":r[LPA_I]).replace(/,/g,"")||0, /* Last Paid Amount = col AB */gr:grc>=0?(+String(r[grc]).replace(/,/g,"")||0):0,due:duc>=0?parseDue(r[duc]):0,tel:nm(r[c["Tel Office Home"]]),
+            grant:dIso(r[c["Grant Date"]]),lpd:dIso(r[LPD_I+off]), /* Last Paid Date = Branch Wise RentalArrears col AC */
+            lpa:n0(r[LPA_I+off]), /* Last Paid Amount = col AB */gr:grc>=0?(+String(r[grc]).replace(/,/g,"")||0):0,due:duc>=0?parseDue(r[duc]):0,tel:nm(r[c["Tel Office Home"]]),
             mkt0:nm(r[c["Mkt Officer"]]),fu:nm(r[c["Follow up Officer"]]),
             br:nm(r[c["Branch"]])||hb
           })
