@@ -594,7 +594,7 @@ function arrAdj(o){
   if(!MED&&o.nr!=null&&+o.gr>0)k=Math.max(0,Math.round((+o.nos0||0)-(+o.nr||0)));
   o.k=k;
   o.rent=Math.max(0,Math.round(((+o.rent0||0)-k*(+o.gr))*100)/100);
-  o.tot=(!MED&&o.tdt!=null)?Math.round((+o.tdt||0)*100)/100:Math.max(0,Math.round(((+o.tot0||0)-k*(+o.gr))*100)/100); /* today report Total Arrears (col Y) wins when Month end due is OFF */
+  o.tot=(o.tdt!=null)?Math.round((+o.tdt||0)*100)/100:Math.max(0,Math.round(((+o.tot0||0)-k*(+o.gr))*100)/100); /* Total Arrears = TODAY report column Y whenever that report is uploaded (ON or OFF) */
   o.nos=(!MED&&o.tdn!=null)?Math.round((+o.tdn||0)*100)/100:Math.max(0,Math.round(((+o.nos0||0)-k)*100)/100)
 }
 function load(d){
