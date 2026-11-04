@@ -301,6 +301,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
   <button id="bmBack" class="p">&#8592; Dashboard</button>
   <b style="font-size:16px;align-self:center">&#128200; Bucket Movement</b>
    <button id="medB" class="medb" title="Month end due: use Arrears Days instead of NDIA">&#128197; Month end due</button>
+   <button id="bmLM" class="medb" title="Bucket movement of the last month end: previous month-end report (A) vs last month-end report (B), from the month-end Excel uploads">&#128197; Last month end</button>
   <label>Month-end report (A)<select id="bmA"></select></label>
   <label>Latest uploaded report (B)<select id="bmB"></select></label>
   <label>Branch<select id="bmBr"><option value="">All</option></select></label>
@@ -1293,17 +1294,32 @@ function bmSnap(k){
     return BMSNAP[k]=bmPrep(rows)
   }).catch(function(e){console.error(e);return null})
 }
+var BMLM=false; /* true = Last month end mode: A = previous month-end, B = last month-end (both saved month-end uploads) */
 var BA=[],BB=[],BCUR=null,BMSEL={t:"w"},BMGRP=null,BMPG=0,BMGB="mkt",BMLIST=[];
-function bmShow(){$("bm").classList.add("on");document.body.style.overflow="hidden";bmInit()}
+function bmShow(){bmLMSync();$("bm").classList.add("on");document.body.style.overflow="hidden";bmInit()}
 function bmHide(){$("bm").classList.remove("on")}
 $("bmb").onclick=function(){location.hash="bm"};
 $("bmBack").onclick=function(){location.hash=""};
+function bmLMSync(){var b=$("bmLM");if(b){b.classList.toggle("on",BMLM);b.innerHTML=(BMLM?"&#10004; ":"&#128197; ")+"Last month end"+(BMLM?" : ON":"")}var l=$("bmB")&&$("bmB").parentNode;if(l&&l.firstChild)l.firstChild.nodeValue=BMLM?"Last month-end report (B)":"Latest uploaded report (B)"}
+$("bmLM").onclick=function(){BMLM=!BMLM;BMSEL={t:"w"};bmLMSync();bmInit()};
 window.addEventListener("hashchange",function(){if(location.hash=="#bm")bmShow();else{bmHide();if(!$("cmp").classList.contains("on")&&!$("due").classList.contains("on"))document.body.style.overflow=""}});
 function bmInit(){
   if(!ccfg().url){$("bmbody").innerHTML='<div class="card">Online storage is not set up, so the saved month-end report cannot be loaded.</div>';return}
   $("bmbody").innerHTML='<div class="card mu">Loading...</div>';
   Promise.all([sget("snapmeta"),sget("arrears")]).then(function(r){
-    SM=r[0]||{};var cur=(r[1]&&r[1].rows&&r[1].rows.length)?r[1]:CURD;
+    SM=r[0]||{};
+    if(BMLM){
+      var al=Object.keys(SM).filter(isME).sort(),lk=al[al.length-1],pk=al.filter(function(k){return k<lk}).reverse();
+      if(!lk||!pk.length){$("bmA").innerHTML="";$("bmB").innerHTML="";$("bmbody").innerHTML='<div class="card"><b>Two month-end reports are needed.</b><br><span class="mu">Upload the month-end Excel files of at least two month ends (Upload &rarr; Month-end report). Last month end is then compared with the month end before it.</span></div>';return}
+      return bmSnap(lk).then(function(sb){
+        if(!sb){$("bmbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Last month-end snapshot ('+dlab(lk)+') not found in the database.</b></div>';return}
+        BCUR={key:lk,rows:sb};
+        $("bmB").innerHTML='<option>'+dlab(lk)+' (last month end)</option>';$("bmB").disabled=true;
+        $("bmA").innerHTML=pk.map(function(k){var m=SM[k]||{};return'<option value="'+k+'">Month-end '+dlab(k)+' ('+(m.n||"?")+' fac)</option>'}).join("");
+        bmRun()
+      })
+    }
+    var cur=(r[1]&&r[1].rows&&r[1].rows.length)?r[1]:CURD;
     if(!cur||!cur.rows||!cur.rows.length){$("bmbody").innerHTML='<div class="card">No current data loaded. Upload the Excel files first.</div>';return}
     var rows=Array.isArray(cur.rows)?cur.rows:Object.keys(cur.rows).map(function(x){return cur.rows[x]});
     BCUR={key:(cur.asAt||"").slice(0,10)||new Date().toISOString().slice(0,10),rows:bmPrep(rows)};
