@@ -80,7 +80,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 .duca{display:inline-block;background:#0e9f6e;color:#fff!important;text-decoration:none;font-weight:700;font-size:14px;padding:9px 14px;border-radius:10px}
 @media(max-width:700px){.duc{display:block}.dut{display:none}}
 .duf label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
-.lmt{width:100%;border-collapse:collapse;font-size:13px}.lmt th,.lmt td{padding:6px 9px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}.lmt th:first-child,.lmt td:first-child{text-align:left}.lmt th{position:sticky;top:0;background:var(--card);font-size:12px;color:var(--mu)}.lmt tr.tt td{font-weight:700;border-top:2px solid var(--bd2)}
+.lmt{width:100%;border-collapse:collapse;font-size:13px}.lmt th,.lmt td{padding:6px 9px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}.lmt th:first-child,.lmt td:first-child{text-align:left}.lmt th{position:sticky;top:0;background:var(--card);font-size:12px;color:var(--mu)}.lmc{cursor:pointer}.lmc:hover{filter:brightness(.93);text-decoration:underline}.lmt tr.tt td{font-weight:700;border-top:2px solid var(--bd2)}
 .cmpv{position:fixed;inset:0;z-index:60;background:var(--bg);overflow:auto;display:none}.cmpv.on{display:block}
 .cmph{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:12px 18px;background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:3}
 .cmph label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
@@ -1337,7 +1337,7 @@ function lmLoad(){
   $("lmbody").innerHTML='<div class="card mu">Loading month-end report...</div>';
   Promise.all([bmSnap(k),pk?bmSnap(pk):Promise.resolve(null)]).then(function(r){
     if(!r[0]){$("lmbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Month-end snapshot '+dlab(k)+' not found in the database.</b> Upload that month-end report again.</div>';return}
-    LMS={key:k,pk:pk,rows:r[0],prev:r[1]};
+    LMS={key:k,pk:pk,rows:r[0],prev:r[1]};LMSEL={t:"all"};LMPG=0;
     var both=r[0].concat(r[1]||[]),keep=function(id,f){var v=$(id).value,x=Array.from(new Set(both.map(function(o){return o[f]}))).sort();$(id).innerHTML='<option value="">All</option>'+x.map(function(y){return'<option>'+esc(y)+'</option>'}).join("");if(x.indexOf(v)>=0)$(id).value=v};
     keep("lmBr","branch");keep("lmOf","mkt");keep("lmDe","desc");
     var mv=$("lmMo").value,ms=Array.from(new Set(both.map(function(o){return duGrant(o).slice(0,7)}).filter(Boolean))).sort().reverse();
@@ -1353,44 +1353,68 @@ function lmFilt(a){
     if(gd){if(!g)return false;var gm=(ref-new Date(g+"T00:00:00Z"))/864e5/30.44;if(gd=="A"){if(gm<=12)return false}else if(gm>+gd)return false}
     return true})
 }
-var LMROWS=[];
+var LMALL=[],LMLIST=[],LMSEL={t:"all"},LMPG=0,LMPS=100,LMT={all:"All customers",s:"Not Move",w:"ADD (went higher)",i:"Remove (came lower / cleared)",c:"Closed",n:"New"};
 function lmRender(){
-  var cur=lmFilt(LMS.rows),prv=LMS.prev?lmFilt(LMS.prev):null,N=BMK.length,i;
-  var cnt=[],arr=[],por=[];for(i=0;i<N;i++){cnt.push(0);arr.push(0);por.push(0)}
-  cur.forEach(function(r){cnt[r.b]++;arr[r.b]+=r.tot;por[r.b]+=r.port});
+  var cur=lmFilt(LMS.rows),prv=LMS.prev?lmFilt(LMS.prev):null,N=BMK.length,i,j;
   var tc=cur.length,ta=sum(cur,"tot"),tp=sum(cur,"port"),n91=cur.filter(function(r){return r.days>=91}).length;
   var h='<div class="kpis"><div class="kpi"><span>Month end</span><b>'+dlab(LMS.key)+'</b></div><div class="kpi"><span>Facilities</span><b>'+fmt(tc)+'</b></div><div class="kpi"><span>Total Arrears</span><b>'+fmt(ta)+'</b></div><div class="kpi"><span>Portfolio</span><b>'+fmt(tp)+'</b></div><div class="kpi"><span>91+ days facilities</span><b>'+fmt(n91)+'</b></div></div>';
-  h+='<div class="card"><b>Bucket position at '+dlab(LMS.key)+'</b><div class="tw" style="margin-top:8px"><table class="lmt"><tr><th>Bucket</th><th>Facilities</th><th>% </th><th>Total Arrears</th><th>Portfolio</th></tr>';
-  for(i=0;i<N;i++)h+='<tr><td>'+BMK[i][0]+'</td><td>'+fmt(cnt[i])+'</td><td>'+(tc?(cnt[i]*100/tc).toFixed(1):"0.0")+'%</td><td>'+fmt(arr[i])+'</td><td>'+fmt(por[i])+'</td></tr>';
-  h+='<tr class="tt"><td>Total</td><td>'+fmt(tc)+'</td><td>100%</td><td>'+fmt(ta)+'</td><td>'+fmt(tp)+'</td></tr></table></div></div>';
-  LMROWS=[];
+  var MP={},MC={};(prv||[]).forEach(function(r){MP[r.fac]=r});cur.forEach(function(r){MC[r.fac]=r});
+  LMALL=Object.keys(Object.assign({},MP,MC)).map(function(f){var p=MP[f],c=MC[f],z=c||p;
+    return{fac:f,name:z.name,branch:z.branch,mkt:z.mkt,desc:z.desc,grant:duGrant(z),tel:z.tel||"",aB:p?p.b:-1,bB:c?c.b:-1,dA:p?p.days:null,dB:c?c.days:null,tA:p?p.tot:0,tB:c?c.tot:0,
+      t:!prv?"all":!p?"n":!c?"c":c.b==p.b?"s":c.b>p.b?"w":"i"}});
   if(!prv){
-    h+='<div class="card mu" style="margin-top:12px">No earlier month-end report is saved, so there is no bucket movement to show for '+dlab(LMS.key)+'. Upload the previous month end as well (Upload &rarr; Month-end report).</div>';
-    cur.forEach(function(r){LMROWS.push({"Fac No":r.fac,Name:r.name,Branch:r.branch,"Mkt Officer":r.mkt,"Days":r.days,Bucket:BMK[r.b][0],"Total Arrears":r.tot,Portfolio:r.port,"Grant Date":duGrant(r)})})
+    h+='<div class="card mu" style="margin-top:12px">No earlier month-end report is saved, so there is no bucket movement to show for '+dlab(LMS.key)+'. Upload the previous month end as well (Upload &rarr; Month-end report). The customer list below shows this month end.</div>'
   }else{
-    var MP={},MC={};prv.forEach(function(r){MP[r.fac]=r});cur.forEach(function(r){MC[r.fac]=r});
-    var same=[],up=[],dn=[],cl=[],nw=0,pc=[];for(i=0;i<N;i++){same.push(0);up.push(0);dn.push(0);cl.push(0);pc.push(0)}
-    var MX=[],NW=[],j;for(i=0;i<N;i++){NW.push(0);MX.push([]);for(j=0;j<N;j++)MX[i].push(0)}
-    prv.forEach(function(p){var c=MC[p.fac];pc[p.b]++;if(!c)cl[p.b]++;else{MX[p.b][c.b]++;if(c.b==p.b)same[p.b]++;else if(c.b>p.b)up[p.b]++;else dn[p.b]++}});
-    cur.forEach(function(c){if(!MP[c.fac]){nw++;NW[c.b]++}});
-    var T=function(a){return a.reduce(function(x,y){return x+y},0)};
-    h+='<div class="card" style="margin-top:12px"><b>Bucket movement: '+dlab(LMS.pk)+' &rarr; '+dlab(LMS.key)+'</b><div class="tw" style="margin-top:8px"><table class="lmt"><tr><th>Bucket (at '+dlab(LMS.pk)+')</th><th>Facilities</th><th style="background:#ffe600;color:#000">Not Move</th><th style="background:#e00000;color:#fff">ADD (went higher)</th><th style="background:#00a651;color:#fff">Remove (came lower / cleared)</th><th>Closed</th></tr>';
-    for(i=0;i<N;i++)h+='<tr><td>'+BMK[i][0]+'</td><td>'+fmt(pc[i])+'</td><td>'+fmt(same[i])+'</td><td style="color:#c00;font-weight:700">'+fmt(up[i])+'</td><td style="color:#0a8f4e;font-weight:700">'+fmt(dn[i])+'</td><td>'+fmt(cl[i])+'</td></tr>';
-    h+='<tr class="tt"><td>Total</td><td>'+fmt(T(pc))+'</td><td>'+fmt(T(same))+'</td><td style="color:#c00">'+fmt(T(up))+'</td><td style="color:#0a8f4e">'+fmt(T(dn))+'</td><td>'+fmt(T(cl))+'</td></tr></table></div>';
-    h+='<div class="mu" style="font-size:12px;margin-top:6px">New facilities in '+dlab(LMS.key)+' (not in '+dlab(LMS.pk)+'): <b>'+fmt(nw)+'</b></div></div>';
+    var pc=[],same=[],up=[],dn=[],cl=[],NW=[],MX=[],nw=0;
+    for(i=0;i<N;i++){pc.push(0);same.push(0);up.push(0);dn.push(0);cl.push(0);NW.push(0);MX.push([]);for(j=0;j<N;j++)MX[i].push(0)}
+    LMALL.forEach(function(o){
+      if(o.aB>=0){pc[o.aB]++;if(o.bB<0)cl[o.aB]++;else{MX[o.aB][o.bB]++;if(o.t=="s")same[o.aB]++;else if(o.t=="w")up[o.aB]++;else dn[o.aB]++}}
+      else if(o.bB>=0){NW[o.bB]++;nw++}});
+    var T=function(a){return a.reduce(function(x,y){return x+y},0)},cz=function(v){return v?fmt(v):""};
+    h+='<div class="card" style="margin-top:12px"><b>Bucket movement: '+dlab(LMS.pk)+' &rarr; '+dlab(LMS.key)+'</b> <span class="mu" style="font-size:12px">(click any number to list the customers below)</span><div class="tw" style="margin-top:8px"><table class="lmt"><tr><th>Bucket (at '+dlab(LMS.pk)+')</th><th>Facilities</th><th style="background:#ffe600;color:#000">Not Move</th><th style="background:#e00000;color:#fff">ADD (went higher)</th><th style="background:#00a651;color:#fff">Remove (came lower / cleared)</th><th>Closed</th></tr>';
+    for(i=0;i<N;i++)h+='<tr><td>'+BMK[i][0]+'</td><td class="lmc" data-r="'+i+'" data-t="all">'+cz(pc[i])+'</td><td class="lmc" data-r="'+i+'" data-t="s">'+cz(same[i])+'</td><td class="lmc" data-r="'+i+'" data-t="w" style="color:#c00;font-weight:700">'+cz(up[i])+'</td><td class="lmc" data-r="'+i+'" data-t="i" style="color:#0a8f4e;font-weight:700">'+cz(dn[i])+'</td><td class="lmc" data-r="'+i+'" data-t="c">'+cz(cl[i])+'</td></tr>';
+    h+='<tr class="tt"><td>Total</td><td class="lmc" data-t="all">'+fmt(T(pc))+'</td><td class="lmc" data-t="s">'+fmt(T(same))+'</td><td class="lmc" data-t="w" style="color:#c00">'+fmt(T(up))+'</td><td class="lmc" data-t="i" style="color:#0a8f4e">'+fmt(T(dn))+'</td><td class="lmc" data-t="c">'+fmt(T(cl))+'</td></tr></table></div>';
+    h+='<div class="mu" style="font-size:12px;margin-top:6px">New facilities in '+dlab(LMS.key)+' (not in '+dlab(LMS.pk)+'): <a class="lmc" data-t="n" style="cursor:pointer;font-weight:700;text-decoration:underline">'+fmt(nw)+'</a></div></div>';
     var mx='<div class="card" style="margin-top:12px"><h3>Movement map \u2013 where did each '+dlab(LMS.pk)+' bucket go? <small class="mu">(row = '+dlab(LMS.pk)+' bucket, column = bucket at '+dlab(LMS.key)+')</small></h3><div class="tw" style="max-height:none"><table class="bmx"><tr><th style="text-align:left">'+dlab(LMS.pk)+' \u2193 / '+dlab(LMS.key)+' \u2192</th>'+BMK.map(function(k){return'<th class="n">'+k[0]+'</th>'}).join("")+'<th class="n">Closed</th><th class="n">Total</th></tr>';
     for(i=0;i<N;i++){var rt=cl[i];mx+='<tr><th style="text-align:left">'+BMK[i][0]+'</th>';
-      for(j=0;j<N;j++){rt+=MX[i][j];var st2=i==j?"background:#ffe600;color:#000":j>i?"background:#fde2e2;color:#c00;font-weight:700":"background:#dcf5e7;color:#0a8f4e;font-weight:700";mx+='<td class="n" style="'+st2+'">'+(MX[i][j]?fmt(MX[i][j]):"")+'</td>'}
-      mx+='<td class="n">'+(cl[i]?fmt(cl[i]):"")+'</td><td class="n"><b>'+fmt(rt)+'</b></td></tr>'}
-    mx+='<tr><th style="text-align:left">New (not in '+dlab(LMS.pk)+')</th>'+NW.map(function(v){return'<td class="n">'+(v?fmt(v):"")+'</td>'}).join("")+'<td class="n"></td><td class="n"><b>'+fmt(nw)+'</b></td></tr></table></div><div class="mu" style="margin-top:6px">Yellow = Not Move (same bucket) &bull; Red = ADD (moved to a higher, worse bucket) &bull; Green = Remove (moved to a lower bucket / cleared).</div></div>';
-    h+=mx;
-    Object.keys(Object.assign({},MP,MC)).forEach(function(f){var p=MP[f],c=MC[f],z=c||p;
-      LMROWS.push({"Fac No":f,Name:z.name,Branch:z.branch,"Mkt Officer":z.mkt,"Bucket (prev)":p?BMK[p.b][0]:"-","Days (prev)":p?p.days:"","Bucket (month end)":c?BMK[c.b][0]:"-","Days (month end)":c?c.days:"",Movement:!p?"New":!c?"Closed":c.b==p.b?"Not moved":c.b>p.b?"Went higher":"Came lower","Total Arrears (prev)":p?p.tot:0,"Total Arrears (month end)":c?c.tot:0,"Grant Date":duGrant(z)})})
+      for(j=0;j<N;j++){rt+=MX[i][j];var st2=i==j?"background:#ffe600;color:#000":j>i?"background:#fde2e2;color:#c00;font-weight:700":"background:#dcf5e7;color:#0a8f4e;font-weight:700";mx+='<td class="n lmc" data-a="'+i+'" data-b="'+j+'" style="'+st2+'">'+cz(MX[i][j])+'</td>'}
+      mx+='<td class="n lmc" data-a="'+i+'" data-b="-1">'+cz(cl[i])+'</td><td class="n lmc" data-r="'+i+'" data-t="all"><b>'+fmt(rt)+'</b></td></tr>'}
+    mx+='<tr><th style="text-align:left">New (not in '+dlab(LMS.pk)+')</th>'+NW.map(function(v,j){return'<td class="n lmc" data-a="-1" data-b="'+j+'">'+cz(v)+'</td>'}).join("")+'<td class="n"></td><td class="n lmc" data-t="n"><b>'+fmt(nw)+'</b></td></tr></table></div><div class="mu" style="margin-top:6px">Yellow = Not Move (same bucket) &bull; Red = ADD (moved to a higher, worse bucket) &bull; Green = Remove (moved to a lower bucket / cleared). Click any number to list the customers below.</div></div>';
+    h+=mx
   }
-  $("lmbody").innerHTML=h
+  h+='<div class="card" id="lmlist" style="margin-top:12px"><div class="f" style="margin-bottom:8px;gap:8px;align-items:center"><h3 id="lmLt" style="margin:0 10px 0 0"></h3><button id="lmAllB">Show all</button><button id="lmXl2">&#11015; Excel</button></div><div class="tw"><table class="lmt" id="lmtb"></table></div><div class="f" id="lmPg" style="margin-top:8px;gap:8px;align-items:center"></div></div>';
+  $("lmbody").innerHTML=h;lmList()
 }
+function lmPick(o){var S=LMSEL;if(S.r!=null)return o.aB==S.r&&(S.t=="all"||o.t==S.t);if(S.a!=null)return o.aB==S.a&&o.bB==S.b;return S.t=="all"||o.t=="all"||o.t==S.t}
+function lmSelName(){var S=LMSEL;if(S.r!=null)return BMK[S.r][0]+" (at "+dlab(LMS.pk)+") \u2013 "+LMT[S.t];if(S.a!=null)return(S.a>=0?BMK[S.a][0]:"New")+" \u2192 "+(S.b>=0?BMK[S.b][0]:"Closed");return LMT[S.t]||""}
+function lmList(){
+  LMLIST=LMALL.filter(function(o){return LMSEL.t=="all"&&LMSEL.r==null&&LMSEL.a==null?true:lmPick(o)}).sort(function(a,b){return(b.dB!=null?b.dB:b.dA||0)-(a.dB!=null?a.dB:a.dA||0)});
+  var n=LMLIST.length,pages=Math.max(1,Math.ceil(n/LMPS));if(LMPG>=pages)LMPG=pages-1;if(LMPG<0)LMPG=0;
+  $("lmLt").innerHTML='Customers \u2013 '+esc(lmSelName())+' <span class="badge">'+fmt(n)+'</span>';
+  var mc={s:"#b58900",w:"#c00",i:"#0a8f4e",c:"#6b7280",n:"#2b7de9"},ml={s:"Not Move",w:"ADD",i:"Remove",c:"Closed",n:"New"};
+  var hasP=!!LMS.prev;
+  var th='<tr><th>Fac No</th><th>Name</th><th>Branch</th><th>Mkt Officer</th><th>Grant Date</th>'+(hasP?'<th>Bucket ('+dlab(LMS.pk)+')</th><th>Days</th>':'')+'<th>Bucket ('+dlab(LMS.key)+')</th><th>Days</th><th>Total Arrears</th>'+(hasP?'<th>Movement</th>':'')+'</tr>';
+  var rows=LMLIST.slice(LMPG*LMPS,LMPG*LMPS+LMPS).map(function(o){return'<tr><td>'+esc(o.fac)+'</td><td style="text-align:left">'+esc(o.name||"")+'</td><td style="text-align:left">'+esc(o.branch||"")+'</td><td style="text-align:left">'+esc(o.mkt||"")+'</td><td>'+esc(o.grant||"")+'</td>'+(hasP?'<td>'+(o.aB>=0?BMK[o.aB][0]:"-")+'</td><td>'+(o.dA!=null?o.dA:"")+'</td>':'')+'<td>'+(o.bB>=0?BMK[o.bB][0]:"-")+'</td><td>'+(o.dB!=null?o.dB:"")+'</td><td>'+fmt(o.bB>=0?o.tB:o.tA)+'</td>'+(hasP?'<td style="color:'+(mc[o.t]||"inherit")+';font-weight:700">'+(ml[o.t]||"")+'</td>':'')+'</tr>'}).join("");
+  $("lmtb").innerHTML=th+(rows||'<tr><td colspan="11" style="text-align:center">No customers</td></tr>');
+  $("lmPg").innerHTML=pages>1?'<button id="lmPv"'+(LMPG?'':' disabled')+'>&larr; Prev</button><span class="mu">Page '+(LMPG+1)+' of '+pages+' ('+fmt(n)+' customers, '+LMPS+' per page &ndash; Excel has all)</span><button id="lmNx"'+(LMPG<pages-1?'':' disabled')+'>Next &rarr;</button>':'<span class="mu">'+fmt(n)+' customers</span>'
+}
+function lmExcel(){
+  if(!LMLIST.length)return;var hasP=!!LMS.prev;
+  dl(LMLIST.map(function(o){var r={"Fac No":o.fac,Name:o.name,Branch:o.branch,"Mkt Officer":o.mkt,Description:o.desc,"Grant Date":o.grant,Tel:o.tel};
+    if(hasP){r["Bucket ("+LMS.pk+")"]=o.aB>=0?BMK[o.aB][0]:"-";r["Days ("+LMS.pk+")"]=o.dA!=null?o.dA:"";r["Total Arrears ("+LMS.pk+")"]=o.tA}
+    r["Bucket ("+LMS.key+")"]=o.bB>=0?BMK[o.bB][0]:"-";r["Days ("+LMS.key+")"]=o.dB!=null?o.dB:"";r["Total Arrears ("+LMS.key+")"]=o.tB;
+    if(hasP)r.Movement=({s:"Not Move",w:"ADD",i:"Remove",c:"Closed",n:"New"})[o.t]||"";return r}),"Last_Month_End_"+(LMS.key||"")+"_"+lmSelName().replace(/[^A-Za-z0-9]+/g,"_"))
+}
+$("lmbody").addEventListener("click",function(e){
+  var t=e.target,c=t.closest?t.closest(".lmc"):null;
+  if(c){var d=c.dataset,S={};if(d.r!=null)S.r=+d.r;if(d.a!=null){S.a=+d.a;S.b=+d.b}if(d.t!=null)S.t=d.t;if(S.r==null&&S.a==null&&!S.t)return;LMSEL=S;LMPG=0;lmList();var l=$("lmlist");if(l&&l.scrollIntoView)l.scrollIntoView({behavior:"smooth",block:"start"});return}
+  if(t.id=="lmAllB"){LMSEL={t:"all"};LMPG=0;lmList();return}
+  if(t.id=="lmXl2"){lmExcel();return}
+  if(t.id=="lmPv"){LMPG--;lmList();return}
+  if(t.id=="lmNx"){LMPG++;lmList();return}
+});
 $("lmSel").onchange=lmLoad;["lmBr","lmOf","lmDe","lmGd","lmMo"].forEach(function(i){$(i).onchange=lmRender});
-$("lmXl").onclick=function(){if(!LMROWS.length)return;dl(LMROWS,"Last_Month_End_"+(LMS.key||""))};
+$("lmXl").onclick=lmExcel;
 var BA=[],BB=[],BCUR=null,BMSEL={t:"w"},BMGRP=null,BMPG=0,BMGB="mkt",BMLIST=[];
 function bmShow(){$("bm").classList.add("on");document.body.style.overflow="hidden";bmInit()}
 function bmHide(){$("bm").classList.remove("on")}
