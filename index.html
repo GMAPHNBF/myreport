@@ -80,6 +80,7 @@ h3{margin:0 0 8px;font-size:14px}.pg{display:flex;gap:8px;align-items:center;mar
 .duca{display:inline-block;background:#0e9f6e;color:#fff!important;text-decoration:none;font-weight:700;font-size:14px;padding:9px 14px;border-radius:10px}
 @media(max-width:700px){.duc{display:block}.dut{display:none}}
 .duf label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
+.lmt{width:100%;border-collapse:collapse;font-size:13px}.lmt th,.lmt td{padding:6px 9px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}.lmt th:first-child,.lmt td:first-child{text-align:left}.lmt th{position:sticky;top:0;background:var(--card);font-size:12px;color:var(--mu)}.lmt tr.tt td{font-weight:700;border-top:2px solid var(--bd2)}
 .cmpv{position:fixed;inset:0;z-index:60;background:var(--bg);overflow:auto;display:none}.cmpv.on{display:block}
 .cmph{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:12px 18px;background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:3}
 .cmph label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
@@ -299,7 +300,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 <div class="cmpv" id="bm">
  <div class="cmph">
   <button id="bmBack" class="p">&#8592; Dashboard</button>
-  <b id="bmTitle" style="font-size:16px;align-self:center">&#128200; Bucket Movement</b>
+  <b style="font-size:16px;align-self:center">&#128200; Bucket Movement</b>
    <button id="medB" class="medb" title="Month end due: use Arrears Days instead of NDIA">&#128197; Month end due</button>
    <button id="bmLM" class="medb" title="Bucket movement of the last month end: previous month-end report (A) vs last month-end report (B), from the month-end Excel uploads">&#128197; Last month end</button>
   <label>Month-end report (A)<select id="bmA"></select></label>
@@ -314,6 +315,18 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
   <button id="bmXl">&#11015; Excel</button>
  </div>
  <div class="cmpm" id="bmbody"></div>
+</div>
+
+<div class="cmpv" id="lm">
+ <div class="cmph">
+  <button id="lmBack" class="p">&#8592; Bucket Movement</button>
+  <b style="font-size:16px;align-self:center">&#128197; Last Month End Report</b>
+  <label>Month-end report<select id="lmSel"></select></label>
+  <label>Branch<select id="lmBr"><option value="">All</option></select></label>
+  <label>Mkt Officer<select id="lmOf"><option value="">All</option></select></label>
+  <button id="lmXl">&#11015; Excel</button>
+ </div>
+ <div class="cmpm" id="lmbody"></div>
 </div>
 
 <div class="cmpv" id="due">
@@ -1294,31 +1307,83 @@ function bmSnap(k){
     return BMSNAP[k]=bmPrep(rows)
   }).catch(function(e){console.error(e);return null})
 }
-var BMLM=false; /* true = Last month end mode: A = previous month-end, B = last month-end (both saved month-end uploads) */
+
+/* ===== LAST MONTH END REPORT (separate page, #lme) =====
+   Built only from the month-end Excel files uploaded in "Month-end report (manual)" (Branch Wise RentalArrears + Destinity).
+   Shows that month end as it was, and its bucket movement from the month end before it. */
+var LMS={key:"",pk:"",rows:[],prev:null};
+function lmShow(){$("lm").classList.add("on");document.body.style.overflow="hidden";lmInit()}
+function lmHide(){$("lm").classList.remove("on");if(location.hash!="#bm"&&location.hash!="#lme"&&!$("cmp").classList.contains("on")&&!$("due").classList.contains("on"))document.body.style.overflow=""}
+$("lmBack").onclick=function(){location.hash="bm"};
+$("bmLM").onclick=function(){location.hash="lme"};
+function lmInit(){
+  if(!ccfg().url){$("lmbody").innerHTML='<div class="card">Online storage is not set up, so the saved month-end report cannot be loaded.</div>';return}
+  $("lmbody").innerHTML='<div class="card mu">Loading...</div>';
+  sget("snapmeta").then(function(m){
+    SM=m||{};var ks=Object.keys(SM).filter(isME).sort().reverse();
+    if(!ks.length){$("lmSel").innerHTML="";$("lmbody").innerHTML='<div class="card"><b>No month-end report saved yet.</b><br><span class="mu">Upload &rarr; Month-end report (manual): select the month-end Branch Wise RentalArrears and Destinity Excel files of the last day of the month.</span></div>';return}
+    var cur=$("lmSel").value;
+    $("lmSel").innerHTML=ks.map(function(k){return'<option value="'+k+'">'+dlab(k)+' ('+((SM[k]||{}).n||"?")+' fac)</option>'}).join("");
+    if(cur&&ks.indexOf(cur)>=0)$("lmSel").value=cur;
+    lmLoad()
+  }).catch(function(e){$("lmbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Error:</b> '+esc(String(e&&e.message||e))+'</div>'})
+}
+function lmLoad(){
+  var k=$("lmSel").value;if(!k)return;
+  var all=Object.keys(SM).filter(isME).sort(),pk=all.filter(function(x){return x<k}).pop()||"";
+  $("lmbody").innerHTML='<div class="card mu">Loading month-end report...</div>';
+  Promise.all([bmSnap(k),pk?bmSnap(pk):Promise.resolve(null)]).then(function(r){
+    if(!r[0]){$("lmbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Month-end snapshot '+dlab(k)+' not found in the database.</b> Upload that month-end report again.</div>';return}
+    LMS={key:k,pk:pk,rows:r[0],prev:r[1]};
+    var both=r[0].concat(r[1]||[]),keep=function(id,f){var v=$(id).value,x=Array.from(new Set(both.map(function(o){return o[f]}))).sort();$(id).innerHTML='<option value="">All</option>'+x.map(function(y){return'<option>'+esc(y)+'</option>'}).join("");if(x.indexOf(v)>=0)$(id).value=v};
+    keep("lmBr","branch");keep("lmOf","mkt");
+    lmRender()
+  }).catch(function(e){$("lmbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Error:</b> '+esc(String(e&&e.message||e))+'</div>'})
+}
+function lmFilt(a){var br=$("lmBr").value,of=$("lmOf").value;return(a||[]).filter(function(r){return(!br||r.branch==br)&&(!of||r.mkt==of)})}
+var LMROWS=[];
+function lmRender(){
+  var cur=lmFilt(LMS.rows),prv=LMS.prev?lmFilt(LMS.prev):null,N=BMK.length,i;
+  var cnt=[],arr=[],por=[];for(i=0;i<N;i++){cnt.push(0);arr.push(0);por.push(0)}
+  cur.forEach(function(r){cnt[r.b]++;arr[r.b]+=r.tot;por[r.b]+=r.port});
+  var tc=cur.length,ta=sum(cur,"tot"),tp=sum(cur,"port"),n91=cur.filter(function(r){return r.days>=91}).length;
+  var h='<div class="kpis"><div class="kpi"><span>Month end</span><b>'+dlab(LMS.key)+'</b></div><div class="kpi"><span>Facilities</span><b>'+fmt(tc)+'</b></div><div class="kpi"><span>Total Arrears</span><b>'+fmt(ta)+'</b></div><div class="kpi"><span>Portfolio</span><b>'+fmt(tp)+'</b></div><div class="kpi"><span>91+ days facilities</span><b>'+fmt(n91)+'</b></div></div>';
+  h+='<div class="card"><b>Bucket position at '+dlab(LMS.key)+'</b><div class="tw" style="margin-top:8px"><table class="lmt"><tr><th>Bucket</th><th>Facilities</th><th>% </th><th>Total Arrears</th><th>Portfolio</th></tr>';
+  for(i=0;i<N;i++)h+='<tr><td>'+BMK[i][0]+'</td><td>'+fmt(cnt[i])+'</td><td>'+(tc?(cnt[i]*100/tc).toFixed(1):"0.0")+'%</td><td>'+fmt(arr[i])+'</td><td>'+fmt(por[i])+'</td></tr>';
+  h+='<tr class="tt"><td>Total</td><td>'+fmt(tc)+'</td><td>100%</td><td>'+fmt(ta)+'</td><td>'+fmt(tp)+'</td></tr></table></div></div>';
+  LMROWS=[];
+  if(!prv){
+    h+='<div class="card mu" style="margin-top:12px">No earlier month-end report is saved, so there is no bucket movement to show for '+dlab(LMS.key)+'. Upload the previous month end as well (Upload &rarr; Month-end report).</div>';
+    cur.forEach(function(r){LMROWS.push({"Fac No":r.fac,Name:r.name,Branch:r.branch,"Mkt Officer":r.mkt,"Days":r.days,Bucket:BMK[r.b][0],"Total Arrears":r.tot,Portfolio:r.port,"Grant Date":duGrant(r)})})
+  }else{
+    var MP={},MC={};prv.forEach(function(r){MP[r.fac]=r});cur.forEach(function(r){MC[r.fac]=r});
+    var same=[],up=[],dn=[],cl=[],nw=0,pc=[];for(i=0;i<N;i++){same.push(0);up.push(0);dn.push(0);cl.push(0);pc.push(0)}
+    prv.forEach(function(p){var c=MC[p.fac];pc[p.b]++;if(!c)cl[p.b]++;else if(c.b==p.b)same[p.b]++;else if(c.b>p.b)up[p.b]++;else dn[p.b]++});
+    cur.forEach(function(c){if(!MP[c.fac])nw++});
+    var T=function(a){return a.reduce(function(x,y){return x+y},0)};
+    h+='<div class="card" style="margin-top:12px"><b>Bucket movement: '+dlab(LMS.pk)+' &rarr; '+dlab(LMS.key)+'</b><div class="tw" style="margin-top:8px"><table class="lmt"><tr><th>Bucket (at '+dlab(LMS.pk)+')</th><th>Facilities</th><th>Not moved</th><th>Went higher (ADD)</th><th>Came lower / cleared</th><th>Closed</th></tr>';
+    for(i=0;i<N;i++)h+='<tr><td>'+BMK[i][0]+'</td><td>'+fmt(pc[i])+'</td><td>'+fmt(same[i])+'</td><td style="color:var(--s3)">'+fmt(up[i])+'</td><td style="color:var(--s1)">'+fmt(dn[i])+'</td><td>'+fmt(cl[i])+'</td></tr>';
+    h+='<tr class="tt"><td>Total</td><td>'+fmt(T(pc))+'</td><td>'+fmt(T(same))+'</td><td style="color:var(--s3)">'+fmt(T(up))+'</td><td style="color:var(--s1)">'+fmt(T(dn))+'</td><td>'+fmt(T(cl))+'</td></tr></table></div>';
+    h+='<div class="mu" style="font-size:12px;margin-top:6px">New facilities in '+dlab(LMS.key)+' (not in '+dlab(LMS.pk)+'): <b>'+fmt(nw)+'</b></div></div>';
+    Object.keys(Object.assign({},MP,MC)).forEach(function(f){var p=MP[f],c=MC[f],z=c||p;
+      LMROWS.push({"Fac No":f,Name:z.name,Branch:z.branch,"Mkt Officer":z.mkt,"Bucket (prev)":p?BMK[p.b][0]:"-","Days (prev)":p?p.days:"","Bucket (month end)":c?BMK[c.b][0]:"-","Days (month end)":c?c.days:"",Movement:!p?"New":!c?"Closed":c.b==p.b?"Not moved":c.b>p.b?"Went higher":"Came lower","Total Arrears (prev)":p?p.tot:0,"Total Arrears (month end)":c?c.tot:0,"Grant Date":duGrant(z)})})
+  }
+  $("lmbody").innerHTML=h
+}
+$("lmSel").onchange=lmLoad;$("lmBr").onchange=lmRender;$("lmOf").onchange=lmRender;
+$("lmXl").onclick=function(){if(!LMROWS.length)return;dl(LMROWS,"Last_Month_End_"+(LMS.key||""))};
 var BA=[],BB=[],BCUR=null,BMSEL={t:"w"},BMGRP=null,BMPG=0,BMGB="mkt",BMLIST=[];
-function bmShow(){bmLMSync();$("bm").classList.add("on");document.body.style.overflow="hidden";bmInit()}
+function bmShow(){$("bm").classList.add("on");document.body.style.overflow="hidden";bmInit()}
 function bmHide(){$("bm").classList.remove("on")}
 $("bmb").onclick=function(){location.hash="bm"};
-$("bmBack").onclick=function(){location.hash=BMLM?"bm":""};
-function bmLMSync(){var b=$("bmLM");if(b)b.style.display=BMLM?"none":"";var t=$("bmTitle");if(t)t.innerHTML=BMLM?"&#128197; Last Month End &ndash; Bucket Movement":"&#128200; Bucket Movement";var bk=$("bmBack");if(bk)bk.innerHTML=BMLM?"&#8592; Bucket Movement":"&#8592; Dashboard";var l=$("bmB")&&$("bmB").parentNode;if(l&&l.firstChild)l.firstChild.nodeValue=BMLM?"Last month-end report (B)":"Latest uploaded report (B)"}
+$("bmBack").onclick=function(){location.hash=""};
 $("bmLM").onclick=function(){location.hash="lme"};
-window.addEventListener("hashchange",function(){if(location.hash=="#bm"||location.hash=="#lme"){BMLM=(location.hash=="#lme");BMSEL={t:"w"};bmShow()}else{bmHide();if(!$("cmp").classList.contains("on")&&!$("due").classList.contains("on"))document.body.style.overflow=""}});
+window.addEventListener("hashchange",function(){if(location.hash=="#lme")lmShow();else lmHide();if(location.hash=="#bm")bmShow();else{bmHide();if(!$("cmp").classList.contains("on")&&!$("due").classList.contains("on"))document.body.style.overflow=""}});
 function bmInit(){
   if(!ccfg().url){$("bmbody").innerHTML='<div class="card">Online storage is not set up, so the saved month-end report cannot be loaded.</div>';return}
   $("bmbody").innerHTML='<div class="card mu">Loading...</div>';
   Promise.all([sget("snapmeta"),sget("arrears")]).then(function(r){
     SM=r[0]||{};
-    if(BMLM){
-      var al=Object.keys(SM).filter(isME).sort(),lk=al[al.length-1],pk=al.filter(function(k){return k<lk}).reverse();
-      if(!lk||!pk.length){$("bmA").innerHTML="";$("bmB").innerHTML="";$("bmbody").innerHTML='<div class="card"><b>Two month-end reports are needed.</b><br><span class="mu">Upload the month-end Excel files of at least two month ends (Upload &rarr; Month-end report). Last month end is then compared with the month end before it.</span></div>';return}
-      return bmSnap(lk).then(function(sb){
-        if(!sb){$("bmbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Last month-end snapshot ('+dlab(lk)+') not found in the database.</b></div>';return}
-        BCUR={key:lk,rows:sb};
-        $("bmB").innerHTML='<option>'+dlab(lk)+' (last month end)</option>';$("bmB").disabled=true;
-        $("bmA").innerHTML=pk.map(function(k){var m=SM[k]||{};return'<option value="'+k+'">Month-end '+dlab(k)+' ('+(m.n||"?")+' fac)</option>'}).join("");
-        bmRun()
-      })
-    }
     var cur=(r[1]&&r[1].rows&&r[1].rows.length)?r[1]:CURD;
     if(!cur||!cur.rows||!cur.rows.length){$("bmbody").innerHTML='<div class="card">No current data loaded. Upload the Excel files first.</div>';return}
     var rows=Array.isArray(cur.rows)?cur.rows:Object.keys(cur.rows).map(function(x){return cur.rows[x]});
@@ -1444,7 +1509,7 @@ $("bmXl").onclick=function(){
   var P=BMLIST.filter(bmPick);if(!P.length)return;
   dl(P.map(function(o){return{"Fac No":o.fac,Name:o.name,"Mkt Officer":o.mkt,Branch:o.branch,Description:o.desc,"Grant Date":o.grant,"Month-end Bucket":o.aB>=0?BMK[o.aB][0]:"",["Month-end "+(MED?TXT_PD:TXT_ND)]:o.dA,"Bucket Now":o.bB>=0?BMK[o.bB][0]:"",[(MED?TXT_PD:TXT_ND)+" Now"]:o.dB,Movement:({s:"Same",w:"Worsened",i:"Improved",n:"New",c:"Closed"})[o.t],"Buckets Moved":o.st,"Days Change":o.dd,"Last Paid Date":o.lpd,"Last Paid Amount":o.lpa,"Paid This Month":o.bB<0?"":o.paid?"Yes":"No","Arrears Change":(o.aB>=0&&o.bB>=0)?o.tB-o.tA:"","Total Arrears (Month-end)":o.tA,"Total Arrears (Now)":o.tB,"Rental Arrears (Now)":o.rB,Portfolio:o.pB||o.pA,Tel:o.tel}}),"Bucket_Movement")
 };
-if(location.hash=="#bm"||location.hash=="#lme"){BMLM=(location.hash=="#lme");bmShow()}
+if(location.hash=="#bm")bmShow();if(location.hash=="#lme")lmShow();
 /* ===== Due page: facilities whose Due day = selected date's day of month ===== */
 var DUROWS=[];
 function lIso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
