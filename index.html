@@ -324,6 +324,9 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
   <label>Month-end report<select id="lmSel"></select></label>
   <label>Branch<select id="lmBr"><option value="">All</option></select></label>
   <label>Mkt Officer<select id="lmOf"><option value="">All</option></select></label>
+  <label>Description<select id="lmDe"><option value="">All</option></select></label>
+  <label>Grant Date<select id="lmGd"><option value="">All</option><option value="3">Last 3 Months</option><option value="6">Last 6 Months</option><option value="12">Last 12 Months</option><option value="A">After 12 Months</option></select></label>
+  <label>Grant Month<select id="lmMo"><option value="">All</option></select></label>
   <button id="lmXl">&#11015; Excel</button>
  </div>
  <div class="cmpm" id="lmbody"></div>
@@ -1336,11 +1339,20 @@ function lmLoad(){
     if(!r[0]){$("lmbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Month-end snapshot '+dlab(k)+' not found in the database.</b> Upload that month-end report again.</div>';return}
     LMS={key:k,pk:pk,rows:r[0],prev:r[1]};
     var both=r[0].concat(r[1]||[]),keep=function(id,f){var v=$(id).value,x=Array.from(new Set(both.map(function(o){return o[f]}))).sort();$(id).innerHTML='<option value="">All</option>'+x.map(function(y){return'<option>'+esc(y)+'</option>'}).join("");if(x.indexOf(v)>=0)$(id).value=v};
-    keep("lmBr","branch");keep("lmOf","mkt");
+    keep("lmBr","branch");keep("lmOf","mkt");keep("lmDe","desc");
+    var mv=$("lmMo").value,ms=Array.from(new Set(both.map(function(o){return duGrant(o).slice(0,7)}).filter(Boolean))).sort().reverse();
+    $("lmMo").innerHTML='<option value="">All</option>'+ms.map(function(m){return'<option value="'+m+'">'+mlab(m)+'</option>'}).join("");if(ms.indexOf(mv)>=0)$("lmMo").value=mv;
     lmRender()
   }).catch(function(e){$("lmbody").innerHTML='<div class="card" style="color:var(--s3)"><b>Error:</b> '+esc(String(e&&e.message||e))+'</div>'})
 }
-function lmFilt(a){var br=$("lmBr").value,of=$("lmOf").value;return(a||[]).filter(function(r){return(!br||r.branch==br)&&(!of||r.mkt==of)})}
+function lmFilt(a){
+  var br=$("lmBr").value,of=$("lmOf").value,de=$("lmDe").value,gd=$("lmGd").value,mo=$("lmMo").value,ref=new Date((LMS.key||"")+"T00:00:00Z");
+  return(a||[]).filter(function(r){
+    if(br&&r.branch!=br)return false;if(of&&r.mkt!=of)return false;if(de&&r.desc!=de)return false;
+    var g=duGrant(r);if(mo&&g.slice(0,7)!=mo)return false;
+    if(gd){if(!g)return false;var gm=(ref-new Date(g+"T00:00:00Z"))/864e5/30.44;if(gd=="A"){if(gm<=12)return false}else if(gm>+gd)return false}
+    return true})
+}
 var LMROWS=[];
 function lmRender(){
   var cur=lmFilt(LMS.rows),prv=LMS.prev?lmFilt(LMS.prev):null,N=BMK.length,i;
@@ -1358,19 +1370,26 @@ function lmRender(){
   }else{
     var MP={},MC={};prv.forEach(function(r){MP[r.fac]=r});cur.forEach(function(r){MC[r.fac]=r});
     var same=[],up=[],dn=[],cl=[],nw=0,pc=[];for(i=0;i<N;i++){same.push(0);up.push(0);dn.push(0);cl.push(0);pc.push(0)}
-    prv.forEach(function(p){var c=MC[p.fac];pc[p.b]++;if(!c)cl[p.b]++;else if(c.b==p.b)same[p.b]++;else if(c.b>p.b)up[p.b]++;else dn[p.b]++});
-    cur.forEach(function(c){if(!MP[c.fac])nw++});
+    var MX=[],NW=[],j;for(i=0;i<N;i++){NW.push(0);MX.push([]);for(j=0;j<N;j++)MX[i].push(0)}
+    prv.forEach(function(p){var c=MC[p.fac];pc[p.b]++;if(!c)cl[p.b]++;else{MX[p.b][c.b]++;if(c.b==p.b)same[p.b]++;else if(c.b>p.b)up[p.b]++;else dn[p.b]++}});
+    cur.forEach(function(c){if(!MP[c.fac]){nw++;NW[c.b]++}});
     var T=function(a){return a.reduce(function(x,y){return x+y},0)};
-    h+='<div class="card" style="margin-top:12px"><b>Bucket movement: '+dlab(LMS.pk)+' &rarr; '+dlab(LMS.key)+'</b><div class="tw" style="margin-top:8px"><table class="lmt"><tr><th>Bucket (at '+dlab(LMS.pk)+')</th><th>Facilities</th><th>Not moved</th><th>Went higher (ADD)</th><th>Came lower / cleared</th><th>Closed</th></tr>';
-    for(i=0;i<N;i++)h+='<tr><td>'+BMK[i][0]+'</td><td>'+fmt(pc[i])+'</td><td>'+fmt(same[i])+'</td><td style="color:var(--s3)">'+fmt(up[i])+'</td><td style="color:var(--s1)">'+fmt(dn[i])+'</td><td>'+fmt(cl[i])+'</td></tr>';
-    h+='<tr class="tt"><td>Total</td><td>'+fmt(T(pc))+'</td><td>'+fmt(T(same))+'</td><td style="color:var(--s3)">'+fmt(T(up))+'</td><td style="color:var(--s1)">'+fmt(T(dn))+'</td><td>'+fmt(T(cl))+'</td></tr></table></div>';
+    h+='<div class="card" style="margin-top:12px"><b>Bucket movement: '+dlab(LMS.pk)+' &rarr; '+dlab(LMS.key)+'</b><div class="tw" style="margin-top:8px"><table class="lmt"><tr><th>Bucket (at '+dlab(LMS.pk)+')</th><th>Facilities</th><th style="background:#ffe600;color:#000">Not Move</th><th style="background:#e00000;color:#fff">ADD (went higher)</th><th style="background:#00a651;color:#fff">Remove (came lower / cleared)</th><th>Closed</th></tr>';
+    for(i=0;i<N;i++)h+='<tr><td>'+BMK[i][0]+'</td><td>'+fmt(pc[i])+'</td><td>'+fmt(same[i])+'</td><td style="color:#c00;font-weight:700">'+fmt(up[i])+'</td><td style="color:#0a8f4e;font-weight:700">'+fmt(dn[i])+'</td><td>'+fmt(cl[i])+'</td></tr>';
+    h+='<tr class="tt"><td>Total</td><td>'+fmt(T(pc))+'</td><td>'+fmt(T(same))+'</td><td style="color:#c00">'+fmt(T(up))+'</td><td style="color:#0a8f4e">'+fmt(T(dn))+'</td><td>'+fmt(T(cl))+'</td></tr></table></div>';
     h+='<div class="mu" style="font-size:12px;margin-top:6px">New facilities in '+dlab(LMS.key)+' (not in '+dlab(LMS.pk)+'): <b>'+fmt(nw)+'</b></div></div>';
+    var mx='<div class="card" style="margin-top:12px"><h3>Movement map \u2013 where did each '+dlab(LMS.pk)+' bucket go? <small class="mu">(row = '+dlab(LMS.pk)+' bucket, column = bucket at '+dlab(LMS.key)+')</small></h3><div class="tw" style="max-height:none"><table class="bmx"><tr><th style="text-align:left">'+dlab(LMS.pk)+' \u2193 / '+dlab(LMS.key)+' \u2192</th>'+BMK.map(function(k){return'<th class="n">'+k[0]+'</th>'}).join("")+'<th class="n">Closed</th><th class="n">Total</th></tr>';
+    for(i=0;i<N;i++){var rt=cl[i];mx+='<tr><th style="text-align:left">'+BMK[i][0]+'</th>';
+      for(j=0;j<N;j++){rt+=MX[i][j];var st2=i==j?"background:#ffe600;color:#000":j>i?"background:#fde2e2;color:#c00;font-weight:700":"background:#dcf5e7;color:#0a8f4e;font-weight:700";mx+='<td class="n" style="'+st2+'">'+(MX[i][j]?fmt(MX[i][j]):"")+'</td>'}
+      mx+='<td class="n">'+(cl[i]?fmt(cl[i]):"")+'</td><td class="n"><b>'+fmt(rt)+'</b></td></tr>'}
+    mx+='<tr><th style="text-align:left">New (not in '+dlab(LMS.pk)+')</th>'+NW.map(function(v){return'<td class="n">'+(v?fmt(v):"")+'</td>'}).join("")+'<td class="n"></td><td class="n"><b>'+fmt(nw)+'</b></td></tr></table></div><div class="mu" style="margin-top:6px">Yellow = Not Move (same bucket) &bull; Red = ADD (moved to a higher, worse bucket) &bull; Green = Remove (moved to a lower bucket / cleared).</div></div>';
+    h+=mx;
     Object.keys(Object.assign({},MP,MC)).forEach(function(f){var p=MP[f],c=MC[f],z=c||p;
       LMROWS.push({"Fac No":f,Name:z.name,Branch:z.branch,"Mkt Officer":z.mkt,"Bucket (prev)":p?BMK[p.b][0]:"-","Days (prev)":p?p.days:"","Bucket (month end)":c?BMK[c.b][0]:"-","Days (month end)":c?c.days:"",Movement:!p?"New":!c?"Closed":c.b==p.b?"Not moved":c.b>p.b?"Went higher":"Came lower","Total Arrears (prev)":p?p.tot:0,"Total Arrears (month end)":c?c.tot:0,"Grant Date":duGrant(z)})})
   }
   $("lmbody").innerHTML=h
 }
-$("lmSel").onchange=lmLoad;$("lmBr").onchange=lmRender;$("lmOf").onchange=lmRender;
+$("lmSel").onchange=lmLoad;["lmBr","lmOf","lmDe","lmGd","lmMo"].forEach(function(i){$(i).onchange=lmRender});
 $("lmXl").onclick=function(){if(!LMROWS.length)return;dl(LMROWS,"Last_Month_End_"+(LMS.key||""))};
 var BA=[],BB=[],BCUR=null,BMSEL={t:"w"},BMGRP=null,BMPG=0,BMGB="mkt",BMLIST=[];
 function bmShow(){$("bm").classList.add("on");document.body.style.overflow="hidden";bmInit()}
