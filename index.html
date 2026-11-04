@@ -299,7 +299,7 @@ mark{background:#ffe066;color:#1c2433;border-radius:3px;padding:0 2px}
 <div class="cmpv" id="bm">
  <div class="cmph">
   <button id="bmBack" class="p">&#8592; Dashboard</button>
-  <b style="font-size:16px;align-self:center">&#128200; Bucket Movement</b>
+  <b id="bmTitle" style="font-size:16px;align-self:center">&#128200; Bucket Movement</b>
    <button id="medB" class="medb" title="Month end due: use Arrears Days instead of NDIA">&#128197; Month end due</button>
    <button id="bmLM" class="medb" title="Bucket movement of the last month end: previous month-end report (A) vs last month-end report (B), from the month-end Excel uploads">&#128197; Last month end</button>
   <label>Month-end report (A)<select id="bmA"></select></label>
@@ -1299,10 +1299,10 @@ var BA=[],BB=[],BCUR=null,BMSEL={t:"w"},BMGRP=null,BMPG=0,BMGB="mkt",BMLIST=[];
 function bmShow(){bmLMSync();$("bm").classList.add("on");document.body.style.overflow="hidden";bmInit()}
 function bmHide(){$("bm").classList.remove("on")}
 $("bmb").onclick=function(){location.hash="bm"};
-$("bmBack").onclick=function(){location.hash=""};
-function bmLMSync(){var b=$("bmLM");if(b){b.classList.toggle("on",BMLM);b.innerHTML=(BMLM?"&#10004; ":"&#128197; ")+"Last month end"+(BMLM?" : ON":"")}var l=$("bmB")&&$("bmB").parentNode;if(l&&l.firstChild)l.firstChild.nodeValue=BMLM?"Last month-end report (B)":"Latest uploaded report (B)"}
-$("bmLM").onclick=function(){BMLM=!BMLM;BMSEL={t:"w"};bmLMSync();bmInit()};
-window.addEventListener("hashchange",function(){if(location.hash=="#bm")bmShow();else{bmHide();if(!$("cmp").classList.contains("on")&&!$("due").classList.contains("on"))document.body.style.overflow=""}});
+$("bmBack").onclick=function(){location.hash=BMLM?"bm":""};
+function bmLMSync(){var b=$("bmLM");if(b)b.style.display=BMLM?"none":"";var t=$("bmTitle");if(t)t.innerHTML=BMLM?"&#128197; Last Month End &ndash; Bucket Movement":"&#128200; Bucket Movement";var bk=$("bmBack");if(bk)bk.innerHTML=BMLM?"&#8592; Bucket Movement":"&#8592; Dashboard";var l=$("bmB")&&$("bmB").parentNode;if(l&&l.firstChild)l.firstChild.nodeValue=BMLM?"Last month-end report (B)":"Latest uploaded report (B)"}
+$("bmLM").onclick=function(){location.hash="lme"};
+window.addEventListener("hashchange",function(){if(location.hash=="#bm"||location.hash=="#lme"){BMLM=(location.hash=="#lme");BMSEL={t:"w"};bmShow()}else{bmHide();if(!$("cmp").classList.contains("on")&&!$("due").classList.contains("on"))document.body.style.overflow=""}});
 function bmInit(){
   if(!ccfg().url){$("bmbody").innerHTML='<div class="card">Online storage is not set up, so the saved month-end report cannot be loaded.</div>';return}
   $("bmbody").innerHTML='<div class="card mu">Loading...</div>';
@@ -1444,7 +1444,7 @@ $("bmXl").onclick=function(){
   var P=BMLIST.filter(bmPick);if(!P.length)return;
   dl(P.map(function(o){return{"Fac No":o.fac,Name:o.name,"Mkt Officer":o.mkt,Branch:o.branch,Description:o.desc,"Grant Date":o.grant,"Month-end Bucket":o.aB>=0?BMK[o.aB][0]:"",["Month-end "+(MED?TXT_PD:TXT_ND)]:o.dA,"Bucket Now":o.bB>=0?BMK[o.bB][0]:"",[(MED?TXT_PD:TXT_ND)+" Now"]:o.dB,Movement:({s:"Same",w:"Worsened",i:"Improved",n:"New",c:"Closed"})[o.t],"Buckets Moved":o.st,"Days Change":o.dd,"Last Paid Date":o.lpd,"Last Paid Amount":o.lpa,"Paid This Month":o.bB<0?"":o.paid?"Yes":"No","Arrears Change":(o.aB>=0&&o.bB>=0)?o.tB-o.tA:"","Total Arrears (Month-end)":o.tA,"Total Arrears (Now)":o.tB,"Rental Arrears (Now)":o.rB,Portfolio:o.pB||o.pA,Tel:o.tel}}),"Bucket_Movement")
 };
-if(location.hash=="#bm")bmShow();
+if(location.hash=="#bm"||location.hash=="#lme"){BMLM=(location.hash=="#lme");bmShow()}
 /* ===== Due page: facilities whose Due day = selected date's day of month ===== */
 var DUROWS=[];
 function lIso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
