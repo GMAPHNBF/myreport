@@ -603,7 +603,7 @@ function isNewGrant(r){
 /* 1st Rental: normally only facilities whose due day has arrived and have arrears; with "Month end due" ON every facility granted last month (all fall due by month end) */
 function r2calc(o){return !!o.r2b&&+o.rent>0}
 function r3calc(o){return !!o.r3b&&+o.rent>0}
-function r1calc(o){return !!o.r1b&&(MED||(+o.rent>0&&dueArrived(o)))}
+function r1calc(o){return !!o.r1b&&+o.rent>0&&(MED||dueArrived(o))}
 function dueArrived(o){var x=+o.due;if(!(x>0))return true;var t=new Date(),day=t.getDate(),last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();return x<=day||(day===last&&x>last)}
 /* The Branch Wise RentalArrears report is run "As at" month-end, so it already counts the rental(s) not yet due today.
    Destinity NRIA = rentals in arrears today. Remove the not-yet-due rentals (nos - NRIA, rounded) from
@@ -728,7 +728,7 @@ function draw(){
   var pp=a.filter(pn);
   k.push(["NPL Ratio (Portfolio)",(sum(a,"port")?sum(a.filter(function(r){return r.days>=91}),"port")/sum(a,"port")*100:0).toFixed(2)+"%","#d6453d"]);
   k.push(["PNPL",pp.length+" • "+fmt(sum(pp,"tot")),"#7a5af8"]);
-  k.push(["1st Rental (Granted last month)",a.filter(function(r){return r.r1}).length,"#7a5af8"]);
+  k.push(["1st Rental (Granted last month, arrears)",a.filter(function(r){return r.r1}).length,"#7a5af8"]);
   k.push(["2nd Rental (Granted 2 months ago, arrears)",a.filter(function(r){return r.r2}).length,"#7a5af8"]);
   k.push(["3rd Rental (Granted 3 months ago, arrears)",a.filter(function(r){return r.r3}).length,"#7a5af8"]);
   k.push(["Null Payment (this month)",a.filter(function(r){return r.np}).length+" • "+fmt(sum(a.filter(function(r){return r.np}),"tot")),"#7a5af8"]);
